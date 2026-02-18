@@ -3,10 +3,10 @@
 BINARY_NAME=feedscheduler
 
 run:
-	go run cmd/scheduler/main.go
+	go run cmd/feedscheduler/main.go
 
 build:
-	go build -o bin/${BINARY_NAME} cmd/scheduler/main.go
+	go build -o bin/${BINARY_NAME} cmd/feedscheduler/main.go
 
 clean:
 	go clean
