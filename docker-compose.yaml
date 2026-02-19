@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: rss_postgres
+    environment:
+      POSTGRES_USER: rssuser #CHANGE THIS
+      POSTGRES_PASSWORD: changemeplease #CHANGE THIS
+      POSTGRES_DB: rssdb #MAYBE DON'T CHANGE THIS?
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U user -d rss" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
