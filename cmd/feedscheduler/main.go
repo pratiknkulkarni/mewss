@@ -2,6 +2,7 @@ package main
 
 import (
 	"feedscheduler/internal/config"
+	"feedscheduler/internal/database"
 	"feedscheduler/internal/logger"
 	"log"
 	"log/slog"
@@ -25,4 +26,7 @@ func main() {
 	)
 
 	slog.Debug("this won't show unless level is debug, hopefully")
+
+	database.Connect()
+	database.RunMigrations()
 }
