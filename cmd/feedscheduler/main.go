@@ -16,13 +16,13 @@ func main() {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
-	logger.InitLogger(cfg.AppEnv)
+	logger.InitLogger(cfg.AppEnv, cfg.LogLevel)
 
 	slog.Info("starting rss scheduler",
 		"env", cfg.AppEnv,
+		"log level", cfg.LogLevel,
 		"version", "1.0.0",
 	)
 
 	slog.Debug("this won't show unless level is debug, hopefully")
-	//fmt.Printf("Starting Scheduler in %s mode\n", cfg.AppEnv)
 }

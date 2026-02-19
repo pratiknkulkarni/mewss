@@ -9,8 +9,9 @@ import (
 // Config holds the configuration for the entire application
 // TODO: think of a better docstring here and add in worker/scheduler "knobs" here
 type Config struct {
-	AppEnv  string `mapstructure:"APP_ENV"`
-	APIPort string `mapstructure:"API_PORT"`
+	AppEnv   string `mapstructure:"APP_ENV"`
+	APIPort  string `mapstructure:"API_PORT"`
+	LogLevel string `mapstructure:"LOG_LEVEL"`
 }
 
 func LoadConfig() (*Config, error) {
@@ -18,6 +19,7 @@ func LoadConfig() (*Config, error) {
 
 	v.SetDefault("APP_ENV", "development")
 	v.SetDefault("API_PORT", ":8081")
+	v.SetDefault("LOG_LEVEL", "info")
 
 	// if the config.yaml exists, load from it instead
 	v.SetConfigName("config")
