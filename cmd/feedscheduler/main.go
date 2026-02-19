@@ -6,6 +6,7 @@ import (
 	"feedscheduler/internal/logger"
 	"log"
 	"log/slog"
+	"os"
 )
 
 func main() {
@@ -27,6 +28,17 @@ func main() {
 
 	slog.Debug("this won't show unless level is debug, hopefully")
 
-	database.Connect()
-	database.RunMigrations()
+	dbURL := os.Getenv("RSS_DATABASE_URL")
+	db, err := database.Connect(dbURL)
+	if err != nil {
+		slog.Error("failed to connect to database", "error", err)
+		os.Exit(1)
+	}
+
+	defer db.Close()
+
+	if err := database.RunMigrations(db); err != nil {
+		slog.Error("failed to run database migrations", "error", err)
+		os.Exit(1)
+	}
 }
