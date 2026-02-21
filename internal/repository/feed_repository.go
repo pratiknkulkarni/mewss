@@ -9,4 +9,5 @@ import (
 type FeedRepository interface {
 	// Scheduler operations
 	GetFeedsDueForRefresh(ctx context.Context, limit int) ([]model.Feed, error)
+	GetRemainingFeedsCount(ctx context.Context) (int, error)
 }
