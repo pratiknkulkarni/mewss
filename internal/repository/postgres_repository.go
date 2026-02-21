@@ -11,8 +11,17 @@ type PostgresFeedRepository struct {
 }
 
 func (r *PostgresFeedRepository) GetRemainingFeedsCount(ctx context.Context) (int, error) {
-	//TODO implement me
-	panic("implement me")
+	query := `
+		SELECT COUNT(*)
+		FROM feed
+		WHERE (next_fetch_after <= NOW() OR force_refresh = true)
+		  AND (status = 'active' OR force_refresh = true)
+		  AND fetching_at IS NULL
+	`
+
+	var count int
+	err := r.db.QueryRowContext(ctx, query).Scan(&count)
+	return count, err
 }
 
 // NewPostgresFeedRepository creates a new implementation of the PostgreSQL repository

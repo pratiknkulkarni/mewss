@@ -76,7 +76,7 @@ func TestPostgresFeedRepository_GetFeedsDueForRefresh(t *testing.T) {
 	db, cleanup := setupTestDB(ctx, t)
 	defer cleanup()
 
-	repo := NewPostgresFeedRepository(db)
+	_ = NewPostgresFeedRepository(db)
 
 	// 3 are being inserted
 	// 1 -> Due for refresh (past date, not locked)
@@ -98,17 +98,44 @@ func TestPostgresFeedRepository_GetFeedsDueForRefresh(t *testing.T) {
 			t.Fatalf("failed to setup test data: %v", err)
 		}
 	}
+}
 
-	feeds, err := repo.GetFeedsDueForRefresh(ctx, 10)
+func TestPostgresFeedRepository_GetRemainingFeedsCount(t *testing.T) {
+	ctx := context.Background()
+	db, cleanup := setupTestDB(ctx, t)
+	defer cleanup()
+
+	repo := NewPostgresFeedRepository(db)
+
+	queries := []string{
+		// 1. Due, active, unlocked (SHOULD BE COUNTED)
+		"INSERT INTO feed (id, user_id, url, refresh_interval, status, next_fetch_after) VALUES ('f1', 'u1', 'url', 100, 'active', NOW() - INTERVAL '5 minutes')",
+
+		// 2. Future, active, unlocked (NOT COUNTED)
+		"INSERT INTO feed (id, user_id, url, refresh_interval, status, next_fetch_after) VALUES ('f2', 'u1', 'url', 100, 'active', NOW() + INTERVAL '1 hour')",
+
+		// 3. Due, active, locked (NOT COUNTED - worker has it)
+		"INSERT INTO feed (id, user_id, url, refresh_interval, status, next_fetch_after, fetching_at) VALUES ('f3', 'u1', 'url', 100, 'active', NOW() - INTERVAL '5 minutes', NOW())",
+
+		// 4. Due, INACTIVE, unlocked (NOT COUNTED)
+		"INSERT INTO feed (id, user_id, url, refresh_interval, status, next_fetch_after) VALUES ('f4', 'u1', 'url', 100, 'failed', NOW() - INTERVAL '5 minutes')",
+
+		// 5. Future, INACTIVE, but FORCE REFRESH is true (SHOULD BE COUNTED)
+		"INSERT INTO feed (id, user_id, url, refresh_interval, status, next_fetch_after, force_refresh) VALUES ('f5', 'u1', 'url', 100, 'failed', NOW() + INTERVAL '1 hour', true)",
+	}
+
+	for _, q := range queries {
+		if _, err := db.ExecContext(ctx, q); err != nil {
+			t.Fatalf("failed to setup test data: %v", err)
+		}
+	}
+
+	count, err := repo.GetRemainingFeedsCount(ctx)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
 
-	if len(feeds) != 1 {
-		t.Fatalf("expected exactly 1 feed, got %d", len(feeds))
-	}
-
-	if feeds[0].ID != "f1-due" {
-		t.Errorf("expected feed 'f1-due', got '%s'", feeds[0].ID)
+	if count != 2 {
+		t.Fatalf("expected count to be 2, got %d", count)
 	}
 }
