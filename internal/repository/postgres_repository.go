@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"feedscheduler/internal/model"
 )
 
@@ -11,8 +12,26 @@ type PostgresFeedRepository struct {
 }
 
 func (r *PostgresFeedRepository) ClaimFeed(ctx context.Context, feedID string) (bool, error) {
-	//TODO implement me
-	panic("implement me")
+	//TODO: maybe add a threashold here? So if a lock is locked for longer than x mins, it ignores the lock
+	query := `
+		UPDATE feed
+		SET fetching_at = NOW()
+		WHERE id = $1
+		  AND (fetching_at IS NULL)
+		RETURNING id
+	`
+	var id string
+	err := r.db.QueryRowContext(ctx, query, feedID).Scan(&id)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			// some other worker grabbed it OR it does not exist
+			return false, nil
+		}
+		return false, err
+	}
+
+	return true, nil
 }
 
 func (r *PostgresFeedRepository) GetRemainingFeedsCount(ctx context.Context) (int, error) {
