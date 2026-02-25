@@ -28,6 +28,19 @@ func (s *FeedService) ProcessFeed(ctx context.Context, feed model.Feed) {
 	logger.Debug("we are in the process feed")
 
 	// try getting the lock
+	isClaimed, err := s.repo.ClaimFeed(ctx, feed.ID)
+	if err != nil {
+		logger.Error("failed to claim feed lock", "error", err)
+		return
+	}
+
+	if !isClaimed {
+		logger.Debug("feed already claimed by another worker, skipping")
+		return
+	}
+
+	logger.Debug("fetching feed with id %d\n", feed.ID)
+
 	// if gotten -> fetch the feed from internet using that fetcher.Fetch. If not -> just fail
 	// if fetching works, insert into db AND release lock
 }

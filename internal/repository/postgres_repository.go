@@ -18,6 +18,7 @@ func (r *PostgresFeedRepository) ClaimFeed(ctx context.Context, feedID string) (
 		SET fetching_at = NOW()
 		WHERE id = $1
 		  AND (fetching_at IS NULL)
+-- 			 AND FETCHING < threshhold
 		RETURNING id
 	`
 	var id string
