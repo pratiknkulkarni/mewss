@@ -10,6 +10,11 @@ type PostgresFeedRepository struct {
 	db *sql.DB
 }
 
+func (r *PostgresFeedRepository) ClaimFeed(ctx context.Context, feedID string) (bool, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (r *PostgresFeedRepository) GetRemainingFeedsCount(ctx context.Context) (int, error) {
 	query := `
 		SELECT COUNT(*)
