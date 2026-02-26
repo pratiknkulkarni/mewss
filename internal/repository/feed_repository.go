@@ -12,4 +12,5 @@ type FeedRepository interface {
 	GetRemainingFeedsCount(ctx context.Context) (int, error)
 
 	ClaimFeed(ctx context.Context, feedID string) (bool, error)
+	SaveArticle(ctx context.Context, article *model.Article) error
 }

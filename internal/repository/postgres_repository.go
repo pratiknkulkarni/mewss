@@ -11,6 +11,10 @@ type PostgresFeedRepository struct {
 	db *sql.DB
 }
 
+// NewPostgresFeedRepository creates a new implementation of the PostgreSQL repository
+func NewPostgresFeedRepository(db *sql.DB) *PostgresFeedRepository {
+	return &PostgresFeedRepository{db: db}
+}
 func (r *PostgresFeedRepository) ClaimFeed(ctx context.Context, feedID string) (bool, error) {
 	//TODO: maybe add a threashold here? So if a lock is locked for longer than x mins, it ignores the lock
 	query := `
@@ -49,11 +53,6 @@ func (r *PostgresFeedRepository) GetRemainingFeedsCount(ctx context.Context) (in
 	return count, err
 }
 
-// NewPostgresFeedRepository creates a new implementation of the PostgreSQL repository
-func NewPostgresFeedRepository(db *sql.DB) *PostgresFeedRepository {
-	return &PostgresFeedRepository{db: db}
-}
-
 func (r *PostgresFeedRepository) GetFeedsDueForRefresh(ctx context.Context, limit int) ([]model.Feed, error) {
 	query := `
 	SELECT id, user_id, url, refresh_interval, error_count, status, next_fetch_after, force_refresh
@@ -85,4 +84,9 @@ func (r *PostgresFeedRepository) GetFeedsDueForRefresh(ctx context.Context, limi
 	}
 
 	return feeds, nil
+}
+
+func (r *PostgresFeedRepository) SaveArticle(ctx context.Context, article *model.Article) error {
+	//TODO implement me
+	panic("implement me")
 }
