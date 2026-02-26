@@ -5,6 +5,7 @@ import (
 	"feedscheduler/internal/fetcher"
 	"feedscheduler/internal/model"
 	"feedscheduler/internal/repository"
+	"fmt"
 	"log/slog"
 )
 
@@ -25,8 +26,6 @@ func NewFeedService(repo repository.FeedRepository, fetcher fetcher.Fetcher) *Fe
 func (s *FeedService) ProcessFeed(ctx context.Context, feed model.Feed) {
 	logger := slog.With("feed_id", feed.ID, "url", feed.URL)
 
-	logger.Debug("we are in the process feed")
-
 	// try getting the lock
 	isClaimed, err := s.repo.ClaimFeed(ctx, feed.ID)
 	if err != nil {
@@ -42,5 +41,74 @@ func (s *FeedService) ProcessFeed(ctx context.Context, feed model.Feed) {
 	logger.Debug("fetching feed with id %d\n", feed.ID)
 
 	// if gotten -> fetch the feed from internet using that fetcher.Fetch. If not -> just fail
+	parsedFeed, err := s.fetcher.Fetch(ctx, feed.URL)
+
+	logger.Debug(parsedFeed.Title, parsedFeed.Categories)
+
+	if err != nil {
+		logger.Warn("failed to fetch feed", "error", err, "current_errors", feed.ErrorCount)
+		return
+	}
 	// if fetching works, insert into db AND release lock
+
+	fmt.Println("parsing articles -> ")
+
+	for _, item := range parsedFeed.Items {
+		fmt.Printf("===>\n")
+		//fmt.Println(item)
+
+		var guid *string
+		if item.GUID != "" {
+			guid = &item.GUID
+		}
+
+		var author *string
+		if item.Authors != nil {
+			author = &item.Authors[0].Name // taking first one for now, maybe map over all of them?
+		}
+
+		var summary *string
+		if item.Description != "" {
+			summary = &item.Description
+		}
+
+		article := model.Article{
+			FeedID:       feed.ID,
+			UserID:       feed.UserID,
+			GUID:         guid,
+			Title:        item.Title,
+			URL:          item.Link,
+			Author:       author,
+			PublishedAt:  item.PublishedParsed,
+			Summary:      summary,
+			IdentityHash: "",
+		}
+
+		fmt.Printf(`Article {
+  				ID:           %s
+  								FeedID:       %s
+  								UserID:       %s
+  								GUID:         %v
+  								Title:        %s
+  								URL:          %s
+  								Author:       %v
+  								PublishedAt:  %v
+  								Summary:      %v
+  								IdentityHash: %s
+}`,
+			article.ID,
+			article.FeedID,
+			article.UserID,
+			article.GUID,
+			article.Title,
+			article.URL,
+			article.Author,
+			article.PublishedAt,
+			article.Summary,
+			article.IdentityHash,
+			//article.CreatedAt.Format(time.RFC3339),
+		)
+
+		fmt.Printf("<===\n")
+	}
 }
