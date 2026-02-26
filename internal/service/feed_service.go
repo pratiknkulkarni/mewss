@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"log/slog"
 	"time"
+
+	"github.com/mmcdole/gofeed"
 )
 
 // FeedService orchestrates the business logic of fetching and saving feeds.
@@ -52,72 +54,48 @@ func (s *FeedService) ProcessFeed(ctx context.Context, feed model.Feed, staleThr
 		logger.Warn("failed to fetch feed", "error", err, "current_errors", feed.ErrorCount)
 		return
 	}
-	// if fetching works, insert into db AND release lock
-
-	fmt.Println("parsing articles -> ")
 
 	for _, item := range parsedFeed.Items {
-		fmt.Printf("===>\n")
-		hashStr := fmt.Sprintf("%s:%s:%s", feed.ID, item.Title, item.Link)
-		hash := sha256.Sum256([]byte(hashStr))
-		identityHash := hex.EncodeToString(hash[:])
-
-		var guid *string
-		if item.GUID != "" {
-			guid = &item.GUID
-		}
-
-		var author *string
-		if item.Authors != nil {
-			author = &item.Authors[0].Name // taking first one for now, maybe map over all of them?
-		}
-
-		var summary *string
-		if item.Description != "" {
-			summary = &item.Description
-		}
-
-		article := model.Article{
-			FeedID:       feed.ID,
-			UserID:       feed.UserID,
-			GUID:         guid,
-			Title:        item.Title,
-			URL:          item.Link,
-			Author:       author,
-			PublishedAt:  item.PublishedParsed,
-			Summary:      summary,
-			IdentityHash: identityHash,
-		}
-
-		fmt.Printf(`Article {
-  				ID:           %s
-  								FeedID:       %s
-  								UserID:       %s
-  								GUID:         %v
-  								Title:        %s
-  								URL:          %s
-  								Author:       %v
-  								PublishedAt:  %v
-  								Summary:      %v
-  								IdentityHash: %s
-} has been inserted`,
-			article.ID,
-			article.FeedID,
-			article.UserID,
-			article.GUID,
-			article.Title,
-			article.URL,
-			article.Author,
-			article.PublishedAt,
-			article.Summary,
-			article.IdentityHash,
-			//article.CreatedAt.Format(time.RFC3339),
-		)
-
+		article := s.mapToArticle(feed, item)
 		if err := s.repo.SaveArticle(ctx, &article); err != nil {
-			logger.Error("failed to release feed lock after success", "error", err)
-		} else {
-			logger.Info("feed processed successfully", "articles_found", len(parsedFeed.Items))
+			logger.Error("failed to save article", "article_title", article.Title, "error", err)
+			continue
 		}
 	}
+	//TODO: add logic for releaseing a lock here
+}
+
+// mapToArticle converts a gofeed.Item into the domain model
+func (s *FeedService) mapToArticle(feed model.Feed, item *gofeed.Item) model.Article {
+	hashStr := fmt.Sprintf("%s:%s:%s", feed.ID, item.Title, item.Link)
+	hash := sha256.Sum256([]byte(hashStr))
+	identityHash := hex.EncodeToString(hash[:])
+	var guid *string
+	if item.GUID != "" {
+		guid = &item.GUID
+	}
+
+	var author *string
+	if item.Authors != nil {
+		author = &item.Authors[0].Name // taking first one for now, maybe map over all of them?
+	}
+
+	var summary *string
+	if item.Description != "" {
+		summary = &item.Description
+	}
+
+	article := model.Article{
+		FeedID:       feed.ID,
+		UserID:       feed.UserID,
+		GUID:         guid,
+		Title:        item.Title,
+		URL:          item.Link,
+		Author:       author,
+		PublishedAt:  item.PublishedParsed,
+		Summary:      summary,
+		IdentityHash: identityHash,
+	}
+
+	return article
 }
