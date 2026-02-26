@@ -13,6 +13,11 @@ type PostgresFeedRepository struct {
 	db *sql.DB
 }
 
+func (r *PostgresFeedRepository) ReleaseFeed(ctx context.Context, feedID string, nextFetchAfter time.Time, errorCount int) error {
+	//TODO implement me
+	panic("implement me")
+}
+
 // NewPostgresFeedRepository creates a new implementation of the PostgreSQL repository
 func NewPostgresFeedRepository(db *sql.DB) *PostgresFeedRepository {
 	return &PostgresFeedRepository{db: db}
