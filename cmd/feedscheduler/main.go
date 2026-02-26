@@ -1,12 +1,19 @@
 package main
 
 import (
+	"context"
 	"feedscheduler/internal/config"
 	"feedscheduler/internal/database"
+	"feedscheduler/internal/fetcher"
 	"feedscheduler/internal/logger"
+	"feedscheduler/internal/model"
+	"feedscheduler/internal/repository"
+	"feedscheduler/internal/service"
+	"fmt"
 	"log"
 	"log/slog"
 	"os"
+	"time"
 )
 
 func main() {
@@ -28,7 +35,8 @@ func main() {
 
 	slog.Debug("this won't show unless level is debug, hopefully")
 
-	dbURL := os.Getenv("RSS_DATABASE_URL")
+	dbURL := cfg.TestDatabaseURL
+	fmt.Println(dbURL)
 	db, err := database.Connect(dbURL)
 	if err != nil {
 		slog.Error("failed to connect to database", "error", err)
@@ -41,4 +49,24 @@ func main() {
 		slog.Error("failed to run database migrations", "error", err)
 		os.Exit(1)
 	}
+
+	//manual testing
+	repo := repository.NewPostgresFeedRepository(db)
+	netFetcher := fetcher.NewGoFeedFetcher(10*time.Second, "RSS-Scheduler-Test/1.0")
+	svc := service.NewFeedService(repo, netFetcher)
+
+	feedID := "test-hn-123"
+	_, _ = db.Exec("INSERT INTO feed (id, user_id, url, refresh_interval) VALUES ($1, 'u1', 'https://news.ycombinator.com/rss', 60000000000) ON CONFLICT DO NOTHING", feedID)
+
+	feed := model.Feed{
+		ID:              feedID,
+		UserID:          "u1",
+		URL:             "https://news.ycombinator.com/rss",
+		RefreshInterval: 10 * time.Minute,
+	}
+
+	slog.Info("Firing manual feed fetch...")
+	svc.ProcessFeed(context.Background(), feed)
+	slog.Info("Done. Check your database.")
+
 }
