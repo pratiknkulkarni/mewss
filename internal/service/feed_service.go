@@ -109,6 +109,7 @@ func (s *FeedService) ProcessFeed(ctx context.Context, feed model.Feed) {
 			//article.CreatedAt.Format(time.RFC3339),
 		)
 
+		s.repo.SaveArticle(ctx, &article)
 		fmt.Printf("<===\n")
 	}
 }

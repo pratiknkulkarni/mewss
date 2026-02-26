@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"feedscheduler/internal/model"
+	"fmt"
 )
 
 type PostgresFeedRepository struct {
@@ -87,6 +88,35 @@ func (r *PostgresFeedRepository) GetFeedsDueForRefresh(ctx context.Context, limi
 }
 
 func (r *PostgresFeedRepository) SaveArticle(ctx context.Context, article *model.Article) error {
-	//TODO implement me
-	panic("implement me")
+	query := `
+		INSERT INTO article (
+			feed_id, user_id, guid, title, url, author, published_at, summary, identity_hash
+		) VALUES (
+			$1, $2, $3, $4, $5, $6, $7, $8, $9
+		)
+		ON CONFLICT (identity_hash) DO NOTHING
+	`
+	result, err := r.db.ExecContext(ctx, query,
+		article.FeedID,
+		article.UserID,
+		article.GUID,
+		article.Title,
+		article.URL,
+		article.Author,
+		article.PublishedAt,
+		article.Summary,
+		article.IdentityHash,
+	)
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		fmt.Println("rowsAffected -> ", rowsAffected)
+	}
+
+	lastInsertId, err := result.LastInsertId()
+	if err != nil {
+		fmt.Println(lastInsertId)
+	}
+
+	return err
 }
