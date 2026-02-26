@@ -9,6 +9,7 @@ import (
 	"feedscheduler/internal/repository"
 	"fmt"
 	"log/slog"
+	"time"
 )
 
 // FeedService orchestrates the business logic of fetching and saving feeds.
@@ -25,11 +26,11 @@ func NewFeedService(repo repository.FeedRepository, fetcher fetcher.Fetcher) *Fe
 }
 
 // ProcessFeed handles the processing of one feed at a time. Entire lifecycle. At least I hope it'll
-func (s *FeedService) ProcessFeed(ctx context.Context, feed model.Feed) {
+func (s *FeedService) ProcessFeed(ctx context.Context, feed model.Feed, staleThreshold time.Duration) {
 	logger := slog.With("feed_id", feed.ID, "url", feed.URL)
 
 	// try getting the lock
-	isClaimed, err := s.repo.ClaimFeed(ctx, feed.ID)
+	isClaimed, err := s.repo.ClaimFeed(ctx, feed.ID, staleThreshold)
 	if err != nil {
 		logger.Error("failed to claim feed lock", "error", err)
 		return

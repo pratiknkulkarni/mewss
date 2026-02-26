@@ -6,6 +6,7 @@ import (
 	"errors"
 	"feedscheduler/internal/model"
 	"fmt"
+	"time"
 )
 
 type PostgresFeedRepository struct {
@@ -16,18 +17,18 @@ type PostgresFeedRepository struct {
 func NewPostgresFeedRepository(db *sql.DB) *PostgresFeedRepository {
 	return &PostgresFeedRepository{db: db}
 }
-func (r *PostgresFeedRepository) ClaimFeed(ctx context.Context, feedID string) (bool, error) {
-	//TODO: maybe add a threashold here? So if a lock is locked for longer than x mins, it ignores the lock
+func (r *PostgresFeedRepository) ClaimFeed(ctx context.Context, feedID string, staleThreshold time.Duration) (bool, error) {
+	threshold := time.Now().Add(-staleThreshold)
+
 	query := `
 		UPDATE feed
 		SET fetching_at = NOW()
 		WHERE id = $1
-		  AND (fetching_at IS NULL)
--- 			 AND FETCHING < threshhold
+		AND (fetching_at IS NULL OR fetching_at < $2)
 		RETURNING id
 	`
 	var id string
-	err := r.db.QueryRowContext(ctx, query, feedID).Scan(&id)
+	err := r.db.QueryRowContext(ctx, query, feedID, threshold).Scan(&id)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

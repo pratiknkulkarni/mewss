@@ -45,10 +45,10 @@ func main() {
 
 	defer db.Close()
 
-	//if err := database.RunMigrations(db); err != nil {
-	//	slog.Error("failed to run database migrations", "error", err)
-	//	os.Exit(1)
-	//}
+	if err := database.RunMigrations(db); err != nil {
+		slog.Error("failed to run database migrations", "error", err)
+		os.Exit(1)
+	}
 
 	//manual testing
 	repo := repository.NewPostgresFeedRepository(db)
@@ -66,7 +66,7 @@ func main() {
 	}
 
 	slog.Info("Firing manual feed fetch...")
-	svc.ProcessFeed(context.Background(), feed)
+	svc.ProcessFeed(context.Background(), feed, 15*time.Minute)
 	slog.Info("Done. Check your database.")
 
 }

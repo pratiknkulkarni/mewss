@@ -40,7 +40,7 @@ func setupTestDB(ctx context.Context, t *testing.T) (*sql.DB, func()) {
 		t.Fatalf("failed to connect to db: %v", err)
 	}
 
-	// I am creating this here for isolation, however I guess I can even use the migrations folder.
+	// I am creating this here for isolation, however I guess I can even use the migrations' folder.
 	// That requires a bit of a setup, so deferring that for now. I am not too happy with this...
 	_, err = db.ExecContext(ctx, `
 		CREATE TABLE feed (
@@ -138,4 +138,56 @@ func TestPostgresFeedRepository_GetRemainingFeedsCount(t *testing.T) {
 	if count != 2 {
 		t.Fatalf("expected count to be 2, got %d", count)
 	}
+}
+
+func TestPostgresFeedRepository_ClaimFeed(t *testing.T) {
+	ctx := context.Background()
+	db, cleanup := setupTestDB(ctx, t)
+	defer cleanup()
+
+	repo := NewPostgresFeedRepository(db)
+
+	feedID := "feed-123"
+	_, err := db.ExecContext(ctx, `
+		INSERT INTO feed (id, user_id, url, refresh_interval)
+		VALUES ($1, 'user-1', 'https://example.com/rss', 600000000000)
+	`, feedID)
+	if err != nil {
+		t.Fatalf("failed to insert dummy feed: %v", err)
+	}
+
+	t.Run("Successfully claim an available feed", func(t *testing.T) {
+		claimed, err := repo.ClaimFeed(ctx, feedID, 15*time.Minute)
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+		if !claimed {
+			t.Errorf("expected feed to be claimed successfully")
+		}
+	})
+
+	t.Run("Fail to claim an already locked feed", func(t *testing.T) {
+		claimed, err := repo.ClaimFeed(ctx, feedID, 15*time.Minute)
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+		if claimed {
+			t.Errorf("expected claim to fail because feed is already locked")
+		}
+	})
+
+	t.Run("Successfully claim a stale feed", func(t *testing.T) {
+		_, err := db.ExecContext(ctx, "UPDATE feed SET fetching_at = NOW() - INTERVAL '2 hours' WHERE id = $1", feedID)
+		if err != nil {
+			t.Fatalf("failed to update fetching_at: %v", err)
+		}
+
+		claimed, err := repo.ClaimFeed(ctx, feedID, 1*time.Hour)
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+		if !claimed {
+			t.Errorf("expected to successfully claim a stale lock")
+		}
+	})
 }
