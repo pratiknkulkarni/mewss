@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"feedscheduler/internal/fetcher"
 	"feedscheduler/internal/model"
 	"feedscheduler/internal/repository"
@@ -55,7 +57,9 @@ func (s *FeedService) ProcessFeed(ctx context.Context, feed model.Feed) {
 
 	for _, item := range parsedFeed.Items {
 		fmt.Printf("===>\n")
-		//fmt.Println(item)
+		hashStr := fmt.Sprintf("%s:%s:%s", feed.ID, item.Title, item.Link)
+		hash := sha256.Sum256([]byte(hashStr))
+		identityHash := hex.EncodeToString(hash[:])
 
 		var guid *string
 		if item.GUID != "" {
@@ -81,7 +85,7 @@ func (s *FeedService) ProcessFeed(ctx context.Context, feed model.Feed) {
 			Author:       author,
 			PublishedAt:  item.PublishedParsed,
 			Summary:      summary,
-			IdentityHash: "",
+			IdentityHash: identityHash,
 		}
 
 		fmt.Printf(`Article {
@@ -95,7 +99,7 @@ func (s *FeedService) ProcessFeed(ctx context.Context, feed model.Feed) {
   								PublishedAt:  %v
   								Summary:      %v
   								IdentityHash: %s
-}`,
+} has been inserted`,
 			article.ID,
 			article.FeedID,
 			article.UserID,
@@ -109,7 +113,10 @@ func (s *FeedService) ProcessFeed(ctx context.Context, feed model.Feed) {
 			//article.CreatedAt.Format(time.RFC3339),
 		)
 
-		s.repo.SaveArticle(ctx, &article)
-		fmt.Printf("<===\n")
+		if err := s.repo.SaveArticle(ctx, &article); err != nil {
+			logger.Error("failed to release feed lock after success", "error", err)
+		} else {
+			logger.Info("feed processed successfully", "articles_found", len(parsedFeed.Items))
+		}
 	}
 }

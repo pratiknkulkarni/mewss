@@ -56,20 +56,25 @@ func (r *PostgresFeedRepository) GetRemainingFeedsCount(ctx context.Context) (in
 
 func (r *PostgresFeedRepository) GetFeedsDueForRefresh(ctx context.Context, limit int) ([]model.Feed, error) {
 	query := `
-	SELECT id, user_id, url, refresh_interval, error_count, status, next_fetch_after, force_refresh
-		FROM feed
-		WHERE (status = 'active' OR force_refresh = true)
-		  AND (next_fetch_after <= NOW() OR force_refresh = true)
-		  AND fetching_at IS NULL
-		ORDER BY next_fetch_after ASC
-		LIMIT $1
-		`
+		SELECT id, user_id, url, refresh_interval, error_count, status, next_fetch_after, force_refresh
+			FROM feed
+			WHERE (status = 'active' OR force_refresh = true)
+			  AND (next_fetch_after <= NOW() OR force_refresh = true)
+			  AND fetching_at IS NULL
+			ORDER BY next_fetch_after
+			LIMIT $1
+			`
 
 	rows, err := r.db.QueryContext(ctx, query, limit)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+		}
+	}(rows)
 
 	var feeds []model.Feed
 
@@ -108,15 +113,31 @@ func (r *PostgresFeedRepository) SaveArticle(ctx context.Context, article *model
 		article.IdentityHash,
 	)
 
-	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		fmt.Println("rowsAffected -> ", rowsAffected)
+		fmt.Println("error inserting the article -> ", err)
+		return err
+	} else {
+		fmt.Println("NO error inserting the article -> ", err)
 	}
 
-	lastInsertId, err := result.LastInsertId()
-	if err != nil {
-		fmt.Println(lastInsertId)
+	rowsAffected, err1 := result.RowsAffected()
+	if err1 != nil {
+		fmt.Println(err1)
+	} else {
+		fmt.Println("\nrowsAffected -> ", rowsAffected)
 	}
+
+	//TODO: remove this, this is only for testing ->
+	query2 := `
+UPDATE feed SET fetching_at = NULL where id = $1;
+		`
+	_, err2 := r.db.ExecContext(ctx, query2, article.FeedID)
+	if err2 != nil {
+		fmt.Println("error reset the feed", err2)
+	} else {
+		fmt.Println("reset the feed")
+	}
+	// <- till here
 
 	return err
 }

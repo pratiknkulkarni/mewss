@@ -45,10 +45,10 @@ func main() {
 
 	defer db.Close()
 
-	if err := database.RunMigrations(db); err != nil {
-		slog.Error("failed to run database migrations", "error", err)
-		os.Exit(1)
-	}
+	//if err := database.RunMigrations(db); err != nil {
+	//	slog.Error("failed to run database migrations", "error", err)
+	//	os.Exit(1)
+	//}
 
 	//manual testing
 	repo := repository.NewPostgresFeedRepository(db)
@@ -56,12 +56,12 @@ func main() {
 	svc := service.NewFeedService(repo, netFetcher)
 
 	feedID := "test-hn-123"
-	_, _ = db.Exec("INSERT INTO feed (id, user_id, url, refresh_interval) VALUES ($1, 'u1', 'https://news.ycombinator.com/rss', 60000000000) ON CONFLICT DO NOTHING", feedID)
+	_, _ = db.Exec("INSERT INTO feed (id, user_id, url, refresh_interval) VALUES ($1, 'u1', 'https://feeds.thelocal.com/rss/es', 60000000000) ON CONFLICT DO NOTHING", feedID)
 
 	feed := model.Feed{
 		ID:              feedID,
 		UserID:          "u1",
-		URL:             "https://news.ycombinator.com/rss",
+		URL:             "https://feeds.thelocal.com/rss/es",
 		RefreshInterval: 10 * time.Minute,
 	}
 
