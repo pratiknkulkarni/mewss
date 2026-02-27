@@ -13,15 +13,25 @@ type PostgresFeedRepository struct {
 	db *sql.DB
 }
 
-func (r *PostgresFeedRepository) ReleaseFeed(ctx context.Context, feedID string, nextFetchAfter time.Time, errorCount int) error {
-	//TODO implement me
-	panic("implement me")
-}
-
 // NewPostgresFeedRepository creates a new implementation of the PostgreSQL repository
 func NewPostgresFeedRepository(db *sql.DB) *PostgresFeedRepository {
 	return &PostgresFeedRepository{db: db}
 }
+
+func (r *PostgresFeedRepository) ReleaseFeed(ctx context.Context, feedID string, nextFetchAfter time.Time, errorCount int) error {
+	query := `
+		UPDATE feed
+		SET fetching_at = NULL,
+		    next_fetch_after = $2,
+		    force_refresh = false,
+		    error_count = $3,
+		    updated_at = NOW()
+		WHERE id = $1
+	`
+	_, err := r.db.ExecContext(ctx, query, feedID, nextFetchAfter, errorCount)
+	return err
+}
+
 func (r *PostgresFeedRepository) ClaimFeed(ctx context.Context, feedID string, staleThreshold time.Duration) (bool, error) {
 	threshold := time.Now().Add(-staleThreshold)
 

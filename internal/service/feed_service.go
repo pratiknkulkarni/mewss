@@ -62,7 +62,12 @@ func (s *FeedService) ProcessFeed(ctx context.Context, feed model.Feed, staleThr
 			continue
 		}
 	}
-	//TODO: add logic for releaseing a lock here
+	nextFetch := time.Now().Add(feed.RefreshInterval)
+	if err := s.repo.ReleaseFeed(ctx, feed.ID, nextFetch, 0); err != nil {
+		logger.Error("failed to release feed lock after success", "error", err)
+	} else {
+		logger.Info("feed processed successfully, lock released", "articles_found", len(parsedFeed.Items))
+	}
 }
 
 // mapToArticle converts a gofeed.Item into the domain model

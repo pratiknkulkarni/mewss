@@ -191,3 +191,51 @@ func TestPostgresFeedRepository_ClaimFeed(t *testing.T) {
 		}
 	})
 }
+
+func TestPostgresFeedRepository_ReleaseFeed(t *testing.T) {
+	ctx := context.Background()
+	db, cleanup := setupTestDB(ctx, t)
+	defer cleanup()
+
+	repo := NewPostgresFeedRepository(db)
+
+	feedID := "f1"
+	_, err := db.ExecContext(ctx, `
+		INSERT INTO feed (id, user_id, url, refresh_interval, fetching_at, force_refresh)
+		VALUES ($1, 'u1', 'url', 100, NOW(), true)
+	`, feedID)
+	if err != nil {
+		t.Fatalf("failed to setup test data: %v", err)
+	}
+
+	nextFetchTime := time.Now().Add(1 * time.Hour).Round(time.Second) // Rounding handles PG precision differences
+
+	err = repo.ReleaseFeed(ctx, feedID, nextFetchTime, 0)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	var fetchingAt sql.NullTime
+	var dbNextFetch time.Time
+	var forceRefresh bool
+	var errCount int
+
+	err = db.QueryRowContext(ctx, "SELECT fetching_at, next_fetch_after, force_refresh, error_count FROM feed WHERE id = $1", feedID).
+		Scan(&fetchingAt, &dbNextFetch, &forceRefresh, &errCount)
+	if err != nil {
+		t.Fatalf("failed to query db: %v", err)
+	}
+
+	if fetchingAt.Valid {
+		t.Errorf("expected fetching_at to be NULL, got %v", fetchingAt.Time)
+	}
+	if forceRefresh {
+		t.Errorf("expected force_refresh to be false")
+	}
+	if errCount != 0 {
+		t.Errorf("expected error_count to be 0, got %d", errCount)
+	}
+	if !dbNextFetch.Equal(nextFetchTime) {
+		t.Errorf("expected next_fetch_after %v, got %v", nextFetchTime, dbNextFetch)
+	}
+}
