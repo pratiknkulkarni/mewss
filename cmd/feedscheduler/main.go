@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"feedscheduler/internal/api"
 	"log"
 	"log/slog"
 	"os"
@@ -50,6 +51,8 @@ func main() {
 	pool := worker.NewPool(workerCount, feedService, jobsChan)
 	scheduler := worker.NewScheduler(repo, jobsChan, 10*time.Second, workerCount)
 
+	apiServer := api.NewServer(cfg.APIPort, netFetcher)
+
 	ctx, cancel := context.WithCancel(context.Background())
 	setupSignalHandler(cancel)
 
@@ -57,9 +60,21 @@ func main() {
 
 	pool.Start(ctx)
 
+	go func() {
+		if err := apiServer.Start(); err != nil {
+			slog.Error("http server crashed", "error", err)
+		}
+	}()
+
 	<-ctx.Done()
 
 	slog.Info("shutdown signal received, initiating graceful shutdown")
+
+	shutdownCtx, cancelShutdown := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancelShutdown()
+	if err := apiServer.Stop(shutdownCtx); err != nil {
+		slog.Error("failed to stop http server gracefully", "error", err)
+	}
 
 	close(jobsChan)
 
