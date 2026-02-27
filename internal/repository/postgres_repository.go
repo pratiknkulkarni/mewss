@@ -71,15 +71,30 @@ func (r *PostgresFeedRepository) GetRemainingFeedsCount(ctx context.Context) (in
 }
 
 func (r *PostgresFeedRepository) GetFeedsDueForRefresh(ctx context.Context, limit int) ([]model.Feed, error) {
+	//query := `
+	//	SELECT id, user_id, url, refresh_interval, error_count, status, next_fetch_after, force_refresh
+	//		FROM feed
+	//		WHERE (status = 'active' OR force_refresh = true)
+	//		  AND (next_fetch_after <= NOW() OR force_refresh = true)
+	//		  AND fetching_at IS NULL
+	//		ORDER BY next_fetch_after
+	//		LIMIT $1
+	//		`
+
 	query := `
-		SELECT id, user_id, url, refresh_interval, error_count, status, next_fetch_after, force_refresh
+		UPDATE feed
+		SET fetching_at = NOW()
+		WHERE id IN (
+			SELECT id
 			FROM feed
-			WHERE (status = 'active' OR force_refresh = true)
-			  AND (next_fetch_after <= NOW() OR force_refresh = true)
+			WHERE (next_fetch_after <= NOW() OR force_refresh = true)
+			  AND (status = 'active' OR force_refresh = true)
 			  AND fetching_at IS NULL
-			ORDER BY next_fetch_after
 			LIMIT $1
-			`
+			FOR UPDATE SKIP LOCKED
+		)
+		RETURNING id, user_id, url, refresh_interval, error_count, status, next_fetch_after, force_refresh
+	`
 
 	rows, err := r.db.QueryContext(ctx, query, limit)
 	if err != nil {

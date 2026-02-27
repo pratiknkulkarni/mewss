@@ -34,16 +34,16 @@ func (s *FeedService) ProcessFeed(ctx context.Context, feed model.Feed, staleThr
 	logger := slog.With("feed_id", feed.ID, "url", feed.URL)
 
 	// try getting the lock
-	isClaimed, err := s.repo.ClaimFeed(ctx, feed.ID, staleThreshold)
-	if err != nil {
-		logger.Error("failed to claim feed lock", "error", err)
-		return
-	}
-
-	if !isClaimed {
-		logger.Debug("feed already claimed by another worker, skipping")
-		return
-	}
+	//isClaimed, err := s.repo.ClaimFeed(ctx, feed.ID, staleThreshold)
+	//if err != nil {
+	//	logger.Error("failed to claim feed lock", "error", err)
+	//	return
+	//}
+	//
+	//if !isClaimed {
+	//	logger.Debug("feed already claimed by another worker, skipping")
+	//	return
+	//}
 
 	//logger.Debug("fetching feed with id %d\n", feed.ID)
 
