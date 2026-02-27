@@ -79,12 +79,12 @@ func TestFeedService_ProcessFeed_ExponentialBackoff(t *testing.T) {
 	fetcher := &mockFetcher{err: errors.New("network timeout")}
 	svc := NewFeedService(repo, fetcher)
 
-	// the feed already has 2 errors => expected backoff = 2^(2 + 1) = 8 mins
+	// the feed already has 2 errors (hard coded in this test) => expected backoff = 2^(2 + 1) = 8 mins
 	// Expected backoff: 2^(2+1) = 2^3 = 8 minutes.
 	feed := model.Feed{
 		ID:              "feed-1",
 		RefreshInterval: 60 * time.Minute,
-		ErrorCount:      2,
+		ErrorCount:      2, // hard code
 	}
 
 	beforeRun := time.Now()
@@ -98,12 +98,14 @@ func TestFeedService_ProcessFeed_ExponentialBackoff(t *testing.T) {
 		t.Errorf("expected error count to increment to 3, got %d", repo.lastErrorCount)
 	}
 
-	// 60m (base interval) + 8m (backoff) = 68 minutes from now
-	expectedDuration := 68 * time.Minute
+	// considering the jitter for testing
+	minExpected := 60*time.Minute + time.Duration(6.4*float64(time.Minute))
+	maxExpected := 60*time.Minute + time.Duration(9.6*float64(time.Minute))
+
 	actualDuration := repo.lastNextFetch.Sub(beforeRun)
 
-	if actualDuration < expectedDuration-time.Second || actualDuration > expectedDuration+time.Second {
-		t.Errorf("expected backoff duration ~%v, got %v", expectedDuration, actualDuration)
+	if actualDuration < minExpected || actualDuration > maxExpected {
+		t.Errorf("expected duration between %v and %v, got %v", minExpected, maxExpected, actualDuration)
 	}
 }
 

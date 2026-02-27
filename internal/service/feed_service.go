@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"log/slog"
 	"math"
+	"math/rand"
 	"time"
 
 	"github.com/mmcdole/gofeed"
@@ -55,14 +56,19 @@ func (s *FeedService) ProcessFeed(ctx context.Context, feed model.Feed, staleThr
 		logger.Warn("failed to fetch feed", "error", err, "current_errors", feed.ErrorCount)
 
 		newErrorCount := feed.ErrorCount + 1
-		backOffMins := math.Pow(2, float64(newErrorCount))
+		backOffMinutes := math.Pow(2, float64(newErrorCount))
 
 		// backoff > 24 hours, cap it at that
-		if backOffMins > 1440 {
-			backOffMins = 1440
+		if backOffMinutes > 1440 {
+			backOffMinutes = 1440
 		}
 
-		backoffDuration := time.Duration(backOffMins) * time.Minute
+		// jitter -> randomize the backoff by +/- 20%
+		// reference - https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/
+		jitterFactor := 0.8 + (0.4 * rand.Float64())
+		actualBackoffMinutes := backOffMinutes * jitterFactor
+
+		backoffDuration := time.Duration(actualBackoffMinutes * float64(time.Minute))
 		nextFetch := time.Now().Add(feed.RefreshInterval).Add(backoffDuration)
 
 		logger.Info("scheduling feed with backoff", "next_fetch", nextFetch, "error_count", newErrorCount)
