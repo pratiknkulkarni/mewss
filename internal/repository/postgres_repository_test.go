@@ -239,3 +239,43 @@ func TestPostgresFeedRepository_ReleaseFeed(t *testing.T) {
 		t.Errorf("expected next_fetch_after %v, got %v", nextFetchTime, dbNextFetch)
 	}
 }
+
+func TestPostgresFeedRepository_MarkFeedAsFailed(t *testing.T) {
+	ctx := context.Background()
+	db, cleanup := setupTestDB(ctx, t)
+	defer cleanup()
+
+	repo := NewPostgresFeedRepository(db)
+
+	feedID := "f1"
+	_, err := db.ExecContext(ctx, `
+		INSERT INTO feed (id, user_id, url, refresh_interval, fetching_at, error_count) 
+		VALUES ($1, 'u1', 'url', 100, NOW(), 2)
+	`, feedID)
+	if err != nil {
+		t.Fatalf("failed to setup test data: %v", err)
+	}
+
+	nextFetchTime := time.Now().Add(1 * time.Hour).Round(time.Second)
+
+	// Worker failed again, incrementing error count to 3
+	err = repo.MarkFeedAsFailed(ctx, feedID, 3, nextFetchTime)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	var fetchingAt sql.NullTime
+	var errCount int
+	err = db.QueryRowContext(ctx, "SELECT fetching_at, error_count FROM feed WHERE id = $1", feedID).
+		Scan(&fetchingAt, &errCount)
+	if err != nil {
+		t.Fatalf("failed to query db: %v", err)
+	}
+
+	if fetchingAt.Valid {
+		t.Errorf("expected fetching_at to be NULL")
+	}
+	if errCount != 3 {
+		t.Errorf("expected error_count to be 3, got %d", errCount)
+	}
+}

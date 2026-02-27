@@ -9,6 +9,7 @@ import (
 	"feedscheduler/internal/repository"
 	"fmt"
 	"log/slog"
+	"math"
 	"time"
 
 	"github.com/mmcdole/gofeed"
@@ -43,15 +44,33 @@ func (s *FeedService) ProcessFeed(ctx context.Context, feed model.Feed, staleThr
 		return
 	}
 
-	logger.Debug("fetching feed with id %d\n", feed.ID)
+	//logger.Debug("fetching feed with id %d\n", feed.ID)
 
 	// if gotten -> fetch the feed from internet using that fetcher.Fetch. If not -> just fail
 	parsedFeed, err := s.fetcher.Fetch(ctx, feed.URL)
 
-	logger.Debug(parsedFeed.Title, parsedFeed.Categories)
+	//logger.Debug(parsedFeed.Title, parsedFeed.Categories)
 
 	if err != nil {
 		logger.Warn("failed to fetch feed", "error", err, "current_errors", feed.ErrorCount)
+
+		newErrorCount := feed.ErrorCount + 1
+		backOffMins := math.Pow(2, float64(newErrorCount))
+
+		// backoff > 24 hours, cap it at that
+		if backOffMins > 1440 {
+			backOffMins = 1440
+		}
+
+		backoffDuration := time.Duration(backOffMins) * time.Minute
+		nextFetch := time.Now().Add(feed.RefreshInterval).Add(backoffDuration)
+
+		logger.Info("scheduling feed with backoff", "next_fetch", nextFetch, "error_count", newErrorCount)
+
+		if err := s.repo.MarkFeedAsFailed(ctx, feed.ID, newErrorCount, nextFetch); err != nil {
+			logger.Error("failed to mark feed as failed in db", "error", err)
+		}
+
 		return
 	}
 

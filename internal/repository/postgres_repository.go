@@ -157,3 +157,17 @@ UPDATE feed SET fetching_at = NULL where id = $1;
 
 	return err
 }
+
+func (r *PostgresFeedRepository) MarkFeedAsFailed(ctx context.Context, feedID string, errorCount int, nextFetchAfter time.Time) error {
+	//TODO: check -> if the error count is very high (say, > 5?) maybe I just mark this one as failed
+	query := `
+		UPDATE feed
+		SET fetching_at = NULL,
+		    error_count = $2,
+		    next_fetch_after = $3,
+		    updated_at = NOW()
+		WHERE id = $1
+	`
+	_, err := r.db.ExecContext(ctx, query, feedID, errorCount, nextFetchAfter)
+	return err
+}
