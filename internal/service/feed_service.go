@@ -32,7 +32,10 @@ func NewFeedService(repo repository.FeedRepository, fetcher fetcher.Fetcher) *Fe
 // ProcessFeed handles the processing of one feed at a time. Entire lifecycle. At least I hope it'll
 func (s *FeedService) ProcessFeed(ctx context.Context, feed model.Feed, staleThreshold time.Duration) {
 	logger := slog.With("feed_id", feed.ID, "url", feed.URL)
-	parsedFeed, err := s.fetcher.Fetch(ctx, feed.URL)
+
+	fetchCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	parsedFeed, err := s.fetcher.Fetch(fetchCtx, feed.URL)
+	defer cancel()
 
 	if err != nil {
 		logger.Warn("failed to fetch feed", "error", err, "current_errors", feed.ErrorCount)
@@ -55,7 +58,8 @@ func (s *FeedService) ProcessFeed(ctx context.Context, feed model.Feed, staleThr
 
 		logger.Info("scheduling feed with backoff", "next_fetch", nextFetch, "error_count", newErrorCount)
 
-		if err := s.repo.MarkFeedAsFailed(ctx, feed.ID, newErrorCount, nextFetch); err != nil {
+		// changing the context here for a fresh one since the queries fail if parent dies
+		if err := s.repo.MarkFeedAsFailed(context.Background(), feed.ID, newErrorCount, nextFetch); err != nil {
 			logger.Error("failed to mark feed as failed in db", "error", err)
 		}
 
@@ -64,13 +68,13 @@ func (s *FeedService) ProcessFeed(ctx context.Context, feed model.Feed, staleThr
 
 	for _, item := range parsedFeed.Items {
 		article := s.mapToArticle(feed, item)
-		if err := s.repo.SaveArticle(ctx, &article); err != nil {
+		if err := s.repo.SaveArticle(context.Background(), &article); err != nil {
 			logger.Error("failed to save article", "article_title", article.Title, "error", err)
 			continue
 		}
 	}
 	nextFetch := time.Now().Add(feed.RefreshInterval)
-	if err := s.repo.ReleaseFeed(ctx, feed.ID, nextFetch, 0); err != nil {
+	if err := s.repo.ReleaseFeed(context.Background(), feed.ID, nextFetch, 0); err != nil {
 		logger.Error("failed to release feed lock after success", "error", err)
 	} else {
 		logger.Info("feed processed successfully, lock released", "articles_found", len(parsedFeed.Items))
