@@ -59,7 +59,7 @@ func main() {
 
 	<-ctx.Done()
 
-	slog.Info("shutdown signal received, initiating graceful shutdown...")
+	slog.Info("shutdown signal received, initiating graceful shutdown")
 
 	close(jobsChan)
 
