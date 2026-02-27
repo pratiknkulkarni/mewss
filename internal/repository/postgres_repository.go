@@ -153,3 +153,23 @@ func (r *PostgresFeedRepository) MarkFeedAsFailed(ctx context.Context, feedID st
 	_, err := r.db.ExecContext(ctx, query, feedID, errorCount, nextFetchAfter)
 	return err
 }
+
+// CleanStaleLocks finds the feeds which have been locked for too long and forcefully releases them
+// The error count is incremented here so that if they keep getting locked, this function will forcefully release them
+// and back off that feed
+func (r *PostgresFeedRepository) CleanStaleLocks(ctx context.Context, cutoff time.Time) (int64, error) {
+	query := `
+		UPDATE feed
+		SET fetching_at = NULL,
+		    error_count = error_count + 1,
+		    updated_at = NOW()
+		WHERE fetching_at < $1
+	`
+
+	result, err := r.db.ExecContext(ctx, query, cutoff)
+	if err != nil {
+		return 0, err
+	}
+
+	return result.RowsAffected()
+}

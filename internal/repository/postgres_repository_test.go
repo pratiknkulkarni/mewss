@@ -279,3 +279,65 @@ func TestPostgresFeedRepository_MarkFeedAsFailed(t *testing.T) {
 		t.Errorf("expected error_count to be 3, got %d", errCount)
 	}
 }
+
+func TestPostgresFeedRepository_CleanStaleLocks(t *testing.T) {
+	ctx := context.Background()
+	db, cleanup := setupTestDB(ctx, t)
+	defer cleanup()
+
+	repo := NewPostgresFeedRepository(db)
+
+	feedID := "stale-lock-test-1"
+	_, err := db.ExecContext(ctx, `
+		INSERT INTO feed (id, user_id, url, refresh_interval, status, fetching_at, error_count) 
+		VALUES ($1, 'u1', 'http://example.com/stale', 60000000000, 'active', NOW() - INTERVAL '2 hours', 0)
+	`, feedID)
+	if err != nil {
+		t.Fatalf("failed to insert test feed: %v", err)
+	}
+
+	healthyFeedID := "healthy-lock-test-1"
+	_, err = db.ExecContext(ctx, `
+		INSERT INTO feed (id, user_id, url, refresh_interval, status, fetching_at, error_count) 
+		VALUES ($1, 'u1', 'http://example.com/healthy', 60000000000, 'active', NOW() - INTERVAL '1 minute', 0)
+	`, healthyFeedID)
+	if err != nil {
+		t.Fatalf("failed to insert healthy feed: %v", err)
+	}
+
+	cutoff := time.Now().Add(-15 * time.Minute)
+	reapedCount, err := repo.CleanStaleLocks(ctx, cutoff)
+	if err != nil {
+		t.Fatalf("CleanStaleLocks failed: %v", err)
+	}
+
+	if reapedCount != 1 {
+		t.Errorf("expected 1 row to be reaped, got %d", reapedCount)
+	}
+
+	var fetchingAt sql.NullTime
+	var errorCount int
+	err = db.QueryRowContext(ctx, "SELECT fetching_at, error_count FROM feed WHERE id = $1", feedID).Scan(&fetchingAt, &errorCount)
+	if err != nil {
+		t.Fatalf("failed to query stale feed: %v", err)
+	}
+
+	if fetchingAt.Valid {
+		t.Error("expected fetching_at to be NULL for the stale feed")
+	}
+	if errorCount != 1 {
+		t.Errorf("expected error_count to be 1, got %d", errorCount)
+	}
+
+	err = repo.db.QueryRowContext(ctx, "SELECT fetching_at, error_count FROM feed WHERE id = $1", healthyFeedID).Scan(&fetchingAt, &errorCount)
+	if err != nil {
+		t.Fatalf("failed to query healthy feed: %v", err)
+	}
+
+	if !fetchingAt.Valid {
+		t.Error("expected fetching_at to still be populated for the healthy feed")
+	}
+	if errorCount != 0 {
+		t.Errorf("expected healthy feed error_count to remain 0, got %d", errorCount)
+	}
+}

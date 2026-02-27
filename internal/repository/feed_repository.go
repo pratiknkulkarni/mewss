@@ -16,4 +16,5 @@ type FeedRepository interface {
 	ReleaseFeed(ctx context.Context, feedID string, nextFetchAfter time.Time, errorCount int) error
 
 	MarkFeedAsFailed(ctx context.Context, feedID string, errorCount int, nextFetchAfter time.Time) error
+	CleanStaleLocks(ctx context.Context, cutoff time.Time) (int64, error)
 }

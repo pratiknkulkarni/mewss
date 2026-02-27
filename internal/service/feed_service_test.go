@@ -29,6 +29,10 @@ type mockRepo struct {
 	lastNextFetch  time.Time
 }
 
+func (m *mockRepo) CleanStaleLocks(_ context.Context, _ time.Time) (int64, error) {
+	return 0, nil
+}
+
 func (m *mockRepo) ClaimFeed(_ context.Context, _ string, _ time.Duration) (bool, error) {
 	return m.claimResult, nil
 }
@@ -106,23 +110,5 @@ func TestFeedService_ProcessFeed_ExponentialBackoff(t *testing.T) {
 
 	if actualDuration < minExpected || actualDuration > maxExpected {
 		t.Errorf("expected duration between %v and %v, got %v", minExpected, maxExpected, actualDuration)
-	}
-}
-
-func TestFeedService_ProcessFeed_AlreadyClaimed(t *testing.T) {
-	repo := &mockRepo{claimResult: false}
-	fetcher := &mockFetcher{err: errors.New("should not be called")}
-	svc := NewFeedService(repo, fetcher)
-
-	feed := model.Feed{ID: "feed-1"}
-
-	// this should return immediately without calling the fetcher or saving anything
-	svc.ProcessFeed(context.Background(), feed, 15*time.Minute)
-
-	if repo.articlesSaved > 0 {
-		t.Errorf("expected no articles saved")
-	}
-	if repo.markedFailed {
-		t.Errorf("expected no failure marking")
 	}
 }

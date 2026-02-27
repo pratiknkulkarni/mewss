@@ -30,8 +30,11 @@ func NewScheduler(repo repository.FeedRepository, jobs chan<- model.Job, pollInt
 func (s *Scheduler) Start(ctx context.Context) {
 	slog.Info("starting scheduler loop", "poll_interval", s.pollInterval, "batch_size", s.batchSize)
 
-	ticker := time.NewTicker(s.pollInterval)
-	defer ticker.Stop()
+	pollTicker := time.NewTicker(s.pollInterval)
+	defer pollTicker.Stop()
+
+	reaperTicker := time.NewTicker(1 * time.Minute)
+	defer reaperTicker.Stop()
 
 	s.queueFeeds(ctx)
 
@@ -40,7 +43,9 @@ func (s *Scheduler) Start(ctx context.Context) {
 		case <-ctx.Done():
 			slog.Info("scheduler shutting down")
 			return
-		case <-ticker.C:
+		case <-reaperTicker.C:
+			s.reapStaleLocks(ctx)
+		case <-pollTicker.C:
 			s.queueFeeds(ctx)
 		}
 	}
@@ -67,5 +72,20 @@ func (s *Scheduler) queueFeeds(ctx context.Context) {
 			return
 		case s.jobs <- job:
 		}
+	}
+}
+
+// reapStaleLocks acts as a "garbage collector" for feeds that were locked by workers that crashed.
+func (s *Scheduler) reapStaleLocks(ctx context.Context) {
+	cutoff := time.Now().Add(-15 * time.Minute) // worker working with feed > 15 mins => it's dead
+
+	unlockedCount, err := s.repo.CleanStaleLocks(ctx, cutoff)
+	if err != nil {
+		slog.Error("failed to clean stale locks", "error", err)
+		return
+	}
+
+	if unlockedCount > 0 {
+		slog.Warn("reaped stale feed locks", "count", unlockedCount, "cutoff_time", cutoff)
 	}
 }
