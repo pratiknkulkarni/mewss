@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"feedscheduler/internal/model"
-	"fmt"
 	"time"
 )
 
@@ -71,16 +70,6 @@ func (r *PostgresFeedRepository) GetRemainingFeedsCount(ctx context.Context) (in
 }
 
 func (r *PostgresFeedRepository) GetFeedsDueForRefresh(ctx context.Context, limit int) ([]model.Feed, error) {
-	//query := `
-	//	SELECT id, user_id, url, refresh_interval, error_count, status, next_fetch_after, force_refresh
-	//		FROM feed
-	//		WHERE (status = 'active' OR force_refresh = true)
-	//		  AND (next_fetch_after <= NOW() OR force_refresh = true)
-	//		  AND fetching_at IS NULL
-	//		ORDER BY next_fetch_after
-	//		LIMIT $1
-	//		`
-
 	query := `
 		UPDATE feed
 		SET fetching_at = NOW()
@@ -132,7 +121,7 @@ func (r *PostgresFeedRepository) SaveArticle(ctx context.Context, article *model
 		)
 		ON CONFLICT (identity_hash) DO NOTHING
 	`
-	result, err := r.db.ExecContext(ctx, query,
+	_, err := r.db.ExecContext(ctx, query,
 		article.FeedID,
 		article.UserID,
 		article.GUID,
@@ -145,30 +134,8 @@ func (r *PostgresFeedRepository) SaveArticle(ctx context.Context, article *model
 	)
 
 	if err != nil {
-		fmt.Println("error inserting the article -> ", err)
 		return err
-	} else {
-		fmt.Println("NO error inserting the article -> ", err)
 	}
-
-	rowsAffected, err1 := result.RowsAffected()
-	if err1 != nil {
-		fmt.Println(err1)
-	} else {
-		fmt.Println("\nrowsAffected -> ", rowsAffected)
-	}
-
-	//TODO: remove this, this is only for testing ->
-	//	query2 := `
-	//UPDATE feed SET fetching_at = NULL where id = $1;
-	//		`
-	//	_, err2 := r.db.ExecContext(ctx, query2, article.FeedID)
-	//	if err2 != nil {
-	//		fmt.Println("error reset the feed", err2)
-	//	} else {
-	//		fmt.Println("reset the feed")
-	//	}
-	// <- till here
 
 	return err
 }

@@ -32,25 +32,7 @@ func NewFeedService(repo repository.FeedRepository, fetcher fetcher.Fetcher) *Fe
 // ProcessFeed handles the processing of one feed at a time. Entire lifecycle. At least I hope it'll
 func (s *FeedService) ProcessFeed(ctx context.Context, feed model.Feed, staleThreshold time.Duration) {
 	logger := slog.With("feed_id", feed.ID, "url", feed.URL)
-
-	// try getting the lock
-	//isClaimed, err := s.repo.ClaimFeed(ctx, feed.ID, staleThreshold)
-	//if err != nil {
-	//	logger.Error("failed to claim feed lock", "error", err)
-	//	return
-	//}
-	//
-	//if !isClaimed {
-	//	logger.Debug("feed already claimed by another worker, skipping")
-	//	return
-	//}
-
-	//logger.Debug("fetching feed with id %d\n", feed.ID)
-
-	// if gotten -> fetch the feed from internet using that fetcher.Fetch. If not -> just fail
 	parsedFeed, err := s.fetcher.Fetch(ctx, feed.URL)
-
-	//logger.Debug(parsedFeed.Title, parsedFeed.Categories)
 
 	if err != nil {
 		logger.Warn("failed to fetch feed", "error", err, "current_errors", feed.ErrorCount)
