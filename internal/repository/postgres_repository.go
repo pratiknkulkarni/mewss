@@ -144,15 +144,15 @@ func (r *PostgresFeedRepository) SaveArticle(ctx context.Context, article *model
 	}
 
 	//TODO: remove this, this is only for testing ->
-	query2 := `
-UPDATE feed SET fetching_at = NULL where id = $1;
-		`
-	_, err2 := r.db.ExecContext(ctx, query2, article.FeedID)
-	if err2 != nil {
-		fmt.Println("error reset the feed", err2)
-	} else {
-		fmt.Println("reset the feed")
-	}
+	//	query2 := `
+	//UPDATE feed SET fetching_at = NULL where id = $1;
+	//		`
+	//	_, err2 := r.db.ExecContext(ctx, query2, article.FeedID)
+	//	if err2 != nil {
+	//		fmt.Println("error reset the feed", err2)
+	//	} else {
+	//		fmt.Println("reset the feed")
+	//	}
 	// <- till here
 
 	return err

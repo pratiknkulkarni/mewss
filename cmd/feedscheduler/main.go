@@ -2,6 +2,13 @@ package main
 
 import (
 	"context"
+	"log"
+	"log/slog"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
 	"feedscheduler/internal/config"
 	"feedscheduler/internal/database"
 	"feedscheduler/internal/fetcher"
@@ -9,40 +16,23 @@ import (
 	"feedscheduler/internal/model"
 	"feedscheduler/internal/repository"
 	"feedscheduler/internal/service"
-	"fmt"
-	"log"
-	"log/slog"
-	"os"
-	"time"
+	"feedscheduler/internal/worker"
 )
 
 func main() {
-	//TODO:
-	//THIS IS A TEST FILE, I MAY DELETE THIS LATER ON
-	//JUST CHECKING IF THE CONFIG WORKS
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}
-
 	logger.InitLogger(cfg.AppEnv, cfg.LogLevel)
 
-	slog.Info("starting rss scheduler",
-		"env", cfg.AppEnv,
-		"log level", cfg.LogLevel,
-		"version", "1.0.0",
-	)
+	slog.Info("starting feed scheduler daemon", "version", "1.0.0", "env", cfg.AppEnv)
 
-	slog.Debug("this won't show unless level is debug, hopefully")
-
-	dbURL := cfg.TestDatabaseURL
-	fmt.Println(dbURL)
-	db, err := database.Connect(dbURL)
+	db, err := database.Connect(cfg.DatabaseURL)
 	if err != nil {
 		slog.Error("failed to connect to database", "error", err)
 		os.Exit(1)
 	}
-
 	defer db.Close()
 
 	if err := database.RunMigrations(db); err != nil {
@@ -50,23 +40,42 @@ func main() {
 		os.Exit(1)
 	}
 
-	//manual testing
 	repo := repository.NewPostgresFeedRepository(db)
-	netFetcher := fetcher.NewGoFeedFetcher(10*time.Second, "RSS-Scheduler-Test/1.0")
-	svc := service.NewFeedService(repo, netFetcher)
+	netFetcher := fetcher.NewGoFeedFetcher(15*time.Second, "RSS-Scheduler/1.0")
+	feedService := service.NewFeedService(repo, netFetcher)
 
-	feedID := "test-hn-123"
-	_, _ = db.Exec("INSERT INTO feed (id, user_id, url, refresh_interval) VALUES ($1, 'u1', 'https://feeds.thelocal.com/rss/es', 60000000000) ON CONFLICT DO NOTHING", feedID)
+	workerCount := 10
+	jobsChan := make(chan model.Job, workerCount)
 
-	feed := model.Feed{
-		ID:              feedID,
-		UserID:          "u1",
-		URL:             "https://feeds.thelocal.com/rss/es",
-		RefreshInterval: 10 * time.Minute,
-	}
+	pool := worker.NewPool(workerCount, feedService, jobsChan)
+	scheduler := worker.NewScheduler(repo, jobsChan, 10*time.Second, workerCount)
 
-	slog.Info("Firing manual feed fetch...")
-	svc.ProcessFeed(context.Background(), feed, 15*time.Minute)
-	slog.Info("Done. Check your database.")
+	ctx, cancel := context.WithCancel(context.Background())
+	setupSignalHandler(cancel)
 
+	go scheduler.Start(ctx)
+
+	pool.Start(ctx)
+
+	<-ctx.Done()
+
+	slog.Info("shutdown signal received, initiating graceful shutdown...")
+
+	close(jobsChan)
+
+	pool.Stop()
+
+	slog.Info("graceful shutdown complete. exiting.")
+}
+
+// setupSignalHandler listens for OS interrupt signals and cancels the context.
+func setupSignalHandler(cancel context.CancelFunc) {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		oscall := <-c
+		slog.Info("system call received", "signal", oscall)
+		cancel()
+	}()
 }
