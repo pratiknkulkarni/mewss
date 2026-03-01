@@ -38,7 +38,7 @@ func (s *Server) handleValidateFeed(w http.ResponseWriter, r *http.Request) {
 	fetchCtx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 
-	parsedFeed, err := s.fetcher.Fetch(fetchCtx, req.URL)
+	parsedFeed, err := s.fetcher.Fetch(fetchCtx, req.URL, nil, nil)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "invalid rss feed: "+err.Error())
 		return
@@ -46,7 +46,7 @@ func (s *Server) handleValidateFeed(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, http.StatusOK, ValidateFeedResponse{
 		Status:      "valid",
-		Title:       parsedFeed.Title,
-		Description: parsedFeed.Description,
+		Title:       parsedFeed.Feed.Title,
+		Description: parsedFeed.Feed.Description,
 	})
 }

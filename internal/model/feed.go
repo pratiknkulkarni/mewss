@@ -17,6 +17,9 @@ type Feed struct {
 	FetchingAt      *time.Time
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
+
+	ETag               *string
+	LastModifiedHeader *string
 }
 
 // Article represents a single parsed item from a feed.

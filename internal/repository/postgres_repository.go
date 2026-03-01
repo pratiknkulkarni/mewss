@@ -17,17 +17,19 @@ func NewPostgresFeedRepository(db *sql.DB) *PostgresFeedRepository {
 	return &PostgresFeedRepository{db: db}
 }
 
-func (r *PostgresFeedRepository) ReleaseFeed(ctx context.Context, feedID string, nextFetchAfter time.Time, errorCount int) error {
+func (r *PostgresFeedRepository) ReleaseFeed(ctx context.Context, feedID string, nextFetchAfter time.Time, errorCount int, etag *string, lastModified *string) error {
 	query := `
 		UPDATE feed
 		SET fetching_at = NULL,
 		    next_fetch_after = $2,
 		    force_refresh = false,
 		    error_count = $3,
+		    etag = $4,
+			last_modified_header = $5,
 		    updated_at = NOW()
 		WHERE id = $1
 	`
-	_, err := r.db.ExecContext(ctx, query, feedID, nextFetchAfter, errorCount)
+	_, err := r.db.ExecContext(ctx, query, feedID, nextFetchAfter, errorCount, etag, lastModified)
 	return err
 }
 
@@ -82,7 +84,7 @@ func (r *PostgresFeedRepository) GetFeedsDueForRefresh(ctx context.Context, limi
 			LIMIT $1
 			FOR UPDATE SKIP LOCKED
 		)
-		RETURNING id, user_id, url, refresh_interval, error_count, status, next_fetch_after, force_refresh
+		RETURNING id, user_id, url, refresh_interval, error_count, status, next_fetch_after, force_refresh, etag, last_modified_header
 	`
 
 	rows, err := r.db.QueryContext(ctx, query, limit)
@@ -102,7 +104,7 @@ func (r *PostgresFeedRepository) GetFeedsDueForRefresh(ctx context.Context, limi
 		var f model.Feed
 		if err := rows.Scan(
 			&f.ID, &f.UserID, &f.URL, &f.RefreshInterval,
-			&f.ErrorCount, &f.Status, &f.NextFetchAfter, &f.ForceRefresh,
+			&f.ErrorCount, &f.Status, &f.NextFetchAfter, &f.ForceRefresh, &f.ETag, &f.LastModifiedHeader,
 		); err != nil {
 			return nil, err
 		}

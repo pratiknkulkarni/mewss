@@ -54,7 +54,9 @@ func setupTestDB(ctx context.Context, t *testing.T) (*sql.DB, func()) {
 			force_refresh BOOLEAN DEFAULT false,
 			fetching_at TIMESTAMP WITH TIME ZONE,
 			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-			updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+			updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+			etag TEXT,
+			last_modified_header TEXT
 		);
 	`)
 	if err != nil {
@@ -210,7 +212,7 @@ func TestPostgresFeedRepository_ReleaseFeed(t *testing.T) {
 
 	nextFetchTime := time.Now().Add(1 * time.Hour).Round(time.Second) // Rounding handles PG precision differences
 
-	err = repo.ReleaseFeed(ctx, feedID, nextFetchTime, 0)
+	err = repo.ReleaseFeed(ctx, feedID, nextFetchTime, 0, nil, nil)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
