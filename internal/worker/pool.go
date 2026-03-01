@@ -6,7 +6,6 @@ import (
 	"feedscheduler/internal/service"
 	"log/slog"
 	"sync"
-	"time"
 )
 
 // Pool manages a group of concurrent workers processing feeds.
@@ -61,8 +60,7 @@ func (p *Pool) worker(ctx context.Context, id int) {
 
 			logger.Debug("worker picked up job", "feed_id", job.Feed.ID)
 
-			// process feed with a 15 minutes stale lock timer
-			p.service.ProcessFeed(ctx, job.Feed, 15*time.Minute)
+			p.service.ProcessFeed(ctx, job.Feed)
 		}
 	}
 }

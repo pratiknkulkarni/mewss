@@ -66,6 +66,17 @@ func (s *FeedService) ProcessFeed(ctx context.Context, feed model.Feed) {
 		return
 	}
 
+	// if the etag is same, we don't make a request and skip early
+	if parsedFeed.NotModified {
+		logger.Info("feed not modified (304), skipping parsing")
+		nextFetch := time.Now().Add(feed.RefreshInterval)
+
+		if err := s.repo.ReleaseFeed(context.Background(), feed.ID, nextFetch, 0, feed.ETag, feed.LastModifiedHeader); err != nil {
+			logger.Error("failed to release feed lock", "error", err)
+		}
+		return
+	}
+
 	for _, item := range parsedFeed.Feed.Items {
 		article := s.mapToArticle(feed, item)
 		if err := s.repo.SaveArticle(context.Background(), &article); err != nil {
