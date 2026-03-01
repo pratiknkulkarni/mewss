@@ -19,6 +19,7 @@ type DomainLimiter struct {
 // NewDomainLimiter creates a new limiter.
 // eventsPerSecond determines how fast we can hit a single domain.
 // burst determines how many requests can hit simultaneously before the limit kicks in.
+// references -> https://en.wikipedia.org/wiki/Token_bucket; https://pkg.go.dev/golang.org/x/time/rate
 func NewDomainLimiter(eventsPerSecond float64, burst int) *DomainLimiter {
 	return &DomainLimiter{
 		limiters: make(map[string]*rate.Limiter),

@@ -70,6 +70,7 @@ func (p *Pool) worker(ctx context.Context, id int) {
 
 			if err != nil {
 				logger.Warn("rate limiter timed out, dropping job back to queue", "feed_id", job.Feed.ID, "domain", job.Feed.URL)
+				//TODO: release the lock here
 				continue
 			}
 
