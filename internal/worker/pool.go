@@ -6,6 +6,7 @@ import (
 	"feedscheduler/internal/service"
 	"log/slog"
 	"sync"
+	"time"
 )
 
 // Pool manages a group of concurrent workers processing feeds.
@@ -14,6 +15,7 @@ type Pool struct {
 	service     *service.FeedService
 	jobs        <-chan model.Job
 	wg          *sync.WaitGroup
+	limiter     *DomainLimiter
 }
 
 func NewPool(workerCount int, service *service.FeedService, jobs <-chan model.Job) *Pool {
@@ -22,6 +24,7 @@ func NewPool(workerCount int, service *service.FeedService, jobs <-chan model.Jo
 		service:     service,
 		jobs:        jobs,
 		wg:          &sync.WaitGroup{},
+		limiter:     NewDomainLimiter(1.0, 1), // might I make it configurable from config?
 	}
 }
 
@@ -55,10 +58,20 @@ func (p *Pool) worker(ctx context.Context, id int) {
 			return
 		case job, ok := <-p.jobs:
 			if !ok {
+				logger.Debug("jobs channel closed, worker exiting")
 				return
 			}
 
 			logger.Debug("worker picked up job", "feed_id", job.Feed.ID)
+
+			limitCtx, limitCancel := context.WithTimeout(ctx, 10*time.Second)
+			err := p.limiter.Wait(limitCtx, job.Feed.URL)
+			limitCancel()
+
+			if err != nil {
+				logger.Warn("rate limiter timed out, dropping job back to queue", "feed_id", job.Feed.ID, "domain", job.Feed.URL)
+				continue
+			}
 
 			p.service.ProcessFeed(ctx, job.Feed)
 		}
