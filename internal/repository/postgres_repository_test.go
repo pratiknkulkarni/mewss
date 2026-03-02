@@ -73,6 +73,7 @@ func setupTestDB(ctx context.Context, t *testing.T) (*sql.DB, func()) {
 	return db, cleanup
 }
 
+// TODO: I missed he assertions here! No assertions happening in this code
 func TestPostgresFeedRepository_GetFeedsDueForRefresh(t *testing.T) {
 	ctx := context.Background()
 	db, cleanup := setupTestDB(ctx, t)
