@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"feedscheduler/internal/model"
+	"fmt"
+	"strings"
 	"time"
 )
 
@@ -174,4 +176,42 @@ func (r *PostgresFeedRepository) CleanStaleLocks(ctx context.Context, cutoff tim
 	}
 
 	return result.RowsAffected()
+}
+
+// SaveArticles takes a slice of articles and executes a single bulk INSERT query.
+func (r *PostgresFeedRepository) SaveArticles(ctx context.Context, articles []model.Article) error {
+	if len(articles) == 0 {
+		return nil
+	}
+
+	// Calculate capacity exactly to prevent memory reallocation
+	columnsPerArticle := 5 // e.g., feed_id, title, url, published_at, identity_hash
+	valueStrings := make([]string, 0, len(articles))
+	valueArgs := make([]interface{}, 0, len(articles)*columnsPerArticle)
+
+	paramIndex := 1
+	for _, a := range articles {
+		// Build the ($1, $2, $3, $4, $5) blocks
+		chunk := fmt.Sprintf("($%d, $%d, $%d, $%d, $%d)",
+			paramIndex, paramIndex+1, paramIndex+2, paramIndex+3, paramIndex+4)
+		valueStrings = append(valueStrings, chunk)
+
+		// Append the actual values
+		valueArgs = append(valueArgs, a.FeedID, a.Title, a.URL, a.PublishedAt, a.IdentityHash)
+		paramIndex += columnsPerArticle
+	}
+
+	// Join all the chunks with commas
+	query := fmt.Sprintf(`
+		INSERT INTO article (feed_id, title, url, published_at, identity_hash)
+		VALUES %s
+		ON CONFLICT (identity_hash) DO NOTHING
+	`, strings.Join(valueStrings, ","))
+
+	_, err := r.db.ExecContext(ctx, query, valueArgs...)
+	if err != nil {
+		return fmt.Errorf("bulk insert failed: %w", err)
+	}
+
+	return nil
 }

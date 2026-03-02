@@ -78,13 +78,27 @@ func (s *FeedService) ProcessFeed(ctx context.Context, feed model.Feed) {
 		return
 	}
 
+	articles := make([]model.Article, 0, len(parsedFeed.Feed.Items))
+
 	for _, item := range parsedFeed.Feed.Items {
-		article := s.mapToArticle(feed, item)
-		if err := s.repo.SaveArticle(context.Background(), &article); err != nil {
-			logger.Error("failed to save article", "article_title", article.Title, "error", err)
-			continue
+		articles = append(articles, s.mapToArticle(feed, item))
+	}
+
+	if len(articles) > 0 {
+		if err := s.repo.SaveArticles(context.Background(), articles); err != nil {
+			logger.Error("failed to bulk save articles", "feed_id", feed.ID, "error", err)
+		} else {
+			logger.Info("bulk inserted articles", "count", len(articles))
 		}
 	}
+
+	//for _, item := range parsedFeed.Feed.Items {
+	//	article := s.mapToArticle(feed, item)
+	//	if err := s.repo.SaveArticle(context.Background(), &article); err != nil {
+	//		logger.Error("failed to save article", "article_title", article.Title, "error", err)
+	//		continue
+	//	}
+	//}
 	nextFetch := time.Now().Add(feed.RefreshInterval)
 	if err := s.repo.ReleaseFeed(context.Background(), feed.ID, nextFetch, 0, parsedFeed.Etag, parsedFeed.LastModified); err != nil {
 		logger.Error("failed to release feed lock after success", "error", err)

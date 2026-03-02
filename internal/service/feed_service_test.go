@@ -60,6 +60,11 @@ func (m *mockRepo) MarkFeedAsFailed(_ context.Context, _ string, errCount int, n
 	return nil
 }
 
+func (m *mockRepo) SaveArticles(ctx context.Context, articles []model.Article) error {
+	m.articlesSaved += len(articles)
+	return nil
+}
+
 func TestFeedService_ProcessFeed_Success(t *testing.T) {
 	repo := &mockRepo{claimResult: true}
 	fetchMocker := &mockFetcher{
