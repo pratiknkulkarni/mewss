@@ -2,22 +2,22 @@ package worker
 
 import (
 	"context"
+	"feedscheduler/internal/service"
 	"log/slog"
 	"time"
 
 	"feedscheduler/internal/model"
-	"feedscheduler/internal/repository"
 )
 
 // Scheduler queries the database for feeds and queues them for the workers.
 type Scheduler struct {
-	repo         repository.FeedRepository
+	repo         service.FeedRepository
 	jobs         chan<- model.Job // Send-only channel
 	pollInterval time.Duration
 	batchSize    int
 }
 
-func NewScheduler(repo repository.FeedRepository, jobs chan<- model.Job, pollInterval time.Duration, batchSize int) *Scheduler {
+func NewScheduler(repo service.FeedRepository, jobs chan<- model.Job, pollInterval time.Duration, batchSize int) *Scheduler {
 	return &Scheduler{
 		repo:         repo,
 		jobs:         jobs,

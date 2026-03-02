@@ -5,7 +5,6 @@ import (
 	"errors"
 	"feedscheduler/internal/fetcher"
 	"feedscheduler/internal/model"
-	"feedscheduler/internal/repository"
 	"testing"
 	"time"
 
@@ -28,7 +27,7 @@ func (m *mockFetcher) Fetch(_ context.Context, _ string, _ *string, _ *string) (
 }
 
 type mockRepo struct {
-	repository.FeedRepository
+	FeedRepository
 	claimResult    bool
 	articlesSaved  int
 	markedFailed   bool
