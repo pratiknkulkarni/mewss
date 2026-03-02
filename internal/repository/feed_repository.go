@@ -13,7 +13,9 @@ type FeedRepository interface {
 
 	ClaimFeed(ctx context.Context, feedID string, staleThreshold time.Duration) (bool, error)
 	SaveArticle(ctx context.Context, article *model.Article) error
-	ReleaseFeed(ctx context.Context, feedID string, nextFetchAfter time.Time, errorCount int) error
+	//ReleaseFeed(ctx context.Context, feedID string, nextFetchAfter time.Time, errorCount int) error
+
+	ReleaseFeed(ctx context.Context, feedID string, nextFetchAfter time.Time, errorCount int, etag *string, lastModified *string) error
 
 	MarkFeedAsFailed(ctx context.Context, feedID string, errorCount int, nextFetchAfter time.Time) error
 	CleanStaleLocks(ctx context.Context, cutoff time.Time) (int64, error)

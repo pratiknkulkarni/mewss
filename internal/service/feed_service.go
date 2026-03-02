@@ -30,11 +30,11 @@ func NewFeedService(repo repository.FeedRepository, fetcher fetcher.Fetcher) *Fe
 }
 
 // ProcessFeed handles the processing of one feed at a time. Entire lifecycle. At least I hope it'll
-func (s *FeedService) ProcessFeed(ctx context.Context, feed model.Feed, staleThreshold time.Duration) {
+func (s *FeedService) ProcessFeed(ctx context.Context, feed model.Feed) {
 	logger := slog.With("feed_id", feed.ID, "url", feed.URL)
 
 	fetchCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	parsedFeed, err := s.fetcher.Fetch(fetchCtx, feed.URL)
+	parsedFeed, err := s.fetcher.Fetch(fetchCtx, feed.URL, feed.ETag, feed.LastModifiedHeader)
 	defer cancel()
 
 	if err != nil {
@@ -66,7 +66,18 @@ func (s *FeedService) ProcessFeed(ctx context.Context, feed model.Feed, staleThr
 		return
 	}
 
-	for _, item := range parsedFeed.Items {
+	// if the etag is same, we don't make a request and skip early
+	if parsedFeed.NotModified {
+		logger.Info("feed not modified (304), skipping parsing")
+		nextFetch := time.Now().Add(feed.RefreshInterval)
+
+		if err := s.repo.ReleaseFeed(context.Background(), feed.ID, nextFetch, 0, feed.ETag, feed.LastModifiedHeader); err != nil {
+			logger.Error("failed to release feed lock", "error", err)
+		}
+		return
+	}
+
+	for _, item := range parsedFeed.Feed.Items {
 		article := s.mapToArticle(feed, item)
 		if err := s.repo.SaveArticle(context.Background(), &article); err != nil {
 			logger.Error("failed to save article", "article_title", article.Title, "error", err)
@@ -74,10 +85,10 @@ func (s *FeedService) ProcessFeed(ctx context.Context, feed model.Feed, staleThr
 		}
 	}
 	nextFetch := time.Now().Add(feed.RefreshInterval)
-	if err := s.repo.ReleaseFeed(context.Background(), feed.ID, nextFetch, 0); err != nil {
+	if err := s.repo.ReleaseFeed(context.Background(), feed.ID, nextFetch, 0, parsedFeed.Etag, parsedFeed.LastModified); err != nil {
 		logger.Error("failed to release feed lock after success", "error", err)
 	} else {
-		logger.Info("feed processed successfully, lock released", "articles_found", len(parsedFeed.Items))
+		logger.Info("feed processed successfully, lock released", "articles_found", len(parsedFeed.Feed.Items))
 	}
 }
 
