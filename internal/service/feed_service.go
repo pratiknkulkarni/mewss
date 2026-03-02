@@ -29,13 +29,14 @@ func NewFeedService(repo repository.FeedRepository, fetcher fetcher.Fetcher) *Fe
 	}
 }
 
-// ProcessFeed handles the processing of one feed at a time. Entire lifecycle. At least I hope it'll
+// ProcessFeed handles the processing of one feed at a time. Entire lifecycle.
 func (s *FeedService) ProcessFeed(ctx context.Context, feed model.Feed) {
 	logger := slog.With("feed_id", feed.ID, "url", feed.URL)
 
 	fetchCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	parsedFeed, err := s.fetcher.Fetch(fetchCtx, feed.URL, feed.ETag, feed.LastModifiedHeader)
 	defer cancel()
+
+	parsedFeed, err := s.fetcher.Fetch(fetchCtx, feed.URL, feed.ETag, feed.LastModifiedHeader)
 
 	if err != nil {
 		logger.Warn("failed to fetch feed", "error", err, "current_errors", feed.ErrorCount)
@@ -125,4 +126,11 @@ func (s *FeedService) mapToArticle(feed model.Feed, item *gofeed.Item) model.Art
 	}
 
 	return article
+}
+
+// ReleaseLockOnly clears the "fetching_at" flag in the database without touching "next_after" timer
+func (s *FeedService) ReleaseLockOnly(ctx context.Context, feed model.Feed) error {
+	// Notice I'm passing the EXACT SAME next_fetch and not incrementing it
+	// This is because the rate limiter blocked a worker from working with a feed, the feed itself is eligible.
+	return s.repo.ReleaseFeed(ctx, feed.ID, feed.NextFetchAfter, feed.ErrorCount, feed.ETag, feed.LastModifiedHeader)
 }
