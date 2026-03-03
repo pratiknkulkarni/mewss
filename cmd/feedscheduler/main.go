@@ -29,7 +29,7 @@ func main() {
 
 	slog.Info("starting feed scheduler daemon", "version", "1.0.0", "env", cfg.AppEnv)
 
-	db, err := database.Connect(cfg.DatabaseURL)
+	db, err := database.Connect(cfg.DatabaseURL, cfg.DBMaxOpenConns, cfg.DBMaxIdleConns, cfg.DBConnMaxLifetime)
 	if err != nil {
 		slog.Error("failed to connect to database", "error", err)
 		os.Exit(1)

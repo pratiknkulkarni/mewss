@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"strings"
+	"time"
 
 	"github.com/spf13/viper"
 )
@@ -10,11 +11,14 @@ import (
 // Config holds the configuration for the entire application
 // TODO: think of a better docstring here and add in worker/scheduler "knobs" here
 type Config struct {
-	AppEnv          string `mapstructure:"APP_ENV"`
-	APIPort         string `mapstructure:"API_PORT"`
-	LogLevel        string `mapstructure:"LOG_LEVEL"`
-	DatabaseURL     string `mapstructure:"DATABASE_URL"`
-	TestDatabaseURL string `mapstructure:"TEST_DATABASE_URL"` // adding this, might delete later
+	AppEnv            string        `mapstructure:"APP_ENV"`
+	APIPort           string        `mapstructure:"API_PORT"`
+	LogLevel          string        `mapstructure:"LOG_LEVEL"`
+	DatabaseURL       string        `mapstructure:"DATABASE_URL"`
+	TestDatabaseURL   string        `mapstructure:"TEST_DATABASE_URL"` // adding this, might delete later
+	DBMaxOpenConns    int           `mapstructure:"DB_MAX_OPEN_CONNS"`
+	DBMaxIdleConns    int           `mapstructure:"DB_MAX_IDLE_CONNS"`
+	DBConnMaxLifetime time.Duration `mapstructure:"DB_CONN_MAX_LIFETIME"`
 }
 
 func LoadConfig() (*Config, error) {
@@ -50,6 +54,18 @@ func LoadConfig() (*Config, error) {
 
 	if cfg.DatabaseURL == "" {
 		return nil, errors.New("DATABASE_URL configuration is required but missing")
+	}
+
+	if cfg.DBMaxOpenConns == 0 {
+		cfg.DBMaxOpenConns = 25
+	}
+
+	if cfg.DBMaxIdleConns == 0 {
+		cfg.DBMaxIdleConns = 25
+	}
+
+	if cfg.DBConnMaxLifetime == 0 {
+		cfg.DBConnMaxLifetime = 5 * time.Minute
 	}
 
 	return &cfg, nil
