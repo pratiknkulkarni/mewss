@@ -3,25 +3,30 @@ package worker
 import (
 	"context"
 	"feedscheduler/internal/model"
-	"feedscheduler/internal/service"
 	"log/slog"
 	"sync"
 	"time"
 )
 
+// FeedProcessor is the contract that worker requires
+// Reference -> 100 Go Mistakes & How To Avoid Them by Teiva Harsanyi;
+type FeedProcessor interface {
+	ProcessFeed(ctx context.Context, feed model.Feed)
+	ReleaseLockOnly(ctx context.Context, feed model.Feed) error
+}
+
 // Pool manages a group of concurrent workers processing feeds.
 type Pool struct {
 	workerCount int
-	service     *service.FeedService
 	jobs        <-chan model.Job
 	wg          *sync.WaitGroup
 	limiter     *DomainLimiter
+	processor   FeedProcessor
 }
 
-func NewPool(workerCount int, service *service.FeedService, jobs <-chan model.Job) *Pool {
+func NewPool(workerCount int, processor FeedProcessor, jobs <-chan model.Job) *Pool {
 	return &Pool{
 		workerCount: workerCount,
-		service:     service,
 		jobs:        jobs,
 		wg:          &sync.WaitGroup{},
 		limiter:     NewDomainLimiter(1.0, 1), // might I make it configurable from config?
@@ -71,14 +76,14 @@ func (p *Pool) worker(ctx context.Context, id int) {
 			if err != nil {
 				logger.Warn("rate limiter timed out, dropping job back to queue", "feed_id", job.Feed.ID, "domain", job.Feed.URL)
 				//TODO: release the lock here
-				err := p.service.ReleaseLockOnly(context.Background(), job.Feed)
+				err := p.processor.ReleaseLockOnly(context.Background(), job.Feed)
 				if err != nil {
 					logger.Error("failed to release lock for dropped job", "error", err)
 				}
 				continue
 			}
 
-			p.service.ProcessFeed(ctx, job.Feed)
+			p.processor.ProcessFeed(ctx, job.Feed)
 		}
 	}
 }
