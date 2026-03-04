@@ -11,15 +11,21 @@ import (
 	"feedscheduler/internal/fetcher"
 )
 
+type DBPinger interface {
+	PingContext(ctx context.Context) error
+}
+
 type Server struct {
 	httpServer *http.Server
 	fetcher    fetcher.Fetcher
+	db         DBPinger
 }
 
 // NewServer initializes the HTTP API for internal cluster communication.
-func NewServer(port string, feedFetcher fetcher.Fetcher) *Server {
+func NewServer(port string, feedFetcher fetcher.Fetcher, db DBPinger) *Server {
 	s := &Server{
 		fetcher: feedFetcher,
+		db:      db,
 	}
 
 	mux := http.NewServeMux()

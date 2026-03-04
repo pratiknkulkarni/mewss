@@ -3,11 +3,24 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"time"
 )
 
 func (s *Server) handleHealthCheck(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+	defer cancel()
+
+	if err := s.db.PingContext(ctx); err != nil {
+		slog.Warn("health check failed: database unreachable", "error", err)
+		writeJSON(w, http.StatusServiceUnavailable, map[string]string{
+			"status": "unavailable",
+			"reason": "database unreachable",
+		})
+		return
+	}
+
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 

@@ -51,7 +51,7 @@ func main() {
 	pool := worker.NewPool(cfg.WorkerCount, feedService, jobsChan)
 	scheduler := worker.NewScheduler(repo, jobsChan, cfg.PollInterval, cfg.StaleLockCutoff, cfg.WorkerCount)
 
-	apiServer := api.NewServer(cfg.APIPort, netFetcher)
+	apiServer := api.NewServer(cfg.APIPort, netFetcher, db)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	setupSignalHandler(cancel)
