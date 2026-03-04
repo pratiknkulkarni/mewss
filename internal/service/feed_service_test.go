@@ -5,7 +5,6 @@ import (
 	"errors"
 	"feedscheduler/internal/fetcher"
 	"feedscheduler/internal/model"
-	"feedscheduler/internal/repository"
 	"testing"
 	"time"
 
@@ -28,26 +27,21 @@ func (m *mockFetcher) Fetch(_ context.Context, _ string, _ *string, _ *string) (
 }
 
 type mockRepo struct {
-	repository.FeedRepository
-	claimResult    bool
+	//FeedRepository
+	//claimResult    bool
 	articlesSaved  int
 	markedFailed   bool
 	lastErrorCount int
 	lastNextFetch  time.Time
 }
 
-func (m *mockRepo) CleanStaleLocks(_ context.Context, _ time.Time) (int64, error) {
-	return 0, nil
-}
+//func (m *mockRepo) CleanStaleLocks(_ context.Context, _ time.Time) (int64, error) {
+//	return 0, nil
+//}
 
-func (m *mockRepo) ClaimFeed(_ context.Context, _ string, _ time.Duration) (bool, error) {
-	return m.claimResult, nil
-}
-
-func (m *mockRepo) SaveArticle(_ context.Context, _ *model.Article) error {
-	m.articlesSaved++
-	return nil
-}
+//func (m *mockRepo) ClaimFeed(_ context.Context, _ string, _ time.Duration) (bool, error) {
+//	return m.claimResult, nil
+//}
 
 func (m *mockRepo) ReleaseFeed(_ context.Context, _ string, _ time.Time, _ int, _ *string, _ *string) error {
 	return nil
@@ -60,8 +54,13 @@ func (m *mockRepo) MarkFeedAsFailed(_ context.Context, _ string, errCount int, n
 	return nil
 }
 
+func (m *mockRepo) SaveArticles(ctx context.Context, articles []model.Article) error {
+	m.articlesSaved += len(articles)
+	return nil
+}
+
 func TestFeedService_ProcessFeed_Success(t *testing.T) {
-	repo := &mockRepo{claimResult: true}
+	repo := &mockRepo{}
 	fetchMocker := &mockFetcher{
 		feed: &gofeed.Feed{
 			Items: []*gofeed.Item{
@@ -85,7 +84,7 @@ func TestFeedService_ProcessFeed_Success(t *testing.T) {
 }
 
 func TestFeedService_ProcessFeed_ExponentialBackoff(t *testing.T) {
-	repo := &mockRepo{claimResult: true}
+	repo := &mockRepo{}
 	fetchMocker := &mockFetcher{err: errors.New("network timeout")}
 	svc := NewFeedService(repo, fetchMocker)
 

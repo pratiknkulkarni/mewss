@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"feedscheduler/internal/fetcher"
 	"feedscheduler/internal/model"
-	"feedscheduler/internal/repository"
 	"fmt"
 	"log/slog"
 	"math"
@@ -16,26 +15,40 @@ import (
 	"github.com/mmcdole/gofeed"
 )
 
+// FeedRepository defines all database operations required by the scheduler.
+// Extracted this from feed_repository.go (Producer) to feed_service.go (Consumer)
+// Reference -> 100 Go Mistakes & How To Avoid Them by Teiva Harsanyi; Mistake #6 talks about this exact thing
+type FeedRepository interface {
+	//GetFeedsDueForRefresh(ctx context.Context, limit int) ([]model.Feed, error)
+	//GetRemainingFeedsCount(ctx context.Context) (int, error)
+	//ClaimFeed(ctx context.Context, feedID string, staleThreshold time.Duration) (bool, error)
+	SaveArticles(ctx context.Context, articles []model.Article) error
+	ReleaseFeed(ctx context.Context, feedID string, nextFetchAfter time.Time, errorCount int, etag *string, lastModified *string) error
+	MarkFeedAsFailed(ctx context.Context, feedID string, errorCount int, nextFetchAfter time.Time) error
+	//CleanStaleLocks(ctx context.Context, cutoff time.Time) (int64, error)
+}
+
 // FeedService orchestrates the business logic of fetching and saving feeds.
 type FeedService struct {
-	repo    repository.FeedRepository
+	repo    FeedRepository
 	fetcher fetcher.Fetcher
 }
 
-func NewFeedService(repo repository.FeedRepository, fetcher fetcher.Fetcher) *FeedService {
+func NewFeedService(repo FeedRepository, fetcher fetcher.Fetcher) *FeedService {
 	return &FeedService{
 		repo:    repo,
 		fetcher: fetcher,
 	}
 }
 
-// ProcessFeed handles the processing of one feed at a time. Entire lifecycle. At least I hope it'll
+// ProcessFeed handles the processing of one feed at a time. Entire lifecycle.
 func (s *FeedService) ProcessFeed(ctx context.Context, feed model.Feed) {
 	logger := slog.With("feed_id", feed.ID, "url", feed.URL)
 
 	fetchCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	parsedFeed, err := s.fetcher.Fetch(fetchCtx, feed.URL, feed.ETag, feed.LastModifiedHeader)
 	defer cancel()
+
+	parsedFeed, err := s.fetcher.Fetch(fetchCtx, feed.URL, feed.ETag, feed.LastModifiedHeader)
 
 	if err != nil {
 		logger.Warn("failed to fetch feed", "error", err, "current_errors", feed.ErrorCount)
@@ -77,13 +90,27 @@ func (s *FeedService) ProcessFeed(ctx context.Context, feed model.Feed) {
 		return
 	}
 
+	articles := make([]model.Article, 0, len(parsedFeed.Feed.Items))
+
 	for _, item := range parsedFeed.Feed.Items {
-		article := s.mapToArticle(feed, item)
-		if err := s.repo.SaveArticle(context.Background(), &article); err != nil {
-			logger.Error("failed to save article", "article_title", article.Title, "error", err)
-			continue
+		articles = append(articles, s.mapToArticle(feed, item))
+	}
+
+	if len(articles) > 0 {
+		if err := s.repo.SaveArticles(context.Background(), articles); err != nil {
+			logger.Error("failed to bulk save articles", "feed_id", feed.ID, "error", err)
+		} else {
+			logger.Info("bulk inserted articles", "count", len(articles))
 		}
 	}
+
+	//for _, item := range parsedFeed.Feed.Items {
+	//	article := s.mapToArticle(feed, item)
+	//	if err := s.repo.SaveArticle(context.Background(), &article); err != nil {
+	//		logger.Error("failed to save article", "article_title", article.Title, "error", err)
+	//		continue
+	//	}
+	//}
 	nextFetch := time.Now().Add(feed.RefreshInterval)
 	if err := s.repo.ReleaseFeed(context.Background(), feed.ID, nextFetch, 0, parsedFeed.Etag, parsedFeed.LastModified); err != nil {
 		logger.Error("failed to release feed lock after success", "error", err)
@@ -93,6 +120,7 @@ func (s *FeedService) ProcessFeed(ctx context.Context, feed model.Feed) {
 }
 
 // mapToArticle converts a gofeed.Item into the domain model
+// Returns by value intentionally — caller appends directly into a pre-allocated slice
 func (s *FeedService) mapToArticle(feed model.Feed, item *gofeed.Item) model.Article {
 	hashStr := fmt.Sprintf("%s:%s:%s", feed.ID, item.Title, item.Link)
 	hash := sha256.Sum256([]byte(hashStr))
@@ -125,4 +153,11 @@ func (s *FeedService) mapToArticle(feed model.Feed, item *gofeed.Item) model.Art
 	}
 
 	return article
+}
+
+// ReleaseLockOnly clears the "fetching_at" flag in the database without touching "next_after" timer
+func (s *FeedService) ReleaseLockOnly(ctx context.Context, feed model.Feed) error {
+	// Notice I'm passing the EXACT SAME next_fetch and not incrementing it
+	// This is because the rate limiter blocked a worker from working with a feed, the feed itself is eligible.
+	return s.repo.ReleaseFeed(ctx, feed.ID, feed.NextFetchAfter, feed.ErrorCount, feed.ETag, feed.LastModifiedHeader)
 }

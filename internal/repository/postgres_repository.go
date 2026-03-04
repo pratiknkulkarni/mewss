@@ -5,6 +5,9 @@ import (
 	"database/sql"
 	"errors"
 	"feedscheduler/internal/model"
+	"fmt"
+	"log/slog"
+	"strings"
 	"time"
 )
 
@@ -95,6 +98,7 @@ func (r *PostgresFeedRepository) GetFeedsDueForRefresh(ctx context.Context, limi
 	defer func(rows *sql.Rows) {
 		err := rows.Close()
 		if err != nil {
+			slog.Warn("failed to close result rows", "error", err)
 		}
 	}(rows)
 
@@ -111,35 +115,11 @@ func (r *PostgresFeedRepository) GetFeedsDueForRefresh(ctx context.Context, limi
 		feeds = append(feeds, f)
 	}
 
-	return feeds, nil
-}
-
-func (r *PostgresFeedRepository) SaveArticle(ctx context.Context, article *model.Article) error {
-	query := `
-		INSERT INTO article (
-			feed_id, user_id, guid, title, url, author, published_at, summary, identity_hash
-		) VALUES (
-			$1, $2, $3, $4, $5, $6, $7, $8, $9
-		)
-		ON CONFLICT (identity_hash) DO NOTHING
-	`
-	_, err := r.db.ExecContext(ctx, query,
-		article.FeedID,
-		article.UserID,
-		article.GUID,
-		article.Title,
-		article.URL,
-		article.Author,
-		article.PublishedAt,
-		article.Summary,
-		article.IdentityHash,
-	)
-
-	if err != nil {
-		return err
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("GetFeedsDueForRefresh: row iteration error: %w", err)
 	}
 
-	return err
+	return feeds, nil
 }
 
 func (r *PostgresFeedRepository) MarkFeedAsFailed(ctx context.Context, feedID string, errorCount int, nextFetchAfter time.Time) error {
@@ -174,4 +154,41 @@ func (r *PostgresFeedRepository) CleanStaleLocks(ctx context.Context, cutoff tim
 	}
 
 	return result.RowsAffected()
+}
+
+// SaveArticles takes a slice of articles and executes a single bulk INSERT query.
+func (r *PostgresFeedRepository) SaveArticles(ctx context.Context, articles []model.Article) error {
+	if len(articles) == 0 {
+		return nil
+	}
+
+	columnsPerArticle := 9
+	valueStrings := make([]string, 0, len(articles))
+	valueArgs := make([]interface{}, 0, len(articles)*columnsPerArticle)
+
+	paramIndex := 1
+	for _, a := range articles {
+		chunk := fmt.Sprintf("($%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d)",
+			paramIndex, paramIndex+1, paramIndex+2, paramIndex+3, paramIndex+4,
+			paramIndex+5, paramIndex+6, paramIndex+7, paramIndex+8)
+		valueStrings = append(valueStrings, chunk)
+
+		valueArgs = append(valueArgs,
+			a.FeedID, a.UserID, a.GUID, a.Title, a.URL,
+			a.Author, a.PublishedAt, a.Summary, a.IdentityHash)
+		paramIndex += columnsPerArticle
+	}
+
+	query := fmt.Sprintf(`
+		INSERT INTO article (feed_id, user_id, guid, title, url, author, published_at, summary, identity_hash)
+		VALUES %s
+		ON CONFLICT (identity_hash) DO NOTHING
+	`, strings.Join(valueStrings, ","))
+
+	_, err := r.db.ExecContext(ctx, query, valueArgs...)
+	if err != nil {
+		return fmt.Errorf("bulk insert failed: %w", err)
+	}
+
+	return nil
 }

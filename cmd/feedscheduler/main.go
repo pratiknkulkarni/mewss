@@ -29,7 +29,7 @@ func main() {
 
 	slog.Info("starting feed scheduler daemon", "version", "1.0.0", "env", cfg.AppEnv)
 
-	db, err := database.Connect(cfg.DatabaseURL)
+	db, err := database.Connect(cfg.DatabaseURL, cfg.DBMaxOpenConns, cfg.DBMaxIdleConns, cfg.DBConnMaxLifetime)
 	if err != nil {
 		slog.Error("failed to connect to database", "error", err)
 		os.Exit(1)
@@ -45,13 +45,13 @@ func main() {
 	netFetcher := fetcher.NewGoFeedFetcher(15*time.Second, "RSS-Scheduler/1.0")
 	feedService := service.NewFeedService(repo, netFetcher)
 
-	workerCount := 10
-	jobsChan := make(chan model.Job, workerCount)
+	//workerCount := 10
+	jobsChan := make(chan model.Job, cfg.WorkerCount)
 
-	pool := worker.NewPool(workerCount, feedService, jobsChan)
-	scheduler := worker.NewScheduler(repo, jobsChan, 10*time.Second, workerCount)
+	pool := worker.NewPool(cfg.WorkerCount, feedService, jobsChan)
+	scheduler := worker.NewScheduler(repo, jobsChan, cfg.PollInterval, cfg.StaleLockCutoff, cfg.WorkerCount)
 
-	apiServer := api.NewServer(cfg.APIPort, netFetcher)
+	apiServer := api.NewServer(cfg.APIPort, netFetcher, db)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	setupSignalHandler(cancel)

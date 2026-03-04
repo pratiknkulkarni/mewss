@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"log/slog"
+	"time"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
@@ -12,7 +13,7 @@ import (
 )
 
 // Connect establishes a connection to the database and configures the pool
-func Connect(dbURL string) (*sql.DB, error) {
+func Connect(dbURL string, maxOpen, maxIdle int, maxLifetime time.Duration) (*sql.DB, error) {
 	slog.Info("connecting to the database")
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
@@ -23,11 +24,12 @@ func Connect(dbURL string) (*sql.DB, error) {
 		return nil, err
 	}
 
-	//TODO: tune parameters here
+	db.SetMaxOpenConns(maxOpen)
+	db.SetMaxIdleConns(maxIdle)
+	db.SetConnMaxLifetime(maxLifetime) // remove time.Minute
 
 	slog.Info("connected to postgres database")
 	return db, nil
-	//return nil, nil
 }
 
 // RunMigrations applies any pending SQL migrations on startup

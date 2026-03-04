@@ -6,29 +6,39 @@ import (
 	"time"
 
 	"feedscheduler/internal/model"
-	"feedscheduler/internal/repository"
 )
+
+// SchedulerRepository is the DB contract the Scheduler needs.
+// Reference -> 100 Go Mistakes & How To Avoid Them by Teiva Harsanyi; Mistake #6 talks about this exact thing
+type SchedulerRepository interface {
+	GetFeedsDueForRefresh(ctx context.Context, limit int) ([]model.Feed, error)
+	CleanStaleLocks(ctx context.Context, cutoff time.Time) (int64, error)
+}
 
 // Scheduler queries the database for feeds and queues them for the workers.
 type Scheduler struct {
-	repo         repository.FeedRepository
-	jobs         chan<- model.Job // Send-only channel
-	pollInterval time.Duration
-	batchSize    int
+	repo            SchedulerRepository
+	jobs            chan<- model.Job // Send-only channel
+	pollInterval    time.Duration
+	staleLockCutoff time.Duration
+	reaperInterval  time.Duration
+	batchSize       int
 }
 
-func NewScheduler(repo repository.FeedRepository, jobs chan<- model.Job, pollInterval time.Duration, batchSize int) *Scheduler {
+func NewScheduler(repo SchedulerRepository, jobs chan<- model.Job, pollInterval time.Duration, staleLockCutoff time.Duration, batchSize int) *Scheduler {
 	return &Scheduler{
-		repo:         repo,
-		jobs:         jobs,
-		pollInterval: pollInterval,
-		batchSize:    batchSize,
+		repo:            repo,
+		jobs:            jobs,
+		pollInterval:    pollInterval,
+		staleLockCutoff: staleLockCutoff,
+		reaperInterval:  staleLockCutoff / 4,
+		batchSize:       batchSize,
 	}
 }
 
 // Start runs the polling loop until the context is canceled.
 func (s *Scheduler) Start(ctx context.Context) {
-	slog.Info("starting scheduler loop", "poll_interval", s.pollInterval, "batch_size", s.batchSize)
+	slog.Info("starting scheduler loop", "poll_interval", s.pollInterval, "batch_size", s.batchSize, "reaper_interval", s.reaperInterval)
 
 	pollTicker := time.NewTicker(s.pollInterval)
 	defer pollTicker.Stop()
@@ -77,7 +87,7 @@ func (s *Scheduler) queueFeeds(ctx context.Context) {
 
 // reapStaleLocks acts as a "garbage collector" for feeds that were locked by workers that crashed.
 func (s *Scheduler) reapStaleLocks(ctx context.Context) {
-	cutoff := time.Now().Add(-15 * time.Minute) // worker working with feed > 15 mins => it's dead
+	cutoff := time.Now().Add(-s.staleLockCutoff) // worker working with feed > 15 mins (hardcoded or user set) => it's dead
 
 	unlockedCount, err := s.repo.CleanStaleLocks(ctx, cutoff)
 	if err != nil {
