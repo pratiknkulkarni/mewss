@@ -38,6 +38,8 @@ func NewPool(workerCount int, processor FeedProcessor, jobs <-chan model.Job) *P
 func (p *Pool) Start(ctx context.Context) {
 	slog.Info("starting worker pool", "worker_count", p.workerCount)
 
+	go p.limiter.sweepLoop(ctx)
+
 	for i := 1; i <= p.workerCount; i++ {
 		p.wg.Add(1)
 		go p.worker(ctx, i)

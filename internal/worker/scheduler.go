@@ -2,7 +2,6 @@ package worker
 
 import (
 	"context"
-	"feedscheduler/internal/service"
 	"log/slog"
 	"time"
 
@@ -18,18 +17,20 @@ type SchedulerRepository interface {
 
 // Scheduler queries the database for feeds and queues them for the workers.
 type Scheduler struct {
-	repo         SchedulerRepository
-	jobs         chan<- model.Job // Send-only channel
-	pollInterval time.Duration
-	batchSize    int
+	repo            SchedulerRepository
+	jobs            chan<- model.Job // Send-only channel
+	pollInterval    time.Duration
+	staleLockCutoff time.Duration
+	batchSize       int
 }
 
-func NewScheduler(repo service.FeedRepository, jobs chan<- model.Job, pollInterval time.Duration, batchSize int) *Scheduler {
+func NewScheduler(repo SchedulerRepository, jobs chan<- model.Job, pollInterval time.Duration, staleLockCutooff time.Duration, batchSize int) *Scheduler {
 	return &Scheduler{
-		repo:         repo,
-		jobs:         jobs,
-		pollInterval: pollInterval,
-		batchSize:    batchSize,
+		repo:            repo,
+		jobs:            jobs,
+		pollInterval:    pollInterval,
+		staleLockCutoff: staleLockCutooff,
+		batchSize:       batchSize,
 	}
 }
 
@@ -84,7 +85,7 @@ func (s *Scheduler) queueFeeds(ctx context.Context) {
 
 // reapStaleLocks acts as a "garbage collector" for feeds that were locked by workers that crashed.
 func (s *Scheduler) reapStaleLocks(ctx context.Context) {
-	cutoff := time.Now().Add(-15 * time.Minute) // worker working with feed > 15 mins => it's dead
+	cutoff := time.Now().Add(-s.staleLockCutoff) // worker working with feed > 15 mins (hardcoded or user set) => it's dead
 
 	unlockedCount, err := s.repo.CleanStaleLocks(ctx, cutoff)
 	if err != nil {

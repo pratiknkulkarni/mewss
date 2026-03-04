@@ -45,11 +45,11 @@ func main() {
 	netFetcher := fetcher.NewGoFeedFetcher(15*time.Second, "RSS-Scheduler/1.0")
 	feedService := service.NewFeedService(repo, netFetcher)
 
-	workerCount := 10
-	jobsChan := make(chan model.Job, workerCount)
+	//workerCount := 10
+	jobsChan := make(chan model.Job, cfg.WorkerCount)
 
-	pool := worker.NewPool(workerCount, feedService, jobsChan)
-	scheduler := worker.NewScheduler(repo, jobsChan, 10*time.Second, workerCount)
+	pool := worker.NewPool(cfg.WorkerCount, feedService, jobsChan)
+	scheduler := worker.NewScheduler(repo, jobsChan, cfg.PollInterval, cfg.StaleLockCutoff, cfg.WorkerCount)
 
 	apiServer := api.NewServer(cfg.APIPort, netFetcher)
 

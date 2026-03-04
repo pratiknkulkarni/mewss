@@ -35,13 +35,13 @@ type mockRepo struct {
 	lastNextFetch  time.Time
 }
 
-func (m *mockRepo) CleanStaleLocks(_ context.Context, _ time.Time) (int64, error) {
-	return 0, nil
-}
+//func (m *mockRepo) CleanStaleLocks(_ context.Context, _ time.Time) (int64, error) {
+//	return 0, nil
+//}
 
-func (m *mockRepo) ClaimFeed(_ context.Context, _ string, _ time.Duration) (bool, error) {
-	return m.claimResult, nil
-}
+//func (m *mockRepo) ClaimFeed(_ context.Context, _ string, _ time.Duration) (bool, error) {
+//	return m.claimResult, nil
+//}
 
 func (m *mockRepo) ReleaseFeed(_ context.Context, _ string, _ time.Time, _ int, _ *string, _ *string) error {
 	return nil

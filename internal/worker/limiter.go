@@ -29,33 +29,34 @@ type DomainLimiter struct {
 // burst determines how many requests can hit simultaneously before the limit kicks in.
 // references -> https://en.wikipedia.org/wiki/Token_bucket; https://pkg.go.dev/golang.org/x/time/rate
 func NewDomainLimiter(eventsPerSecond float64, burst int) *DomainLimiter {
-	limiter := &DomainLimiter{
+	return &DomainLimiter{
 		limiters: make(map[string]*domainEntry),
 		rate:     rate.Limit(eventsPerSecond),
 		burst:    burst,
 	}
-
-	go limiter.sweepLoop()
-	return limiter
 }
 
 // sweepLoop wakes up every 10 minutes and purges dead domains to prevent OOM crashes.
-func (l *DomainLimiter) sweepLoop() {
+func (l *DomainLimiter) sweepLoop(ctx context.Context) {
 	ticker := time.NewTicker(10 * time.Minute)
 	//ticker := time.NewTicker(1 * time.Second) // only uncomment and comment above line for testing TestDomainLimiter_MemoryLeak
-	for range ticker.C {
-		l.mu.Lock()
-		now := time.Now()
 
-		for host, entry := range l.limiters {
-			if now.Sub(entry.lastSeen) > 1*time.Hour {
-				// only uncomment and comment above line for testing TestDomainLimiter_MemoryLeak
-				//if now.Sub(entry.lastSeen) > 1*time.Nanosecond {
-				delete(l.limiters, host)
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			l.mu.Lock()
+			now := time.Now()
+			for host, entry := range l.limiters {
+				if now.Sub(entry.lastSeen) > 1*time.Hour {
+					// only uncomment and comment above line for testing TestDomainLimiter_MemoryLeak
+					//if now.Sub(entry.lastSeen) > 1*time.Nanosecond {
+					delete(l.limiters, host)
+				}
 			}
+			l.mu.Unlock()
 		}
-
-		l.mu.Unlock()
 	}
 }
 

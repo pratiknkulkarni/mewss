@@ -24,8 +24,8 @@ func NewServer(port string, feedFetcher fetcher.Fetcher) *Server {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("GET /health", s.handleHealthCheck)
-	mux.HandleFunc("POST /feeds/validate", s.handleValidateFeed)
+	mux.HandleFunc("GET /v1/health", s.handleHealthCheck)
+	mux.HandleFunc("POST /v1/feeds/validate", s.handleValidateFeed)
 
 	s.httpServer = &http.Server{
 		Addr:         port,
