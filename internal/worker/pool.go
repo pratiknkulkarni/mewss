@@ -17,20 +17,22 @@ type FeedProcessor interface {
 
 // Pool manages a group of concurrent workers processing feeds.
 type Pool struct {
-	workerCount int
-	jobs        <-chan model.Job
-	wg          *sync.WaitGroup
-	limiter     *DomainLimiter
-	processor   FeedProcessor
+	workerCount    int
+	jobs           <-chan model.Job
+	wg             *sync.WaitGroup
+	limiter        *DomainLimiter
+	processor      FeedProcessor
+	limiterTimeout time.Duration
 }
 
 func NewPool(workerCount int, processor FeedProcessor, jobs <-chan model.Job) *Pool {
 	return &Pool{
-		workerCount: workerCount,
-		jobs:        jobs,
-		wg:          &sync.WaitGroup{},
-		limiter:     NewDomainLimiter(1.0, 1), // might I make it configurable from config?
-		processor:   processor,
+		workerCount:    workerCount,
+		jobs:           jobs,
+		wg:             &sync.WaitGroup{},
+		limiter:        NewDomainLimiter(1.0, 1), // might I make it configurable from config?
+		processor:      processor,
+		limiterTimeout: 10 * time.Second,
 	}
 }
 
@@ -72,7 +74,7 @@ func (p *Pool) worker(ctx context.Context, id int) {
 
 			logger.Debug("worker picked up job", "feed_id", job.Feed.ID)
 
-			limitCtx, limitCancel := context.WithTimeout(ctx, 10*time.Second)
+			limitCtx, limitCancel := context.WithTimeout(ctx, p.limiterTimeout)
 			err := p.limiter.Wait(limitCtx, job.Feed.URL)
 			limitCancel()
 
