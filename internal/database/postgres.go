@@ -26,7 +26,7 @@ func Connect(dbURL string, maxOpen, maxIdle int, maxLifetime time.Duration) (*sq
 
 	db.SetMaxOpenConns(maxOpen)
 	db.SetMaxIdleConns(maxIdle)
-	db.SetConnMaxLifetime(maxLifetime * time.Minute)
+	db.SetConnMaxLifetime(maxLifetime) // remove time.Minute
 
 	slog.Info("connected to postgres database")
 	return db, nil

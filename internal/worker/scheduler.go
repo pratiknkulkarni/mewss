@@ -9,9 +9,16 @@ import (
 	"feedscheduler/internal/model"
 )
 
+// SchedulerRepository is the DB contract the Scheduler needs.
+// Reference -> 100 Go Mistakes & How To Avoid Them by Teiva Harsanyi; Mistake #6 talks about this exact thing
+type SchedulerRepository interface {
+	GetFeedsDueForRefresh(ctx context.Context, limit int) ([]model.Feed, error)
+	CleanStaleLocks(ctx context.Context, cutoff time.Time) (int64, error)
+}
+
 // Scheduler queries the database for feeds and queues them for the workers.
 type Scheduler struct {
-	repo         service.FeedRepository
+	repo         SchedulerRepository
 	jobs         chan<- model.Job // Send-only channel
 	pollInterval time.Duration
 	batchSize    int

@@ -73,36 +73,6 @@ func setupTestDB(ctx context.Context, t *testing.T) (*sql.DB, func()) {
 	return db, cleanup
 }
 
-// TODO: I missed he assertions here! No assertions happening in this code
-func TestPostgresFeedRepository_GetFeedsDueForRefresh(t *testing.T) {
-	ctx := context.Background()
-	db, cleanup := setupTestDB(ctx, t)
-	defer cleanup()
-
-	_ = NewPostgresFeedRepository(db)
-
-	// 3 are being inserted
-	// 1 -> Due for refresh (past date, not locked)
-	// 2 -> Not due (future date)
-	// 3 -> Due, but currently locked by a worker (fetching_at is set)
-	queries := []string{
-		// Due for refresh (past date, not locked)
-		"INSERT INTO feed (id, user_id, url, refresh_interval, next_fetch_after) VALUES ('f1-due', 'u1', 'url1', 100, NOW() - INTERVAL '5 minutes')",
-
-		// Not due (future date)
-		"INSERT INTO feed (id, user_id, url, refresh_interval, next_fetch_after) VALUES ('f2-future', 'u1', 'url2', 100, NOW() + INTERVAL '1 hour')",
-
-		// Due, but currently locked by a worker (fetching_at is set)
-		"INSERT INTO feed (id, user_id, url, refresh_interval, next_fetch_after, fetching_at) VALUES ('f3-locked', 'u1', 'url3', 100, NOW() - INTERVAL '5 minutes', NOW())",
-	}
-
-	for _, q := range queries {
-		if _, err := db.ExecContext(ctx, q); err != nil {
-			t.Fatalf("failed to setup test data: %v", err)
-		}
-	}
-}
-
 func TestPostgresFeedRepository_GetRemainingFeedsCount(t *testing.T) {
 	ctx := context.Background()
 	db, cleanup := setupTestDB(ctx, t)
@@ -342,5 +312,66 @@ func TestPostgresFeedRepository_CleanStaleLocks(t *testing.T) {
 	}
 	if errorCount != 0 {
 		t.Errorf("expected healthy feed error_count to remain 0, got %d", errorCount)
+	}
+}
+
+func TestPostgresFeedRepository_GetFeedsDueForRefresh(t *testing.T) {
+	ctx := context.Background()
+	db, cleanup := setupTestDB(ctx, t)
+	defer cleanup()
+
+	repo := NewPostgresFeedRepository(db)
+
+	queries := []string{
+		// f1-due: should be returned and claimed
+		"INSERT INTO feed (id, user_id, url, refresh_interval, next_fetch_after) VALUES ('f1-due', 'u1', 'http://a.com/rss', 100, NOW() - INTERVAL '5 minutes')",
+		// f2-future: next_fetch_after is in the future, should NOT be returned
+		"INSERT INTO feed (id, user_id, url, refresh_interval, next_fetch_after) VALUES ('f2-future', 'u1', 'http://b.com/rss', 100, NOW() + INTERVAL '1 hour')",
+		// f3-locked: already claimed by another worker, should NOT be returned
+		"INSERT INTO feed (id, user_id, url, refresh_interval, next_fetch_after, fetching_at) VALUES ('f3-locked', 'u1', 'http://c.com/rss', 100, NOW() - INTERVAL '5 minutes', NOW())",
+		// f4-force: force_refresh=true overrides the future date, SHOULD be returned
+		"INSERT INTO feed (id, user_id, url, refresh_interval, next_fetch_after, force_refresh) VALUES ('f4-force', 'u1', 'http://d.com/rss', 100, NOW() + INTERVAL '1 hour', true)",
+	}
+
+	for _, q := range queries {
+		if _, err := db.ExecContext(ctx, q); err != nil {
+			t.Fatalf("failed to setup test data: %v", err)
+		}
+	}
+
+	feeds, err := repo.GetFeedsDueForRefresh(ctx, 10)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Only f1-due and f4-force should come back
+	if len(feeds) != 2 {
+		t.Fatalf("expected 2 feeds, got %d", len(feeds))
+	}
+
+	returnedIDs := map[string]bool{}
+	for _, f := range feeds {
+		returnedIDs[f.ID] = true
+	}
+
+	if !returnedIDs["f1-due"] {
+		t.Errorf("expected f1-due to be returned, it was not")
+	}
+	if !returnedIDs["f4-force"] {
+		t.Errorf("expected f4-force to be returned, it was not")
+	}
+	if returnedIDs["f2-future"] {
+		t.Errorf("f2-future should not be returned (next_fetch_after is in the future)")
+	}
+	if returnedIDs["f3-locked"] {
+		t.Errorf("f3-locked should not be returned (already claimed by another worker)")
+	}
+
+	var fetchingAt sql.NullTime
+	if err := db.QueryRowContext(ctx, "SELECT fetching_at FROM feed WHERE id = 'f1-due'").Scan(&fetchingAt); err != nil {
+		t.Fatalf("failed to query f1-due: %v", err)
+	}
+	if !fetchingAt.Valid {
+		t.Errorf("expected f1-due to have fetching_at set after being claimed, got NULL")
 	}
 }

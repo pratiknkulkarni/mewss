@@ -30,6 +30,7 @@ func NewPool(workerCount int, processor FeedProcessor, jobs <-chan model.Job) *P
 		jobs:        jobs,
 		wg:          &sync.WaitGroup{},
 		limiter:     NewDomainLimiter(1.0, 1), // might I make it configurable from config?
+		processor:   processor,
 	}
 }
 
@@ -75,7 +76,6 @@ func (p *Pool) worker(ctx context.Context, id int) {
 
 			if err != nil {
 				logger.Warn("rate limiter timed out, dropping job back to queue", "feed_id", job.Feed.ID, "domain", job.Feed.URL)
-				//TODO: release the lock here
 				err := p.processor.ReleaseLockOnly(context.Background(), job.Feed)
 				if err != nil {
 					logger.Error("failed to release lock for dropped job", "error", err)

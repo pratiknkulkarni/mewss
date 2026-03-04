@@ -29,11 +29,14 @@ type DomainLimiter struct {
 // burst determines how many requests can hit simultaneously before the limit kicks in.
 // references -> https://en.wikipedia.org/wiki/Token_bucket; https://pkg.go.dev/golang.org/x/time/rate
 func NewDomainLimiter(eventsPerSecond float64, burst int) *DomainLimiter {
-	return &DomainLimiter{
+	limiter := &DomainLimiter{
 		limiters: make(map[string]*domainEntry),
 		rate:     rate.Limit(eventsPerSecond),
 		burst:    burst,
 	}
+
+	go limiter.sweepLoop()
+	return limiter
 }
 
 // sweepLoop wakes up every 10 minutes and purges dead domains to prevent OOM crashes.

@@ -43,11 +43,6 @@ func (m *mockRepo) ClaimFeed(_ context.Context, _ string, _ time.Duration) (bool
 	return m.claimResult, nil
 }
 
-func (m *mockRepo) SaveArticle(_ context.Context, _ *model.Article) error {
-	m.articlesSaved++
-	return nil
-}
-
 func (m *mockRepo) ReleaseFeed(_ context.Context, _ string, _ time.Time, _ int, _ *string, _ *string) error {
 	return nil
 }
