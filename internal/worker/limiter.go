@@ -40,6 +40,7 @@ func NewDomainLimiter(eventsPerSecond float64, burst int) *DomainLimiter {
 func (l *DomainLimiter) sweepLoop(ctx context.Context) {
 	ticker := time.NewTicker(10 * time.Minute)
 	//ticker := time.NewTicker(1 * time.Second) // only uncomment and comment above line for testing TestDomainLimiter_MemoryLeak
+	defer ticker.Stop()
 
 	for {
 		select {

@@ -27,8 +27,8 @@ func (m *mockFetcher) Fetch(_ context.Context, _ string, _ *string, _ *string) (
 }
 
 type mockRepo struct {
-	FeedRepository
-	claimResult    bool
+	//FeedRepository
+	//claimResult    bool
 	articlesSaved  int
 	markedFailed   bool
 	lastErrorCount int
@@ -60,7 +60,7 @@ func (m *mockRepo) SaveArticles(ctx context.Context, articles []model.Article) e
 }
 
 func TestFeedService_ProcessFeed_Success(t *testing.T) {
-	repo := &mockRepo{claimResult: true}
+	repo := &mockRepo{}
 	fetchMocker := &mockFetcher{
 		feed: &gofeed.Feed{
 			Items: []*gofeed.Item{
@@ -84,7 +84,7 @@ func TestFeedService_ProcessFeed_Success(t *testing.T) {
 }
 
 func TestFeedService_ProcessFeed_ExponentialBackoff(t *testing.T) {
-	repo := &mockRepo{claimResult: true}
+	repo := &mockRepo{}
 	fetchMocker := &mockFetcher{err: errors.New("network timeout")}
 	svc := NewFeedService(repo, fetchMocker)
 

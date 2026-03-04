@@ -1,4 +1,4 @@
-.PHONY: run build clean docker-up docker-down test
+.PHONY: run build clean docker-up docker-down docker-down-clean test
 
 BINARY_NAME=feedscheduler
 
@@ -14,3 +14,12 @@ test:
 clean:
 	go clean
 	rm -f bin/${BINARY_NAME}
+
+docker-up:
+	docker compose up -d
+
+docker-down:
+	docker compose down
+
+docker-down-clean:
+	docker compose down -v

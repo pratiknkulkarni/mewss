@@ -21,22 +21,24 @@ type Scheduler struct {
 	jobs            chan<- model.Job // Send-only channel
 	pollInterval    time.Duration
 	staleLockCutoff time.Duration
+	reaperInterval  time.Duration
 	batchSize       int
 }
 
-func NewScheduler(repo SchedulerRepository, jobs chan<- model.Job, pollInterval time.Duration, staleLockCutooff time.Duration, batchSize int) *Scheduler {
+func NewScheduler(repo SchedulerRepository, jobs chan<- model.Job, pollInterval time.Duration, staleLockCutoff time.Duration, batchSize int) *Scheduler {
 	return &Scheduler{
 		repo:            repo,
 		jobs:            jobs,
 		pollInterval:    pollInterval,
-		staleLockCutoff: staleLockCutooff,
+		staleLockCutoff: staleLockCutoff,
+		reaperInterval:  staleLockCutoff / 4,
 		batchSize:       batchSize,
 	}
 }
 
 // Start runs the polling loop until the context is canceled.
 func (s *Scheduler) Start(ctx context.Context) {
-	slog.Info("starting scheduler loop", "poll_interval", s.pollInterval, "batch_size", s.batchSize)
+	slog.Info("starting scheduler loop", "poll_interval", s.pollInterval, "batch_size", s.batchSize, "reaper_interval", s.reaperInterval)
 
 	pollTicker := time.NewTicker(s.pollInterval)
 	defer pollTicker.Stop()
