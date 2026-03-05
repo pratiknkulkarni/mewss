@@ -43,7 +43,7 @@ func (s *Scheduler) Start(ctx context.Context) {
 	pollTicker := time.NewTicker(s.pollInterval)
 	defer pollTicker.Stop()
 
-	reaperTicker := time.NewTicker(1 * time.Minute)
+	reaperTicker := time.NewTicker(s.reaperInterval)
 	defer reaperTicker.Stop()
 
 	s.queueFeeds(ctx)

@@ -3,20 +3,45 @@ version: '3.8'
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: rss_postgres
+    container_name: feedscheduler_postgres
     environment:
-      POSTGRES_USER: rssuser #CHANGE THIS
-      POSTGRES_PASSWORD: changemeplease #CHANGE THIS
-      POSTGRES_DB: rssdb #MAYBE DON'T CHANGE THIS?
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
-      - "5432:5432"
+      - "5437:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U rssuser -d rssdb" ]  # was: -U user -d rss
+      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB" ]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
+    restart: unless-stopped
+
+  feedscheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: feedscheduler_app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      APP_ENV: ${APP_ENV}
+      API_PORT: ":8081"
+      LOG_LEVEL: ${LOG_LEVEL}
+
+      DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable"
+      WORKER_COUNT: "5"
+      POLL_INTERVAL: "10s"
+      STALE_LOCK_CUTOFF: "15m"
+      DB_MAX_OPEN_CONNS: "25"
+      DB_MAX_IDLE_CONNS: "25"
+      DB_CONN_MAX_LIFETIME: "5m"
+
+    ports:
+      - "8081:8081"
     restart: unless-stopped
 
 volumes:

@@ -1,3 +1,6 @@
+-include .env
+export
+
 .PHONY: run build clean docker-up docker-down docker-down-clean test
 
 BINARY_NAME=feedscheduler
@@ -9,7 +12,7 @@ build:
 	go build -o bin/${BINARY_NAME} cmd/feedscheduler/main.go
 
 test:
-	go clean -testcache && go test -v ./...
+	go clean -testcache && go test -v -race ./...
 
 clean:
 	go clean
