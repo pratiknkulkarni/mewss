@@ -19,13 +19,9 @@ import (
 // Extracted this from feed_repository.go (Producer) to feed_service.go (Consumer)
 // Reference -> 100 Go Mistakes & How To Avoid Them by Teiva Harsanyi; Mistake #6 talks about this exact thing
 type FeedRepository interface {
-	//GetFeedsDueForRefresh(ctx context.Context, limit int) ([]model.Feed, error)
-	//GetRemainingFeedsCount(ctx context.Context) (int, error)
-	//ClaimFeed(ctx context.Context, feedID string, staleThreshold time.Duration) (bool, error)
 	SaveArticles(ctx context.Context, articles []model.Article) error
 	ReleaseFeed(ctx context.Context, feedID string, nextFetchAfter time.Time, errorCount int, etag *string, lastModified *string) error
 	MarkFeedAsFailed(ctx context.Context, feedID string, errorCount int, nextFetchAfter time.Time) error
-	//CleanStaleLocks(ctx context.Context, cutoff time.Time) (int64, error)
 }
 
 // FeedService orchestrates the business logic of fetching and saving feeds.

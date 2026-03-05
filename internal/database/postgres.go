@@ -2,6 +2,7 @@ package database
 
 import (
 	"database/sql"
+	"embed"
 	"errors"
 	"log/slog"
 	"time"
@@ -9,8 +10,12 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/golang-migrate/migrate/v4/source/iofs"
 	_ "github.com/lib/pq"
 )
+
+//go:embed migrations/*.sql
+var migrationFS embed.FS
 
 // Connect establishes a connection to the database and configures the pool
 func Connect(dbURL string, maxOpen, maxIdle int, maxLifetime time.Duration) (*sql.DB, error) {
@@ -35,11 +40,18 @@ func Connect(dbURL string, maxOpen, maxIdle int, maxLifetime time.Duration) (*sq
 // RunMigrations applies any pending SQL migrations on startup
 func RunMigrations(db *sql.DB) error {
 	slog.Info("checking database migrations")
+
+	source, err := iofs.New(migrationFS, "migrations")
+	if err != nil {
+		return err
+	}
+
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
 		return err
 	}
-	m, err := migrate.NewWithDatabaseInstance("file://migrations", "postgres", driver)
+	//m, err := migrate.NewWithDatabaseInstance("file://migrations", "postgres", driver)
+	m, err := migrate.NewWithInstance("iofs", source, "postgres", driver)
 	if err != nil {
 		return err
 	}

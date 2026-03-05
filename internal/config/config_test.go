@@ -1,45 +1,83 @@
 package config
 
 import (
-	"os"
 	"strings"
 	"testing"
+	"time"
 )
 
-func TestLoadConfig_ValidationFails(t *testing.T) {
-	os.Unsetenv("RSS_DATABASE_URL")
+// TestLoadConfig_MissingDatabaseURL verifies that startup fails immediately
+// with a clear message when DATABASE_URL is not set.
+func TestLoadConfig_MissingDatabaseURL(t *testing.T) {
+	t.Setenv("DATABASE_URL", "")
 
 	_, err := LoadConfig()
 	if err == nil {
 		t.Fatal("expected an error when DATABASE_URL is missing, got nil")
 	}
 
-	expectedErr := "DATABASE_URL configuration is required"
-	if !strings.Contains(err.Error(), expectedErr) {
-		t.Errorf("expected error to contain %q, got %q", expectedErr, err.Error())
+	if !strings.Contains(err.Error(), "DATABASE_URL") {
+		t.Errorf("unexpected error message: %q", err.Error())
 	}
 }
 
-func TestLoadConfig_EnvOverrides(t *testing.T) {
-	os.Setenv("RSS_DATABASE_URL", "postgres://test:test@localhost:5432/testdb")
-	os.Setenv("RSS_WORKER_COUNT", "99")
-	os.Setenv("RSS_APP_ENV", "testing")
-
-	defer os.Unsetenv("RSS_DATABASE_URL")
-	defer os.Unsetenv("RSS_WORKER_COUNT")
-	defer os.Unsetenv("RSS_APP_ENV")
+// TestLoadConfig_ReadsFromEnv verifies that all fields are populated
+// correctly from environment variables.
+func TestLoadConfig_ReadsFromEnv(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://test:test@localhost:5432/testdb")
+	t.Setenv("WORKER_COUNT", "99")
+	t.Setenv("APP_ENV", "testing")
+	t.Setenv("LOG_LEVEL", "debug")
+	t.Setenv("API_PORT", ":9090")
 
 	cfg, err := LoadConfig()
-
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
 	if cfg.DatabaseURL != "postgres://test:test@localhost:5432/testdb" {
-		t.Errorf("expected DB URL from env, got %v", cfg.DatabaseURL)
+		t.Errorf("DatabaseURL: got %q", cfg.DatabaseURL)
+	}
+	if cfg.WorkerCount != 99 {
+		t.Errorf("WorkerCount: expected 99, got %d", cfg.WorkerCount)
+	}
+	if cfg.AppEnv != "testing" {
+		t.Errorf("AppEnv: expected %q, got %q", "testing", cfg.AppEnv)
+	}
+	if cfg.LogLevel != "debug" {
+		t.Errorf("LogLevel: expected %q, got %q", "debug", cfg.LogLevel)
+	}
+	if cfg.APIPort != ":9090" {
+		t.Errorf("APIPort: expected %q, got %q", ":9090", cfg.APIPort)
+	}
+}
+
+// TestLoadConfig_Defaults verifies that sensible defaults are applied for
+// every optional field when only the required DATABASE_URL is set.
+func TestLoadConfig_Defaults(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://test:test@localhost:5432/testdb")
+
+	cfg, err := LoadConfig()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if cfg.AppEnv != "testing" {
-		t.Errorf("expected AppEnv 'testing', got %v", cfg.AppEnv)
+	if cfg.AppEnv != "development" {
+		t.Errorf("AppEnv default: expected %q, got %q", "development", cfg.AppEnv)
+	}
+	if cfg.APIPort != ":8081" {
+		t.Errorf("APIPort default: expected %q, got %q", ":8081", cfg.APIPort)
+	}
+	if cfg.WorkerCount != 5 {
+		t.Errorf("WorkerCount default: expected 5, got %d", cfg.WorkerCount)
+	}
+	if cfg.DBMaxOpenConns != 25 {
+		t.Errorf("DBMaxOpenConns default: expected 25, got %d", cfg.DBMaxOpenConns)
+	}
+
+	expectedDBConnMaxLifetime := time.Duration(5 * time.Minute)
+
+	if cfg.DBConnMaxLifetime != expectedDBConnMaxLifetime {
+		t.Errorf("DBMaxIdleConns default: expected 25, got %d", cfg.DBMaxOpenConns)
 	}
 }
