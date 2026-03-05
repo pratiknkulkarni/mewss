@@ -1,6 +1,4 @@
 .env
-config.yaml
-config.yaml.example
 .git
 .idea
 *.md
