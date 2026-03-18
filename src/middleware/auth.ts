@@ -15,7 +15,7 @@ export const requireAuth = createMiddleware<HonoEnv>(async (c, next) => {
 
     if (!sessionData) {
         // TODO: make this a centralized error handling and unauthorised error
-        return
+        return c.json({error: "Unauthorized"}, 401)
     }
 
     c.set("user", sessionData.user);
