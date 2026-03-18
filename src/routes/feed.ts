@@ -30,10 +30,6 @@ router.post("/", zValidator("json", createFeedSchema), async (c) => {
 
         const feed = await createFeed(user.id, body);
 
-        console.log(" FEED ADDED => ")
-        console.log(feed);
-        console.log("<= FEED ADDED ")
-
         return c.json({user, session});
     }
 )

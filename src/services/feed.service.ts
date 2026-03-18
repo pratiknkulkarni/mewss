@@ -1,8 +1,10 @@
 import {randomUUID} from "node:crypto";
 import * as feedRepo from "../repository/feed.repository.js";
 import {z} from "zod";
+import {logger} from "../lib/logger.js";
 
 const INTERVAL_REGEX = /^(\d+)([mh])$/;
+const log = logger.child({service: "feed"});
 
 function parseRefreshInterval(refreshInterval: string): number {
     const match = refreshInterval.match(INTERVAL_REGEX);
@@ -61,6 +63,8 @@ export const createFeedSchema = z.object({
 
 export async function createFeed(userId: string, createFeedInput: z.infer<typeof createFeedSchema>) {
     try {
+        log.info({userId, url: createFeedInput.url}, "creating feed");
+
         const now = new Date().toISOString();
         const newFeed = await feedRepo.createFeed({
             id: randomUUID(),
@@ -73,10 +77,12 @@ export async function createFeed(userId: string, createFeedInput: z.infer<typeof
             updatedAt: now,
         });
 
+        log.info({userId, url: createFeedInput.url}, "feed added successfully");
+
         return {...newFeed};
     } catch (err: any) {
         if (err?.code === "23505") {
-            console.error("Feed already exists")
+            log.error({err, userId}, "duplicate feed detected");
         }
         throw err;
     }
