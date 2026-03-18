@@ -2,8 +2,10 @@ import {serve} from '@hono/node-server'
 import {Hono} from 'hono'
 import {auth} from "./lib/auth.js";
 import feedRouter from "./routes/feed.js";
+import {createLogger} from "./lib/logger.js";
 
 const app = new Hono()
+const logger = createLogger("index");
 
 // commenting this out for now since HTTPIE is throwing up
 // app.use(
@@ -36,5 +38,5 @@ serve({
     fetch: app.fetch,
     port: 3000
 }, (info) => {
-    console.log(`Server is running on http://localhost:${info.port}`)
+    logger.info({port: info.port}, "server running");
 })
