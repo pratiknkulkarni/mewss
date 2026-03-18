@@ -1,7 +1,6 @@
 import "dotenv/config";
 import {betterAuth} from "better-auth";
 import {Pool} from "pg";
-import {openAPI} from "better-auth/plugins";
 
 export const auth = betterAuth({
     database: new Pool({
