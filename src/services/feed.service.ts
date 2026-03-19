@@ -3,6 +3,8 @@ import * as feedRepo from "../repository/feed.repository.js";
 import {z} from "zod";
 import {createLogger} from "../lib/logger.js";
 import {validateFeedUrl} from "../lib/scheduler-client.js";
+import {ConflictError, NotFoundError} from "../errors/errors.js";
+import {findFeedByIdAndUser} from "../repository/feed.repository.js";
 
 const INTERVAL_REGEX = /^(\d+)([mh])$/;
 const log = createLogger("service.feed");
@@ -71,8 +73,44 @@ export async function createFeed(userId: string, createFeedInput: z.infer<typeof
     } catch (err: any) {
         if (err?.code === "23505") {
             log.error({err, userId}, "duplicate feed detected");
+            throw new ConflictError("You are already subscribed to this feed.");
         }
         log.error({err, userId}, "feed creation failed");
         throw err;
     }
+}
+
+export async function listFeeds(userId: string, status?: string) {
+    log.info({userId, status}, "listing feeds");
+    return feedRepo.listFeedsByUser(userId, status);
+}
+
+export async function deleteFeed(id: string, userId: string) {
+    const deleted = await feedRepo.deleteFeedByIdAndUser(id, userId);
+    log.info({id, userId}, "feed deleted")
+    if (!deleted) {
+        log.error({id, userId}, "feed not found")
+        throw new NotFoundError();
+    }
+}
+
+export async function refreshFeed(id: string, userId: string) {
+    const triggered = await feedRepo.triggerFeedRefresh(id, userId);
+    log.info({id, userId}, "feed refresh triggered")
+
+    if (!triggered) {
+        log.error({id, userId}, "feed not found")
+        throw new NotFoundError();
+    }
+}
+
+export async function getFeed(id: string, userId: string) {
+    const row = await findFeedByIdAndUser(id, userId);
+    log.info({id, userId}, "feed retrieved")
+
+    if (!row) {
+        log.error({id, userId}, "feed not found");
+        throw new NotFoundError();
+    }
+    return row;
 }

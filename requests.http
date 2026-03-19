@@ -1,0 +1,114 @@
+### Variables
+@baseUrl = http://localhost:3000
+@origin = http://localhost:3000
+@email = admin1@homelab.local
+@password = securepassword123
+
+
+### ========================================
+### AUTH
+### ========================================
+
+### Sign up
+POST {{baseUrl}}/api/auth/sign-up/email
+Content-Type: application/json
+Origin: {{origin}}
+
+{
+  "name": "Test User",
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+
+### Sign in
+# @name signIn
+POST {{baseUrl}}/api/auth/sign-in/email
+Content-Type: application/json
+Origin: {{origin}}
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+
+### Get current session
+GET {{baseUrl}}/api/auth/get-session
+Origin: {{origin}}
+
+
+### Sign out
+POST {{baseUrl}}/api/auth/sign-out
+Origin: {{origin}}
+
+### ========================================
+### FEEDS
+### ========================================
+
+### List all feeds
+GET {{baseUrl}}/api/feeds
+Origin: {{origin}}
+
+
+### List feeds filtered by status
+GET {{baseUrl}}/api/feeds?status=active
+Origin: {{origin}}
+
+
+### Get a single feed
+GET {{baseUrl}}/api/feeds/<FEED_ID>
+Origin: {{origin}}
+
+
+### Add a new feed
+# @name createFeed
+POST {{baseUrl}}/api/feeds
+Content-Type: application/json
+Origin: {{origin}}
+
+{
+  "url": "https://feeds.feedburner.com/ndtvnews-top-stories",
+  "refreshInterval": "30m"
+}
+
+
+### Add a feed — validation error (bad URL)
+POST {{baseUrl}}/api/feeds
+Content-Type: application/json
+Origin: {{origin}}
+
+{
+  "url": "not-a-url",
+  "refreshInterval": "30m"
+}
+
+
+### VALIDATION ERROR (interval too short) - Add a feed
+POST {{baseUrl}}/api/feeds
+Content-Type: application/json
+Origin: {{origin}}
+
+{
+  "url": "https://feeds.feedburner.com/TheHackersNews",
+  "refreshInterval": "1m"
+}
+
+### VALIDATION ERROR (url not valid) - Add a feed
+POST {{baseUrl}}/api/feeds
+Content-Type: application/json
+Origin: {{origin}}
+
+{
+  "url": "https://feeds.feedburner.com/TheHackersNewsss",
+  "refreshInterval": "100m"
+}
+
+### Trigger manual refresh
+POST {{baseUrl}}/api/feeds/refresh/<FEED_ID>
+Origin: {{origin}}
+
+
+### Delete a feed
+DELETE {{baseUrl}}/api/feeds/<FEED_ID>
+Origin: {{origin}}

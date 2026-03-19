@@ -3,6 +3,7 @@ import {Hono} from 'hono'
 import {auth} from "./lib/auth.js";
 import feedRouter from "./routes/feed.js";
 import {createLogger} from "./lib/logger.js";
+import {AppError} from "./errors/errors.js";
 
 const app = new Hono()
 const logger = createLogger("index");
@@ -23,9 +24,13 @@ const logger = createLogger("index");
 // taken from docs, let's see how I handle it
 // REF - https://hono.dev/docs/api/hono#error-handling
 app.onError((err, c) => {
-    console.error(`${err}`)
-    return c.text('Custom Error Message', 500)
-})
+    if (err instanceof AppError) {
+        return c.json({error: {code: err.code, message: err.message}}, err.statusCode as any);
+    }
+    console.error(err);
+    return c.json({error: {code: "INTERNAL_ERROR", message: "Internal server error"}}, 500);
+});
+
 
 app.on(["POST", "GET"], "/api/auth/*", (c) => {
     console.log("here and there")

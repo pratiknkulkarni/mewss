@@ -20,3 +20,21 @@ export class SchedulerUnavailableError extends AppError {
         super(503, "SCHEDULER_UNAVAILABLE", message);
     }
 }
+
+export class UnprocessableError extends AppError {
+    constructor(message: string) {
+        super(422, "INVALID_FEED", message);
+    }
+}
+
+export class ConflictError extends AppError {
+    constructor(message: string) {
+        super(409, "CONFLICT", message);
+    }
+}
+
+export class NotFoundError extends AppError {
+    constructor(message = "Not found") {
+        super(404, "NOT_FOUND", message);
+    }
+}

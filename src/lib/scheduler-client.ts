@@ -1,4 +1,5 @@
 import {createLogger} from "./logger.js";
+import {SchedulerUnavailableError, UnprocessableError} from "../errors/errors.js";
 
 const SCHEDULER_URL = process.env.SCHEDULER_URL ?? "http://localhost:8081";
 
@@ -21,21 +22,18 @@ export async function validateFeedUrl(url: string): Promise<ValidateFeedResult> 
         });
     } catch (err) {
         log.error({url, err}, "Network or timeout error reaching scheduler client");
-        throw new Error("scheduler unavailable") ;
+        throw new SchedulerUnavailableError();
+    }
+
+    if (response.status === 422) {
+        const body = await response.json().catch(() => ({}));
+        throw new UnprocessableError(body?.error ?? "URL is not a valid RSS or Atom feed");
     }
 
     if (!response.ok) {
         log.error({url, status: response.status}, "Scheduler rejected feed validation");
-        throw new Error("scheduler unavailable") ;
+        throw new SchedulerUnavailableError();
     }
 
-    try {
-        const data = await response.json();
-        log.debug({url}, "Scheduler client feed validation successful");
-
-        return data;
-    } catch (err) {
-        log.error({url, err}, "Failed to parse scheduler response as JSON");
-        throw new Error("Invalid JSON response from scheduler");
-    }
+    return response.json();
 }
