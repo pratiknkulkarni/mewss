@@ -3,6 +3,7 @@ import * as feedRepo from "../repository/feed.repository.js";
 import {z} from "zod";
 import {createLogger} from "../lib/logger.js";
 import {validateFeedUrl} from "../lib/scheduler-client.js";
+import {ConflictError} from "../errors/errors.js";
 
 const INTERVAL_REGEX = /^(\d+)([mh])$/;
 const log = createLogger("service.feed");
@@ -71,8 +72,14 @@ export async function createFeed(userId: string, createFeedInput: z.infer<typeof
     } catch (err: any) {
         if (err?.code === "23505") {
             log.error({err, userId}, "duplicate feed detected");
+            throw new ConflictError("You are already subscribed to this feed.");
         }
         log.error({err, userId}, "feed creation failed");
         throw err;
     }
+}
+
+export async function listFeeds(userId: string, status?: string) {
+    log.debug({userId}, "listing user feeds");
+    return feedRepo.listFeedsByUser(userId, status);
 }

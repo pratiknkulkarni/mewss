@@ -26,3 +26,9 @@ export class UnprocessableError extends AppError {
         super(422, "INVALID_FEED", message);
     }
 }
+
+export class ConflictError extends AppError {
+    constructor(message: string) {
+        super(409, "CONFLICT", message);
+    }
+}
