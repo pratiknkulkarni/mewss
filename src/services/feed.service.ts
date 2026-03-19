@@ -3,7 +3,7 @@ import * as feedRepo from "../repository/feed.repository.js";
 import {z} from "zod";
 import {createLogger} from "../lib/logger.js";
 import {validateFeedUrl} from "../lib/scheduler-client.js";
-import {ConflictError} from "../errors/errors.js";
+import {ConflictError, NotFoundError} from "../errors/errors.js";
 
 const INTERVAL_REGEX = /^(\d+)([mh])$/;
 const log = createLogger("service.feed");
@@ -80,6 +80,18 @@ export async function createFeed(userId: string, createFeedInput: z.infer<typeof
 }
 
 export async function listFeeds(userId: string, status?: string) {
-    log.debug({userId}, "listing user feeds");
+    log.info({userId, status}, "listing feeds");
     return feedRepo.listFeedsByUser(userId, status);
+}
+
+export async function deleteFeed(id: string, userId: string) {
+    const deleted = await feedRepo.deleteFeedByIdAndUser(id, userId);
+    log.info({id, userId}, "feed deleted")
+    if (!deleted) throw new NotFoundError();
+}
+
+export async function refreshFeed(id: string, userId: string) {
+    const triggered = await feedRepo.triggerFeedRefresh(id, userId);
+    log.info({id, userId}, "feed refresh triggered")
+    if (!triggered) throw new NotFoundError();
 }

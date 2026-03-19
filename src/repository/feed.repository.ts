@@ -26,9 +26,18 @@ export async function listFeedsByUser(userId: string, status?: string): Promise<
 }
 
 export async function deleteFeedByIdAndUser(id: string, userId: string): Promise<boolean> {
-    //TODO: implement this
+    const rows = await db
+        .delete(feed)
+        .where(and(eq(feed.id, id), eq(feed.userId, userId)))
+        .returning({id: feed.id});
+    return rows.length > 0;
 }
 
 export async function triggerFeedRefresh(id: string, userId: string): Promise<boolean> {
-    //TODO: implement this
+    const rows = await db
+        .update(feed)
+        .set({forceRefresh: true, nextFetchAfter: new Date().toISOString()})
+        .where(and(eq(feed.id, id), eq(feed.userId, userId)))
+        .returning({id: feed.id});
+    return rows.length > 0;
 }
