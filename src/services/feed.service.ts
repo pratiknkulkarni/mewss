@@ -35,22 +35,6 @@ export const createFeedSchema = z.object({
     refreshInterval: z.string()
         .regex(INTERVAL_REGEX, "Use a string like 10m or 1h")
         .refine((v) => {
-            // const match = v.match(INTERVAL_REGEX);
-            // if (!match) {
-            //     throw new Error('Invalid format. Use e.g. "30m" or "1h".');
-            // }
-            //
-            // const amount = parseInt(match[1], 10);
-            // const unit = match[2];
-            // const seconds = unit === "m" ? amount * 60 : amount * 3600;
-            //
-            // if (seconds < 300) {
-            //     throw new Error("Minimum refresh interval is 5 minutes.");
-            // }
-            //
-            // if (seconds > 86400) {
-            //     throw new Error("Maximum refresh interval is 24 hours.");
-            // }
             try {
                 parseRefreshInterval(v);
                 return true;
@@ -64,7 +48,6 @@ export const createFeedSchema = z.object({
 
 export async function createFeed(userId: string, createFeedInput: z.infer<typeof createFeedSchema>) {
     const feedURLValidation = await validateFeedUrl(createFeedInput.url);
-    // console.log(feedURLValidation);
     log.debug({userId, url: createFeedInput.url, feedURLValidation})
 
     try {
