@@ -1,8 +1,9 @@
 import {Hono} from "hono";
 import {requireAuth} from "../middleware/auth.js";
 import {auth} from "../lib/auth.js";
-import {createFeed, createFeedSchema, deleteFeed, listFeeds, refreshFeed} from "../services/feed.service.js";
+import {createFeed, createFeedSchema, deleteFeed, getFeed, listFeeds, refreshFeed} from "../services/feed.service.js";
 import {zValidator} from "@hono/zod-validator";
+import {NotFoundError} from "../errors/errors.js";
 
 type HonoEnv = {
     Variables: {
@@ -48,6 +49,13 @@ router.post("/refresh/:id", async (c) => {
     const user = c.get("user");
     await refreshFeed(c.req.param("id"), user.id);
     return c.json({message: "Feed refresh queued"}, 202);
+});
+
+// GET /api/feeds/:id
+router.get("/:id", async (c) => {
+    const user = c.get("user");
+    const feed = await getFeed(c.req.param("id"), user.id);
+    return c.json({feed});
 });
 
 export default router;

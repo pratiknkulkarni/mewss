@@ -41,3 +41,11 @@ export async function triggerFeedRefresh(id: string, userId: string): Promise<bo
         .returning({id: feed.id});
     return rows.length > 0;
 }
+
+export async function findFeedByIdAndUser(id: string, userId: string): Promise<FeedRow | null> {
+    const rows = await db
+        .select()
+        .from(feed)
+        .where(and(eq(feed.id, id), eq(feed.userId, userId)));
+    return rows[0] ?? null;
+}
