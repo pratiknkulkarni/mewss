@@ -20,3 +20,9 @@ export class SchedulerUnavailableError extends AppError {
         super(503, "SCHEDULER_UNAVAILABLE", message);
     }
 }
+
+export class UnprocessableError extends AppError {
+    constructor(message: string) {
+        super(422, "INVALID_FEED", message);
+    }
+}
