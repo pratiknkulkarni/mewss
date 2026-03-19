@@ -2,6 +2,7 @@ import {randomUUID} from "node:crypto";
 import * as feedRepo from "../repository/feed.repository.js";
 import {z} from "zod";
 import {createLogger} from "../lib/logger.js";
+import {validateFeedUrl} from "../lib/scheduler-client.js";
 
 const INTERVAL_REGEX = /^(\d+)([mh])$/;
 const log = createLogger("service.feed");
@@ -62,6 +63,10 @@ export const createFeedSchema = z.object({
 })
 
 export async function createFeed(userId: string, createFeedInput: z.infer<typeof createFeedSchema>) {
+    const feedURLValidation = await validateFeedUrl(createFeedInput.url);
+    // console.log(feedURLValidation);
+    log.debug({userId, url: createFeedInput.url, feedURLValidation})
+
     try {
         log.info({userId, url: createFeedInput.url}, "creating feed");
 
@@ -79,7 +84,7 @@ export async function createFeed(userId: string, createFeedInput: z.infer<typeof
 
         log.info({userId, url: createFeedInput.url}, "feed added successfully");
 
-        return {...newFeed};
+        return {...newFeed, title: feedURLValidation.title, description: feedURLValidation.description};
     } catch (err: any) {
         if (err?.code === "23505") {
             log.error({err, userId}, "duplicate feed detected");
