@@ -1,0 +1,52 @@
+import {db} from "../db/db.js";
+import {feed} from "../db/generated/schema.js";
+import {and, eq, desc} from "drizzle-orm";
+
+
+type NewFeed = typeof feed.$inferInsert;
+type FeedRow = typeof feed.$inferSelect;
+
+type DbClient = typeof db; // easier to mock in the tests, no major changres required here
+
+export async function createFeed(values: NewFeed, dbClient: DbClient = db) {
+    const rows = await dbClient.insert(feed).values(values).returning();
+
+    return rows[0];
+}
+
+
+export async function listFeedsByUser(userId: string, status?: string, dbClient: DbClient = db): Promise<FeedRow[]> {
+    const conditions = [eq(feed.userId, userId)];
+    if (status) conditions.push(eq(feed.status, status));
+
+    return dbClient
+        .select()
+        .from(feed)
+        .where(and(...conditions))
+        .orderBy(desc(feed.createdAt));
+}
+
+export async function deleteFeedByIdAndUser(id: string, userId: string, dbClient: DbClient = db): Promise<boolean> {
+    const rows = await dbClient
+        .delete(feed)
+        .where(and(eq(feed.id, id), eq(feed.userId, userId)))
+        .returning({id: feed.id});
+    return rows.length > 0;
+}
+
+export async function triggerFeedRefresh(id: string, userId: string, dbClient: DbClient = db): Promise<boolean> {
+    const rows = await dbClient
+        .update(feed)
+        .set({forceRefresh: true, nextFetchAfter: new Date().toISOString(), updatedAt: new Date().toISOString()})
+        .where(and(eq(feed.id, id), eq(feed.userId, userId)))
+        .returning({id: feed.id});
+    return rows.length > 0;
+}
+
+export async function findFeedByIdAndUser(id: string, userId: string, dbClient: DbClient = db): Promise<FeedRow | null> {
+    const rows = await dbClient
+        .select()
+        .from(feed)
+        .where(and(eq(feed.id, id), eq(feed.userId, userId)));
+    return rows[0] ?? null;
+}

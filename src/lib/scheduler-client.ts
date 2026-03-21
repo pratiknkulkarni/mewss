@@ -8,7 +8,7 @@ export interface ValidateFeedResult {
     description: string,
 }
 
-const log = createLogger("scheduler-client");
+const log = createLogger("client.scheduler");
 
 export async function validateFeedUrl(url: string): Promise<ValidateFeedResult> {
     let response: Response;
@@ -25,7 +25,7 @@ export async function validateFeedUrl(url: string): Promise<ValidateFeedResult> 
         throw new SchedulerUnavailableError();
     }
 
-    if (response.status === 422) {
+    if (response.status === 422 || response.status === 400) {
         const body = await response.json().catch(() => ({}));
         throw new UnprocessableError(body?.error ?? "URL is not a valid RSS or Atom feed");
     }
@@ -35,5 +35,6 @@ export async function validateFeedUrl(url: string): Promise<ValidateFeedResult> 
         throw new SchedulerUnavailableError();
     }
 
+    log.info({url, status: response.status}, "feed validation successful")
     return response.json();
 }
