@@ -33,7 +33,6 @@ app.onError((err, c) => {
 
 
 app.on(["POST", "GET"], "/api/auth/*", (c) => {
-    console.log("here and there")
     return auth.handler(c.req.raw);
 });
 
