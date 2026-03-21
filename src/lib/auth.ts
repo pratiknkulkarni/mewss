@@ -1,4 +1,3 @@
-import "dotenv/config";
 import {betterAuth} from "better-auth";
 import {Pool} from "pg";
 
