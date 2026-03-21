@@ -9,8 +9,9 @@ type HonoEnv = {
     }
 };
 
+const log = createLogger("middleware.auth");
+
 export const requireAuth = createMiddleware<HonoEnv>(async (c, next) => {
-    const log = createLogger("middleware.auth");
     const sessionData = await auth.api.getSession({
         headers: c.req.raw.headers,
     });
@@ -18,7 +19,7 @@ export const requireAuth = createMiddleware<HonoEnv>(async (c, next) => {
     if (!sessionData) {
         // TODO: make this a centralized error handling and unauthorised error
         log.warn({path: c.req.path}, "unauthenticated request rejected");
-        return c.json({error: "Unauthorized"}, 401)
+        return c.json({error: {code: "UNAUTHORIZED", message: "Unauthorized"}}, 401);
     }
 
     c.set("user", sessionData.user);
