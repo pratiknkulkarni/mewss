@@ -3,7 +3,6 @@ import {requireAuth} from "../middleware/auth.js";
 import {auth} from "../lib/auth.js";
 import {createFeed, createFeedSchema, deleteFeed, getFeed, listFeeds, refreshFeed} from "../services/feed.service.js";
 import {zValidator} from "@hono/zod-validator";
-import {NotFoundError} from "../errors/errors.js";
 
 type HonoEnv = {
     Variables: {
@@ -27,13 +26,11 @@ router.get("/", async (c) => {
 // POST /api/feeds - Create a new feed for the logged-in user
 router.post("/", zValidator("json", createFeedSchema), async (c) => {
         const user = c.get("user");
-        const session = c.get("session");
         const body = c.req.valid("json");
 
-        //TODO: do something with this feed please
         const feed = await createFeed(user.id, body);
 
-        return c.json({user, session});
+        return c.json({feed}, 201);
     }
 );
 

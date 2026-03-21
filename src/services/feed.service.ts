@@ -4,12 +4,11 @@ import {z} from "zod";
 import {createLogger} from "../lib/logger.js";
 import {validateFeedUrl} from "../lib/scheduler-client.js";
 import {ConflictError, NotFoundError} from "../errors/errors.js";
-import {findFeedByIdAndUser} from "../repository/feed.repository.js";
 
 const INTERVAL_REGEX = /^(\d+)([mh])$/;
 const log = createLogger("service.feed");
 
-function parseRefreshInterval(refreshInterval: string): number {
+export function parseRefreshInterval(refreshInterval: string): number {
     const match = refreshInterval.match(INTERVAL_REGEX);
 
     if (!match) {
@@ -50,7 +49,7 @@ export const createFeedSchema = z.object({
 
 export async function createFeed(userId: string, createFeedInput: z.infer<typeof createFeedSchema>) {
     const feedURLValidation = await validateFeedUrl(createFeedInput.url);
-    log.debug({userId, url: createFeedInput.url, feedURLValidation})
+    log.debug({userId, url: createFeedInput.url, feedURLValidation}, "feed validation successful")
 
     try {
         log.info({userId, url: createFeedInput.url}, "creating feed");
@@ -87,30 +86,29 @@ export async function listFeeds(userId: string, status?: string) {
 
 export async function deleteFeed(id: string, userId: string) {
     const deleted = await feedRepo.deleteFeedByIdAndUser(id, userId);
-    log.info({id, userId}, "feed deleted")
     if (!deleted) {
-        log.error({id, userId}, "feed not found")
+        log.warn({id, userId}, "feed not found for deletion")
         throw new NotFoundError();
     }
+    log.info({id, userId}, "feed deleted")
 }
 
 export async function refreshFeed(id: string, userId: string) {
     const triggered = await feedRepo.triggerFeedRefresh(id, userId);
-    log.info({id, userId}, "feed refresh triggered")
-
     if (!triggered) {
-        log.error({id, userId}, "feed not found")
+        log.warn({id, userId}, "feed not found")
         throw new NotFoundError();
     }
+    log.info({id, userId}, "feed refresh triggered")
 }
 
 export async function getFeed(id: string, userId: string) {
-    const row = await findFeedByIdAndUser(id, userId);
-    log.info({id, userId}, "feed retrieved")
-
+    const row = await feedRepo.findFeedByIdAndUser(id, userId);
     if (!row) {
-        log.error({id, userId}, "feed not found");
+        log.warn({id, userId}, "feed not found");
         throw new NotFoundError();
     }
+
+    log.info({id, userId}, "feed retrieved")
     return row;
 }
