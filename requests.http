@@ -105,7 +105,7 @@ Origin: {{origin}}
 }
 
 ### Trigger manual refresh
-POST {{baseUrl}}/api/feeds/refresh/<FEED_ID>
+POST {{baseUrl}}/api/feeds/<FEED_ID>/refresh
 Origin: {{origin}}
 
 

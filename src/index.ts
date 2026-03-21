@@ -3,10 +3,10 @@ import {Hono} from 'hono'
 import {auth} from "./lib/auth.js";
 import feedRouter from "./routes/feed.js";
 import {createLogger} from "./lib/logger.js";
-import {AppError} from "./errors/errors.js";
+import {AppError, NotFoundError} from "./errors/errors.js";
 
 const app = new Hono()
-const logger = createLogger("index");
+const logger = createLogger("app");
 
 // commenting this out for now since HTTPIE is throwing up
 // app.use(
@@ -27,7 +27,7 @@ app.onError((err, c) => {
     if (err instanceof AppError) {
         return c.json({error: {code: err.code, message: err.message}}, err.statusCode as any);
     }
-    console.error(err);
+    logger.error({err, path: c.req.path}, "unhandled error")
     return c.json({error: {code: "INTERNAL_ERROR", message: "Internal server error"}}, 500);
 });
 

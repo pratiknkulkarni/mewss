@@ -42,7 +42,7 @@ router.delete("/:id", async (c) => {
 });
 
 // POST /api/feeds/refresh/:id - sets force_refresh=true
-router.post("/refresh/:id", async (c) => {
+router.post("/:id/refresh", async (c) => {
     const user = c.get("user");
     await refreshFeed(c.req.param("id"), user.id);
     return c.json({message: "Feed refresh queued"}, 202);
