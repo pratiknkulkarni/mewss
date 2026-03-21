@@ -8,7 +8,6 @@ type FeedRow = typeof feed.$inferSelect;
 
 export async function createFeed(values: NewFeed) {
     const rows = await db.insert(feed).values(values).returning();
-    console.log(rows);
 
     return rows[0];
 }
@@ -36,7 +35,7 @@ export async function deleteFeedByIdAndUser(id: string, userId: string): Promise
 export async function triggerFeedRefresh(id: string, userId: string): Promise<boolean> {
     const rows = await db
         .update(feed)
-        .set({forceRefresh: true, nextFetchAfter: new Date().toISOString()})
+        .set({forceRefresh: true, nextFetchAfter: new Date().toISOString(), updatedAt: new Date().toISOString()})
         .where(and(eq(feed.id, id), eq(feed.userId, userId)))
         .returning({id: feed.id});
     return rows.length > 0;

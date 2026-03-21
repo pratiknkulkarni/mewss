@@ -1,5 +1,5 @@
 import {randomUUID} from "node:crypto";
-import * as feedRepo from "../repository/feed.repository.js";
+import * as feedRepo from "../repositories/feed.repository.js";
 import {z} from "zod";
 import {createLogger} from "../lib/logger.js";
 import {validateFeedUrl} from "../lib/scheduler-client.js";
