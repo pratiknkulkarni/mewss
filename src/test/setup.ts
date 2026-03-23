@@ -27,14 +27,7 @@ async function runMigrations(connectionString: string) {
     await client.connect();
 
     try {
-        // const migrationsDir = path.join(
-        //     __dirname,
-        //     "../../../feedscheduler/internal/database/migrations"
-        // );
-
         const migrationsDir = path.join(__dirname, "./migrations");
-        // console.log(migrationsDir);
-
         const files = await readdir(migrationsDir);
 
         const upFiles = files
