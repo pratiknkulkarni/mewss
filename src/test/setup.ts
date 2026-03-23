@@ -13,7 +13,7 @@ export async function setup() {
         .start();
 
     const connectionString = container.getConnectionUri();
-    process.env.DATABASE_URL = connectionString + "django";
+    process.env.DATABASE_URL = connectionString;
 
     await runMigrations(connectionString);
 }
