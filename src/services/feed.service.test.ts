@@ -12,19 +12,19 @@ vi.mock("../lib/scheduler-client.js", () => ({
     validateFeedUrl: vi.fn(),
 }));
 
-vi.mock("../lib/logger.js", () => ({
-    createLogger: () => ({info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn()}),
-}));
+// vi.mock("../lib/logger.js", () => ({
+//     createLogger: () => ({info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn()}),
+// }));
 
 import {
-    ConflictError,
+    ConflictError, NotFoundError,
     SchedulerUnavailableError,
     UnprocessableError,
 } from "../errors/errors.js";
 import {validateFeedUrl} from "../lib/scheduler-client.js";
 import * as feedRepo from "../repositories/feed.repository.js";
 import {
-    createFeed,
+    createFeed, deleteFeed, getFeed, listFeeds, refreshFeed,
 } from "./feed.service.js";
 
 function makeFeedRow(overrides: Record<string, unknown> = {}) {
@@ -113,5 +113,82 @@ describe("createFeed", () => {
         vi.mocked(feedRepo.createFeed).mockRejectedValueOnce(new Error("connection reset"));
 
         await expect(createFeed(userId, input)).rejects.toThrow("connection reset");
+    });
+});
+
+describe("getFeed", () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
+    it("returns the feed row when found", async () => {
+        const row = makeFeedRow();
+        vi.mocked(feedRepo.findFeedByIdAndUser).mockResolvedValueOnce(row);
+
+        expect(await getFeed("feed-123", "user-abc")).toEqual(row);
+    });
+
+    it("throws NotFoundError when repository returns null", async () => {
+        vi.mocked(feedRepo.findFeedByIdAndUser).mockResolvedValueOnce(null);
+
+        await expect(getFeed("missing", "user-abc")).rejects.toBeInstanceOf(NotFoundError);
+    });
+});
+
+describe("listFeeds", () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
+    it("passes userId and status to repository", async () => {
+        vi.mocked(feedRepo.listFeedsByUser).mockResolvedValueOnce([]);
+
+        await listFeeds("user-abc", "active");
+
+        expect(feedRepo.listFeedsByUser).toHaveBeenCalledWith("user-abc", "active");
+    });
+
+    it("passes undefined status when omitted", async () => {
+        vi.mocked(feedRepo.listFeedsByUser).mockResolvedValueOnce([]);
+
+        await listFeeds("user-abc");
+
+        expect(feedRepo.listFeedsByUser).toHaveBeenCalledWith("user-abc", undefined);
+    });
+});
+
+describe("deleteFeed", () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
+    it("resolves when feed is deleted", async () => {
+        vi.mocked(feedRepo.deleteFeedByIdAndUser).mockResolvedValueOnce(true);
+
+        await expect(deleteFeed("feed-123", "user-abc")).resolves.toBeUndefined();
+    });
+
+    it("throws NotFoundError when repository returns false", async () => {
+        vi.mocked(feedRepo.deleteFeedByIdAndUser).mockResolvedValueOnce(false);
+
+        await expect(deleteFeed("missing", "user-abc")).rejects.toBeInstanceOf(NotFoundError);
+    });
+});
+
+describe("refreshFeed", () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
+    it("resolves when feed is found and updated", async () => {
+        vi.mocked(feedRepo.triggerFeedRefresh).mockResolvedValueOnce(true);
+
+        await expect(refreshFeed("feed-123", "user-abc")).resolves.toBeUndefined();
+    });
+
+    it("throws NotFoundError when repository returns false", async () => {
+        vi.mocked(feedRepo.triggerFeedRefresh).mockResolvedValueOnce(false);
+
+        await expect(refreshFeed("missing", "user-abc")).rejects.toBeInstanceOf(NotFoundError);
     });
 });
