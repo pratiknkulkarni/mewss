@@ -71,7 +71,7 @@ export async function createFeed(userId: string, createFeedInput: z.infer<typeof
         return {...newFeed, title: feedURLValidation.title, description: feedURLValidation.description};
     } catch (err: any) {
         if (err?.code === "23505") {
-            log.error({err, userId}, "duplicate feed detected");
+            log.warn({ userId, url: createFeedInput.url }, "duplicate feed subscription attempt");
             throw new ConflictError("You are already subscribed to this feed.");
         }
         log.error({err, userId}, "feed creation failed");

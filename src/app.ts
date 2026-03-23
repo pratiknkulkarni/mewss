@@ -24,6 +24,9 @@ const logger = createLogger("app");
 // REF - https://hono.dev/docs/api/hono#error-handling
 app.onError((err, c) => {
     if (err instanceof AppError) {
+        if (err.statusCode >= 500) {
+            logger.error({err, path: c.req.path}, "application error");
+        }
         return c.json({error: {code: err.code, message: err.message}}, err.statusCode as any);
     }
     logger.error({err, path: c.req.path}, "unhandled error")

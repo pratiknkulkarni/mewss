@@ -38,3 +38,12 @@ export class NotFoundError extends AppError {
         super(404, "NOT_FOUND", message);
     }
 }
+
+export class ValidationError extends AppError {
+    constructor(
+        message: string,
+        public readonly details: { field: string; message: string }[] = [],
+    ) {
+        super(400, "VALIDATION_ERROR", message);
+    }
+}

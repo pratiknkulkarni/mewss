@@ -1,0 +1,1 @@
+DROP INDEX IF EXISTS feed_user_id_url_key;
