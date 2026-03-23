@@ -1,4 +1,4 @@
-import { pgTable, unique, text, boolean, timestamp, foreignKey, uuid, varchar, index, bigint, integer, primaryKey } from "drizzle-orm/pg-core"
+import { pgTable, unique, text, boolean, timestamp, foreignKey, uuid, varchar, uniqueIndex, index, bigint, integer, primaryKey } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 
@@ -7,23 +7,23 @@ export const user = pgTable("user", {
 	id: text().primaryKey().notNull(),
 	name: text().notNull(),
 	email: text().notNull(),
-	emailVerified: boolean().notNull(),
+	emailVerified: boolean("email_verified").notNull(),
 	image: text(),
-	createdAt: timestamp({ withTimezone: true, mode: 'string' }).notNull(),
-	updatedAt: timestamp({ withTimezone: true, mode: 'string' }).notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).notNull(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).notNull(),
 }, (table) => [
 	unique("user_email_key").on(table.email),
 ]);
 
 export const session = pgTable("session", {
 	id: text().primaryKey().notNull(),
-	userId: text().notNull(),
+	userId: text("user_id").notNull(),
 	token: text().notNull(),
-	expiresAt: timestamp({ withTimezone: true, mode: 'string' }).notNull(),
-	ipAddress: text(),
-	userAgent: text(),
-	createdAt: timestamp({ withTimezone: true, mode: 'string' }).notNull(),
-	updatedAt: timestamp({ withTimezone: true, mode: 'string' }).notNull(),
+	expiresAt: timestamp("expires_at", { withTimezone: true, mode: 'string' }).notNull(),
+	ipAddress: text("ip_address"),
+	userAgent: text("user_agent"),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).notNull(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).notNull(),
 }, (table) => [
 	foreignKey({
 			columns: [table.userId],
@@ -75,7 +75,8 @@ export const feed = pgTable("feed", {
 	etag: text(),
 	lastModifiedHeader: text("last_modified_header"),
 }, (table) => [
-	index("idx_feed_next_fetch").using("btree", table.nextFetchAfter.asc().nullsLast().op("text_ops"), table.status.asc().nullsLast().op("timestamptz_ops"), table.fetchingAt.asc().nullsLast().op("text_ops")),
+	uniqueIndex("feed_user_id_url_key").using("btree", table.userId.asc().nullsLast().op("text_ops"), table.url.asc().nullsLast().op("text_ops")),
+	index("idx_feed_next_fetch").using("btree", table.nextFetchAfter.asc().nullsLast().op("timestamptz_ops"), table.status.asc().nullsLast().op("timestamptz_ops"), table.fetchingAt.asc().nullsLast().op("text_ops")),
 	foreignKey({
 			columns: [table.userId],
 			foreignColumns: [user.id],
@@ -85,18 +86,18 @@ export const feed = pgTable("feed", {
 
 export const account = pgTable("account", {
 	id: text().primaryKey().notNull(),
-	userId: text().notNull(),
-	accountId: text().notNull(),
-	providerId: text().notNull(),
-	accessToken: text(),
-	refreshToken: text(),
-	accessTokenExpiresAt: timestamp({ withTimezone: true, mode: 'string' }),
-	refreshTokenExpiresAt: timestamp({ withTimezone: true, mode: 'string' }),
+	userId: text("user_id").notNull(),
+	accountId: text("account_id").notNull(),
+	providerId: text("provider_id").notNull(),
+	accessToken: text("access_token"),
+	refreshToken: text("refresh_token"),
+	accessTokenExpiresAt: timestamp("access_token_expires_at", { withTimezone: true, mode: 'string' }),
+	refreshTokenExpiresAt: timestamp("refresh_token_expires_at", { withTimezone: true, mode: 'string' }),
 	scope: text(),
-	idToken: text(),
+	idToken: text("id_token"),
 	password: text(),
-	createdAt: timestamp({ withTimezone: true, mode: 'string' }).notNull(),
-	updatedAt: timestamp({ withTimezone: true, mode: 'string' }).notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).notNull(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).notNull(),
 }, (table) => [
 	foreignKey({
 			columns: [table.userId],
@@ -109,9 +110,9 @@ export const verification = pgTable("verification", {
 	id: text().primaryKey().notNull(),
 	identifier: text().notNull(),
 	value: text().notNull(),
-	expiresAt: timestamp({ withTimezone: true, mode: 'string' }).notNull(),
-	createdAt: timestamp({ withTimezone: true, mode: 'string' }).notNull(),
-	updatedAt: timestamp({ withTimezone: true, mode: 'string' }).notNull(),
+	expiresAt: timestamp("expires_at", { withTimezone: true, mode: 'string' }).notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).notNull(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).notNull(),
 });
 
 export const schemaMigrations = pgTable("schema_migrations", {

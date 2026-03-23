@@ -28,9 +28,9 @@ export const auth = betterAuth({
     },
     user: {
         fields: {
-            // emailVerified: "email_verified",
-            // createdAt: "created_at",
-            // updatedAt: "updated_at",
+            emailVerified: "email_verified",
+            createdAt: "created_at",
+            updatedAt: "updated_at",
         }
     },
     account: {
