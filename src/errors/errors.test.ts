@@ -1,4 +1,11 @@
-import {AppError, ValidationError} from "./errors.js";
+import {
+    AppError,
+    ConflictError,
+    NotFoundError, SchedulerUnavailableError,
+    UnauthorizedError,
+    UnprocessableError,
+    ValidationError
+} from "./errors.js";
 import {describe, expect, it} from "vitest";
 
 
@@ -31,5 +38,55 @@ describe("ValidationError", () => {
 
     it("defaults details to empty array", () => {
         expect(new ValidationError("x").details).toEqual([]);
+    });
+});
+
+describe("UnauthorizedError", () => {
+    it("has statusCode 401 and code UNAUTHORIZED", () => {
+        expect(new UnauthorizedError().statusCode).toBe(401);
+        expect(new UnauthorizedError().code).toBe("UNAUTHORIZED");
+    });
+
+    it("uses default message", () => {
+        expect(new UnauthorizedError().message).toBe("Unauthorized");
+    });
+
+    it("accepts a custom message", () => {
+        expect(new UnauthorizedError("Session expired").message).toBe("Session expired");
+    });
+});
+
+describe("NotFoundError", () => {
+    it("has statusCode 404 and code NOT_FOUND", () => {
+        expect(new NotFoundError().statusCode).toBe(404);
+        expect(new NotFoundError().code).toBe("NOT_FOUND");
+    });
+});
+
+describe("ConflictError", () => {
+    it("has statusCode 409 and code CONFLICT", () => {
+        const err = new ConflictError("Already subscribed");
+        expect(err.statusCode).toBe(409);
+        expect(err.code).toBe("CONFLICT");
+        expect(err.message).toBe("Already subscribed");
+    });
+});
+
+describe("UnprocessableError", () => {
+    it("has statusCode 422 and code INVALID_FEED", () => {
+        const err = new UnprocessableError("Not a valid RSS feed");
+        expect(err.statusCode).toBe(422);
+        expect(err.code).toBe("INVALID_FEED");
+    });
+});
+
+describe("SchedulerUnavailableError", () => {
+    it("has statusCode 503 and code SCHEDULER_UNAVAILABLE", () => {
+        expect(new SchedulerUnavailableError().statusCode).toBe(503);
+        expect(new SchedulerUnavailableError().code).toBe("SCHEDULER_UNAVAILABLE");
+    });
+
+    it("uses default message", () => {
+        expect(new SchedulerUnavailableError().message).toBe("Feed validator is unavailable");
     });
 });
