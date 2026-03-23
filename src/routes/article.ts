@@ -1,7 +1,8 @@
 import {auth} from "../lib/auth.js";
 import {requireAuth} from "../middleware/auth.js";
 import {Hono} from "hono";
-import {listArticlesForFeed} from "../services/article.service.js";
+import {listArticlesForFeed, listArticlesSchema} from "../services/article.service.js";
+import {zValidator} from "@hono/zod-validator";
 
 type HonoEnv = {
     Variables: {
@@ -14,10 +15,13 @@ const router = new Hono<HonoEnv>();
 router.use("*", requireAuth);
 
 // GET /api/feeds/:feedId/articles — paginated articles for a specific feed
-router.get("/feeds/:feedId/articles", async (c) => {
+router.get("/feeds/:feedId/articles", zValidator("query", listArticlesSchema), async (c) => {
     const user = c.get("user");
-    // const query = c.req.valid("query");
-    const result = await listArticlesForFeed(c.req.param("feedId"), user.id);
+    const query = c.req.valid("query");
+    // console.log("***")
+    // console.log(query);
+    // console.log("***")
+    const result = await listArticlesForFeed(c.req.param("feedId"), user.id, query);
 
     return c.json(result);
 });
