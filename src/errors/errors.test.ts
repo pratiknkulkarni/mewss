@@ -90,3 +90,26 @@ describe("SchedulerUnavailableError", () => {
         expect(new SchedulerUnavailableError().message).toBe("Feed validator is unavailable");
     });
 });
+
+// adding this as per recommendations from Claude
+describe("instanceof checks across hierarchy", () => {
+    it("every subclass is instanceof AppError and Error", () => {
+        const errors = [
+            new ValidationError("x"),
+            new UnauthorizedError(),
+            new NotFoundError(),
+            new ConflictError("x"),
+            new UnprocessableError("x"),
+            new SchedulerUnavailableError(),
+        ];
+        for (const err of errors) {
+            expect(err).toBeInstanceOf(AppError);
+            expect(err).toBeInstanceOf(Error);
+        }
+    });
+
+    it("subclasses are not instanceof each other", () => {
+        expect(new NotFoundError()).not.toBeInstanceOf(ConflictError);
+        expect(new ConflictError("x")).not.toBeInstanceOf(ValidationError);
+    });
+});
