@@ -2,11 +2,11 @@ import {auth} from "../lib/auth.js";
 import {requireAuth} from "../middleware/auth.js";
 import {Hono} from "hono";
 import {
-    bulkFeedActionSchema,
+    bulkFeedActionSchema, getArticle,
     listArticlesForFeed,
     listArticlesGlobal,
     listArticlesGlobalSchema,
-    listArticlesSchema, markAllArticlesRead, markArticleRead, markFeedArticlesRead,
+    listArticlesSchema, markAllArticlesRead, markArticleRead, markArticleUnread, markFeedArticlesRead,
     markFeedArticlesUnread, markFeedsBulkRead,
     markFeedsBulkUnread
 } from "../services/article.service.js";
@@ -91,6 +91,20 @@ router.post("/feeds/bulk-unread", zValidator("json", bulkFeedActionSchema), asyn
     const {feedIds} = c.req.valid("json");
     const result = await markFeedsBulkUnread(feedIds, user.id);
     return c.json(result);
+});
+
+// PATCH /api/articles/:id/unread — revert a single article to unread
+router.patch("/articles/:id/unread", async (c) => {
+    const user = c.get("user");
+    const article = await markArticleUnread(c.req.param("id"), user.id);
+    return c.json({article});
+});
+
+// GET /api/articles/:id — single article by ID
+router.get("/articles/:id", async (c) => {
+    const user = c.get("user");
+    const article = await getArticle(c.req.param("id"), user.id);
+    return c.json({article});
 });
 
 export default router;

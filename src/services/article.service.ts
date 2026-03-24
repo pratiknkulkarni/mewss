@@ -131,3 +131,24 @@ export async function markFeedsBulkUnread(feedIds: string[], userId: string) {
     logger.info({feedIds, userId, updatedCount}, "articles in selected feeds marked as unread");
     return {updatedCount};
 }
+
+export async function markArticleUnread(articleId: string, userId: string) {
+    const updated = await articleRepo.markArticleAsUnread(articleId, userId);
+    if (!updated) {
+        logger.warn({articleId, userId}, "article not found for mark-as-unread");
+        throw new NotFoundError();
+    }
+
+    logger.info({articleId, userId}, "article marked as unread");
+    return updated;
+}
+
+export async function getArticle(articleId: string, userId: string) {
+    const row = await articleRepo.findArticleByIdAndUser(articleId, userId);
+    if (!row) {
+        logger.warn({articleId, userId}, "article not found");
+        throw new NotFoundError();
+    }
+    logger.info({articleId, userId}, "article retrieved");
+    return row;
+}

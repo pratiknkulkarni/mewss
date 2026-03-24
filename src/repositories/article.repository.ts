@@ -391,3 +391,13 @@ export async function markAllArticlesAsReadForFeeds(
 
     return articleRows.length;
 }
+
+export async function findArticleByIdAndUser(
+    articleId: string,
+    userId: string,
+    dbClient: DbClient = db,
+): Promise<ArticleWithReadState | null> {
+    const result = await buildArticleSelect(userId, dbClient)
+        .where(and(eq(article.id, articleId), eq(article.userId, userId)));
+    return (result[0] as ArticleWithReadState) ?? null;
+}
