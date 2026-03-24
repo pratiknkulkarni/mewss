@@ -2,6 +2,7 @@ import {Hono} from 'hono'
 import {auth} from "./lib/auth.js";
 import feedRouter from "./routes/feed.js";
 import articleRouter from "./routes/article.js";
+import healthRouter from "./routes/health.js";
 import {createLogger} from "./lib/logger.js";
 import {AppError} from "./errors/errors.js";
 
@@ -41,3 +42,4 @@ app.on(["POST", "GET"], "/api/auth/*", (c) => {
 
 app.route("/api/feeds", feedRouter);
 app.route("/api", articleRouter);
+app.route("/api/health", healthRouter);
