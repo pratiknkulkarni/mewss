@@ -68,7 +68,7 @@ Content-Type: application/json
 Origin: {{origin}}
 
 {
-  "url": "https://feeds.feedburner.com/ndtvnews-top-stories",
+  "url": "https://www.thehindu.com/feeder/default.rss",
   "refreshInterval": "30m"
 }
 
@@ -105,7 +105,7 @@ Origin: {{origin}}
 }
 
 ### Trigger manual refresh
-POST {{baseUrl}}/api/feeds/<FEED_ID>/refresh
+POST {{baseUrl}}/api/feeds/fde60409-964f-4305-a9e2-6c8ef5cccddd/refresh
 Origin: {{origin}}
 
 
@@ -114,7 +114,7 @@ DELETE {{baseUrl}}/api/feeds/<FEED_ID>
 Origin: {{origin}}
 
 ### List articles for a feed (defaults: page=1, limit=10)
-GET {{baseUrl}}/api/feeds/23cafaf6-a7ae-4676-9f89-a039477da92d/articles
+GET {{baseUrl}}/api/feeds/fde60409-964f-4305-a9e2-6c8ef5cccddd/articles
 Origin: {{origin}}
 
 
@@ -124,7 +124,7 @@ Origin: {{origin}}
 
 
 ### List unread articles for a feed
-GET {{baseUrl}}/api/feeds/<FEED_ID>/articles?unread=true
+GET {{baseUrl}}/api/feeds/fde60409-964f-4305-a9e2-6c8ef5cccddd/articles?unread=true
 Origin: {{origin}}
 
 
@@ -144,7 +144,7 @@ Origin: {{origin}}
 
 
 ### Global inbox — unread in a specific feed
-GET {{baseUrl}}/api/articles?feedId=<FEED_ID>&unread=true
+GET {{baseUrl}}/api/articles?feedId=fde60409-964f-4305-a9e2-6c8ef5cccddd&unread=true
 Origin: {{origin}}
 
 
@@ -154,7 +154,7 @@ Origin: {{origin}}
 
 
 ### Mark all articles in a feed as read
-POST {{baseUrl}}/api/feeds/<FEED_ID>/articles/read-all
+POST {{baseUrl}}/api/feeds/fde60409-964f-4305-a9e2-6c8ef5cccddd/articles/read-all
 Origin: {{origin}}
 
 

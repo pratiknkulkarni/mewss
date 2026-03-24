@@ -22,6 +22,11 @@ export const listArticlesSchema = z.object({
     unread: z.string().optional().transform((v) => v === "true" ? true : v === "false" ? false : undefined),
 });
 
+// another one
+export const listArticlesGlobalSchema = listArticlesSchema.extend({
+    feedId: z.string().optional(),
+});
+
 export async function listArticlesForFeed(
     feedId: string,
     userId: string,
@@ -40,4 +45,48 @@ export async function listArticlesForFeed(
 
     logger.info({feedId, userId, page, limit}, "articles listed for feed");
     return {articles: articles, pagination: buildPagination(page, limit, totalArticles)}
+}
+
+
+export async function listArticlesGlobal(
+    userId: string,
+    query: z.infer<typeof listArticlesGlobalSchema>,
+) {
+    const {page, limit, unread, feedId} = query;
+    const [articles, total] = await Promise.all([
+        articleRepo.listArticlesGlobal(userId, {page, limit, unread, feedId}),
+        articleRepo.countArticlesGlobal(userId, {unread, feedId}),
+    ]);
+
+    logger.info({userId, page, limit, total}, "global article inbox listed");
+    return {articles, pagination: buildPagination(page, limit, total)};
+}
+
+export async function markArticleRead(articleId: string, userId: string) {
+    const updated = await articleRepo.markArticleAsRead(articleId, userId);
+    if (!updated) {
+        logger.warn({articleId, userId}, "article not found for mark-as-read");
+        throw new NotFoundError();
+    }
+    logger.info({articleId, userId}, "article marked as read");
+    return updated;
+}
+
+export async function markFeedArticlesRead(feedId: string, userId: string) {
+    // Verify feed ownership before bulk-updating (opaque 404 pattern)
+    const feedRow = await feedRepo.findFeedByIdAndUser(feedId, userId);
+    if (!feedRow) {
+        logger.warn({feedId, userId}, "feed not found for bulk mark-as-read");
+        throw new NotFoundError();
+    }
+
+    const updatedCount = await articleRepo.markAllArticlesAsRead(feedId, userId);
+    logger.info({feedId, userId, updatedCount}, "all articles in feed marked as read");
+    return {updatedCount};
+}
+
+export async function markAllArticlesRead(userId: string) {
+    const updatedCount = await articleRepo.markAllArticlesAsReadGlobal(userId);
+    logger.info({userId, updatedCount}, "all articles marked as read");
+    return {updatedCount};
 }
