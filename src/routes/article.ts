@@ -18,9 +18,7 @@ router.use("*", requireAuth);
 router.get("/feeds/:feedId/articles", zValidator("query", listArticlesSchema), async (c) => {
     const user = c.get("user");
     const query = c.req.valid("query");
-    // console.log("***")
-    // console.log(query);
-    // console.log("***")
+
     const result = await listArticlesForFeed(c.req.param("feedId"), user.id, query);
 
     return c.json(result);

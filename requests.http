@@ -113,13 +113,13 @@ Origin: {{origin}}
 DELETE {{baseUrl}}/api/feeds/<FEED_ID>
 Origin: {{origin}}
 
-### List articles for a feed (defaults: page=1, limit=20)
+### List articles for a feed (defaults: page=1, limit=10)
 GET {{baseUrl}}/api/feeds/23cafaf6-a7ae-4676-9f89-a039477da92d/articles
 Origin: {{origin}}
 
 
 ### List articles for a feed — page 2
-GET {{baseUrl}}/api/feeds/<FEED_ID>/articles?page=2&limit=10
+GET {{baseUrl}}/api/feeds/23cafaf6-a7ae-4676-9f89-a039477da92d/articles?page=3&limit=10
 Origin: {{origin}}
 
 
