@@ -1,7 +1,16 @@
 import {Hono} from "hono";
 import {requireAuth} from "../middleware/auth.js";
 import {auth} from "../lib/auth.js";
-import {createFeed, createFeedSchema, deleteFeed, getFeed, listFeeds, refreshFeed} from "../services/feed.service.js";
+import {
+    createFeed,
+    createFeedSchema,
+    deleteFeed,
+    getFeed,
+    listFeeds,
+    refreshFeed,
+    updateFeed,
+    updateFeedSchema
+} from "../services/feed.service.js";
 import {zValidator} from "@hono/zod-validator";
 
 type HonoEnv = {
@@ -52,6 +61,13 @@ router.post("/:id/refresh", async (c) => {
 router.get("/:id", async (c) => {
     const user = c.get("user");
     const feed = await getFeed(c.req.param("id"), user.id);
+    return c.json({feed});
+});
+
+router.patch("/:id", zValidator("json", updateFeedSchema), async (c) => {
+    const user = c.get("user");
+    const body = c.req.valid("json");
+    const feed = await updateFeed(c.req.param("id"), user.id, body);
     return c.json({feed});
 });
 

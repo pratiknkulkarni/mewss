@@ -47,6 +47,24 @@ export const createFeedSchema = z.object({
         })
 })
 
+export const updateFeedSchema = z.object({
+    refreshInterval: z.string()
+        .regex(INTERVAL_REGEX, "Use a string like 10m or 1h")
+        .refine((v) => {
+            try {
+                parseRefreshInterval(v);
+                return true;
+            } catch {
+                return false;
+            }
+        }, {error: "Interval must be between 5m and 24h"})
+        .optional(),
+    status: z.enum(["active", "paused"]).optional(),
+}).refine(
+    (data) => data.refreshInterval !== undefined || data.status !== undefined,
+    {error: "At least one of refreshInterval or status must be provided"},
+);
+
 export async function createFeed(userId: string, createFeedInput: z.infer<typeof createFeedSchema>) {
     const feedURLValidation = await validateFeedUrl(createFeedInput.url);
     log.debug({userId, url: createFeedInput.url, feedURLValidation}, "feed validation successful")
@@ -71,7 +89,7 @@ export async function createFeed(userId: string, createFeedInput: z.infer<typeof
         return {...newFeed, title: feedURLValidation.title, description: feedURLValidation.description};
     } catch (err: any) {
         if (err?.code === "23505") {
-            log.warn({ userId, url: createFeedInput.url }, "duplicate feed subscription attempt");
+            log.warn({userId, url: createFeedInput.url}, "duplicate feed subscription attempt");
             throw new ConflictError("You are already subscribed to this feed.");
         }
         log.error({err, userId}, "feed creation failed");
@@ -112,3 +130,32 @@ export async function getFeed(id: string, userId: string) {
     log.info({id, userId}, "feed retrieved")
     return row;
 }
+
+
+export async function updateFeed(id: string, userId: string, input: z.infer<typeof updateFeedSchema>) {
+    const existing = await feedRepo.findFeedByIdAndUser(id, userId);
+    if (!existing) {
+        log.warn({id, userId}, "feed not found for update");
+        throw new NotFoundError();
+    }
+
+    const updates: Parameters<typeof feedRepo.updateFeed>[2] = {};
+
+    if (input.refreshInterval !== undefined) {
+        const intervalNs = parseRefreshInterval(input.refreshInterval);
+        updates.refreshInterval = intervalNs;
+        updates.nextFetchAfter = new Date(Date.now() + intervalNs / 1_000_000).toISOString();
+    }
+
+    if (input.status !== undefined) {
+        updates.status = input.status;
+        if (input.status === "active") {
+            updates.nextFetchAfter = new Date().toISOString();
+        }
+    }
+
+    const updated = await feedRepo.updateFeed(id, userId, updates);
+    log.info({id, userId, updates}, "feed updated");
+    return updated!;
+}
+

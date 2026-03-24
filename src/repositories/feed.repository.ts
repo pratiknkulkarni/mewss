@@ -69,3 +69,18 @@ export async function findFeedsByIdsAndUser(
         .from(feed)
         .where(and(inArray(feed.id, ids), eq(feed.userId, userId)));
 }
+
+export async function updateFeed(
+    id: string,
+    userId: string,
+    updates: Partial<Pick<NewFeed, "refreshInterval" | "status" | "nextFetchAfter">>,
+    dbClient: DbClient = db,
+): Promise<FeedRow | null> {
+    const rows = await dbClient
+        .update(feed)
+        .set({...updates, updatedAt: new Date().toISOString()})
+        .where(and(eq(feed.id, id), eq(feed.userId, userId)))
+        .returning();
+    return rows[0] ?? null;
+}
+
