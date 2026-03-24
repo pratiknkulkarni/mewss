@@ -68,7 +68,7 @@ Content-Type: application/json
 Origin: {{origin}}
 
 {
-  "url": "https://feeds.feedburner.com/ndtvnews-top-stories",
+  "url": "https://www.thehindu.com/feeder/default.rss",
   "refreshInterval": "30m"
 }
 
@@ -105,10 +105,79 @@ Origin: {{origin}}
 }
 
 ### Trigger manual refresh
-POST {{baseUrl}}/api/feeds/<FEED_ID>/refresh
+POST {{baseUrl}}/api/feeds/fde60409-964f-4305-a9e2-6c8ef5cccddd/refresh
 Origin: {{origin}}
 
 
 ### Delete a feed
 DELETE {{baseUrl}}/api/feeds/<FEED_ID>
+Origin: {{origin}}
+
+### List articles for a feed (defaults: page=1, limit=10)
+GET {{baseUrl}}/api/feeds/fde60409-964f-4305-a9e2-6c8ef5cccddd/articles
+Origin: {{origin}}
+
+
+### List articles for a feed — page 2
+GET {{baseUrl}}/api/feeds/23cafaf6-a7ae-4676-9f89-a039477da92d/articles?page=3&limit=10
+Origin: {{origin}}
+
+
+### List unread articles for a feed
+GET {{baseUrl}}/api/feeds/fde60409-964f-4305-a9e2-6c8ef5cccddd/articles?unread=true
+Origin: {{origin}}
+
+
+### Global inbox — all articles across all feeds
+GET {{baseUrl}}/api/articles
+Origin: {{origin}}
+
+
+### Global inbox — unread only
+GET {{baseUrl}}/api/articles?unread=true
+Origin: {{origin}}
+
+
+### Global inbox — filtered to a specific feed
+GET {{baseUrl}}/api/articles?feedId=<FEED_ID>
+Origin: {{origin}}
+
+
+### Global inbox — unread in a specific feed
+GET {{baseUrl}}/api/articles?feedId=fde60409-964f-4305-a9e2-6c8ef5cccddd&unread=true
+Origin: {{origin}}
+
+
+### Mark a single article as read
+PATCH {{baseUrl}}/api/articles/<ARTICLE_ID>/read
+Origin: {{origin}}
+
+
+### Mark all articles in a feed as read
+POST {{baseUrl}}/api/feeds/fde60409-964f-4305-a9e2-6c8ef5cccddd/articles/read-all
+Origin: {{origin}}
+
+
+### Mark all articles across all feeds as read
+POST {{baseUrl}}/api/articles/read-all
+Origin: {{origin}}
+
+
+### NOT FOUND — articles for non-existent feed
+GET {{baseUrl}}/api/feeds/00000000-0000-0000-0000-000000000000/articles
+Origin: {{origin}}
+
+
+### NOT FOUND — mark non-existent article as read
+PATCH {{baseUrl}}/api/articles/00000000-0000-0000-0000-000000000000/read
+Origin: {{origin}}
+
+
+### VALIDATION ERROR — limit above max (100)
+GET {{baseUrl}}/api/feeds/<FEED_ID>/articles?limit=200
+Origin: {{origin}}
+
+
+### VALIDATION ERROR — page below minimum (1)
+GET {{baseUrl}}/api/feeds/<FEED_ID>/articles?page=0
 Origin: {{origin}}

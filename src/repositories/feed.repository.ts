@@ -1,15 +1,21 @@
 import {db} from "../db/db.js";
-import {feed} from "../db/generated/schema.js";
-import {and, eq, desc} from "drizzle-orm";
+import {article, feed} from "../db/generated/schema.js";
+import {and, eq, desc, inArray} from "drizzle-orm";
 import type {NodePgDatabase} from "drizzle-orm/node-postgres";
 
 
 type NewFeed = typeof feed.$inferInsert;
 type FeedRow = typeof feed.$inferSelect;
+export type NewArticle = typeof article.$inferInsert;
 
 // type DbClient = typeof db; // easier to mock in the tests, no major changres required here
 // type DbClient = ReturnType<typeof drizzle>;
 type DbClient = NodePgDatabase;  // base type, no $client attachment
+
+export async function insertArticle(values: NewArticle, dbClient: DbClient = db) {
+    const rows = await dbClient.insert(article).values(values).returning();
+    return rows[0];
+}
 
 export async function createFeed(values: NewFeed, dbClient: DbClient = db) {
     const rows = await dbClient.insert(feed).values(values).returning();
@@ -51,4 +57,15 @@ export async function findFeedByIdAndUser(id: string, userId: string, dbClient: 
         .from(feed)
         .where(and(eq(feed.id, id), eq(feed.userId, userId)));
     return rows[0] ?? null;
+}
+
+export async function findFeedsByIdsAndUser(
+    ids: string[],
+    userId: string,
+    dbClient: DbClient = db,
+): Promise<FeedRow[]> {
+    return dbClient
+        .select()
+        .from(feed)
+        .where(and(inArray(feed.id, ids), eq(feed.userId, userId)));
 }
