@@ -70,13 +70,6 @@ router.post("/feeds/:feedId/articles/unread-all", async (c) => {
     return c.json(result);
 });
 
-// POST /api/articles/read-all — mark all articles for the user as read
-router.post("/articles/read-all", async (c) => {
-    const user = c.get("user");
-    const result = await markAllArticlesRead(user.id);
-    return c.json(result);
-});
-
 // POST /api/feeds/bulk-read — mark all articles in selected feeds as read
 router.post("/feeds/bulk-read", zValidator("json", bulkFeedActionSchema), async (c) => {
     const user = c.get("user");
