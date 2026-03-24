@@ -2,12 +2,14 @@ import type {NodePgDatabase} from "drizzle-orm/node-postgres";
 import {article, userArticleStates} from "../db/generated/schema.js";
 import {and, eq, getTableColumns, isNull, sql} from "drizzle-orm";
 import {db} from "../db/db.js";
+import type {listArticlesSchema} from "../services/article.service.js";
+import {z} from "zod";
 
 type DbClient = NodePgDatabase;
 
 // type Article = typeof article.$inferSelect;
 
-type ArticleWithReadState = typeof article.$inferSelect & {
+export type ArticleWithReadState = typeof article.$inferSelect & {
     isRead: boolean;
     readAt: string | null;
 };
@@ -43,13 +45,14 @@ function buildArticleSelect(userId: string, dbClient: DbClient) {
         );
 }
 
-// TODO: update this function to use "ListOptions" instead of "page" and "limit" and "unread"
 export async function listArticlesByFeed(feedId: string, userId: string,
-                                         page: number,
-                                         limit: number,
-                                         unread?: boolean,
+                                         query: z.infer<typeof listArticlesSchema>,
+                                         // page: number,
+                                         // limit: number,
+                                         // unread?: boolean,
                                          dbClient: DbClient = db): Promise<ArticleWithReadState[]> {
 
+    const {page, limit, unread} = query;
     const offset = (page - 1) * limit;
 
     const conditions = [

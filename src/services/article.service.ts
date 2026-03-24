@@ -40,7 +40,7 @@ export async function listArticlesForFeed(
 
     const {page, limit, unread} = query;
 
-    const articles = await articleRepo.listArticlesByFeed(feedId, userId, page, limit, unread)
+    const articles = await articleRepo.listArticlesByFeed(feedId, userId, {unread, page, limit})
     const totalArticles = await articleRepo.countArticlesByFeedAndUser(feedId, userId, {unread})
 
     logger.info({feedId, userId, page, limit}, "articles listed for feed");
