@@ -27,6 +27,11 @@ export const listArticlesGlobalSchema = listArticlesSchema.extend({
     feedId: z.string().optional(),
 });
 
+// and another one
+export const bulkFeedActionSchema = z.object({
+    feedIds: z.array(z.string().min(1)).min(1).max(50, "Maximum 50 feeds per bulk operation"),
+});
+
 export async function listArticlesForFeed(
     feedId: string,
     userId: string,
@@ -88,5 +93,41 @@ export async function markFeedArticlesRead(feedId: string, userId: string) {
 export async function markAllArticlesRead(userId: string) {
     const updatedCount = await articleRepo.markAllArticlesAsReadGlobal(userId);
     logger.info({userId, updatedCount}, "all articles marked as read");
+    return {updatedCount};
+}
+
+export async function markFeedArticlesUnread(feedId: string, userId: string) {
+    const feedRow = await feedRepo.findFeedByIdAndUser(feedId, userId);
+    if (!feedRow) {
+        logger.warn({feedId, userId}, "feed not found for bulk mark-as-unread");
+        throw new NotFoundError();
+    }
+    const updatedCount = await articleRepo.markAllArticlesAsUnread(feedId, userId);
+    logger.info({feedId, userId, updatedCount}, "all articles in feed marked as unread");
+    return {updatedCount};
+}
+
+
+export async function markFeedsBulkRead(feedIds: string[], userId: string) {
+    // Verify ALL feedIds belong to this user before touching any state.
+    // If any are missing, return opaque 404 — don't reveal which ones exist.
+    const found = await feedRepo.findFeedsByIdsAndUser(feedIds, userId);
+    if (found.length !== feedIds.length) {
+        logger.warn({feedIds, userId, found: found.length}, "one or more feeds not found for bulk read");
+        throw new NotFoundError();
+    }
+    const updatedCount = await articleRepo.markAllArticlesAsReadForFeeds(feedIds, userId);
+    logger.info({feedIds, userId, updatedCount}, "articles in selected feeds marked as read");
+    return {updatedCount};
+}
+
+export async function markFeedsBulkUnread(feedIds: string[], userId: string) {
+    const found = await feedRepo.findFeedsByIdsAndUser(feedIds, userId);
+    if (found.length !== feedIds.length) {
+        logger.warn({feedIds, userId, found: found.length}, "one or more feeds not found for bulk unread");
+        throw new NotFoundError();
+    }
+    const updatedCount = await articleRepo.markAllArticlesAsUnreadForFeeds(feedIds, userId);
+    logger.info({feedIds, userId, updatedCount}, "articles in selected feeds marked as unread");
     return {updatedCount};
 }

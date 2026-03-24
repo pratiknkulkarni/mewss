@@ -1,13 +1,11 @@
 import type {NodePgDatabase} from "drizzle-orm/node-postgres";
 import {article, userArticleStates} from "../db/generated/schema.js";
-import {and, eq, getTableColumns, isNull, sql} from "drizzle-orm";
+import {and, eq, getTableColumns, inArray, isNull, sql} from "drizzle-orm";
 import {db} from "../db/db.js";
 import type {listArticlesSchema} from "../services/article.service.js";
 import {z} from "zod";
 
 type DbClient = NodePgDatabase;
-
-// type Article = typeof article.$inferSelect;
 
 export type ArticleWithReadState = typeof article.$inferSelect & {
     isRead: boolean;
@@ -47,9 +45,6 @@ function buildArticleSelect(userId: string, dbClient: DbClient) {
 
 export async function listArticlesByFeed(feedId: string, userId: string,
                                          query: z.infer<typeof listArticlesSchema>,
-                                         // page: number,
-                                         // limit: number,
-                                         // unread?: boolean,
                                          dbClient: DbClient = db): Promise<ArticleWithReadState[]> {
 
     const {page, limit, unread} = query;
@@ -223,6 +218,158 @@ export async function markAllArticlesAsReadGlobal(
         .select({id: article.id})
         .from(article)
         .where(eq(article.userId, userId));
+
+    if (articleRows.length === 0) return 0;
+
+    const now = new Date().toISOString();
+    const values = articleRows.map(({id}) => ({
+        userId,
+        articleId: id,
+        isRead: true as const,
+        readAt: now,
+    }));
+
+    await dbClient
+        .insert(userArticleStates)
+        .values(values)
+        .onConflictDoUpdate({
+            target: [userArticleStates.userId, userArticleStates.articleId],
+            set: {isRead: true, readAt: now},
+        });
+
+    return articleRows.length;
+}
+
+// I'm adding these below ones as a reversal for the previous ones.
+// Accidents might happen in which users accidentally mark it as read/unread.
+
+export async function markAllArticlesAsUnreadForFeeds(
+    feedIds: string[],
+    userId: string,
+    dbClient: DbClient = db,
+): Promise<number> {
+    const articleRows = await dbClient
+        .select({id: article.id})
+        .from(article)
+        .where(and(inArray(article.feedId, feedIds), eq(article.userId, userId)));
+
+    if (articleRows.length === 0) return 0;
+
+    const values = articleRows.map(({id}) => ({
+        userId,
+        articleId: id,
+        isRead: false as const,
+        readAt: null as null,
+    }));
+
+    await dbClient
+        .insert(userArticleStates)
+        .values(values)
+        .onConflictDoUpdate({
+            target: [userArticleStates.userId, userArticleStates.articleId],
+            set: {isRead: false, readAt: null},
+        });
+
+    return articleRows.length;
+}
+
+
+export async function markArticleAsUnread(
+    articleId: string,
+    userId: string,
+    dbClient: DbClient = db,
+): Promise<ArticleWithReadState | null> {
+    // Verify the article exists and belongs to this user before touching state
+    const rows = await dbClient
+        .select()
+        .from(article)
+        .where(and(eq(article.id, articleId), eq(article.userId, userId)));
+
+    if (rows.length === 0) return null;
+
+    // Upsert with is_read=false, read_at=null — returns article to unread state
+    await dbClient
+        .insert(userArticleStates)
+        .values({userId, articleId, isRead: false, readAt: null})
+        .onConflictDoUpdate({
+            target: [userArticleStates.userId, userArticleStates.articleId],
+            set: {isRead: false, readAt: null},
+        });
+
+    const result = await buildArticleSelect(userId, dbClient)
+        .where(and(eq(article.id, articleId), eq(article.userId, userId)));
+
+    return (result[0] as ArticleWithReadState) ?? null;
+}
+
+export async function markAllArticlesAsUnread(
+    feedId: string,
+    userId: string,
+    dbClient: DbClient = db,
+): Promise<number> {
+    const articleRows = await dbClient
+        .select({id: article.id})
+        .from(article)
+        .where(and(eq(article.feedId, feedId), eq(article.userId, userId)));
+
+    if (articleRows.length === 0) return 0;
+
+    const values = articleRows.map(({id}) => ({
+        userId,
+        articleId: id,
+        isRead: false as const,
+        readAt: null as null,
+    }));
+
+    await dbClient
+        .insert(userArticleStates)
+        .values(values)
+        .onConflictDoUpdate({
+            target: [userArticleStates.userId, userArticleStates.articleId],
+            set: {isRead: false, readAt: null},
+        });
+
+    return articleRows.length;
+}
+
+export async function markAllArticlesAsUnreadGlobal(
+    userId: string,
+    dbClient: DbClient = db,
+): Promise<number> {
+    const articleRows = await dbClient
+        .select({id: article.id})
+        .from(article)
+        .where(eq(article.userId, userId));
+
+    if (articleRows.length === 0) return 0;
+
+    const values = articleRows.map(({id}) => ({
+        userId,
+        articleId: id,
+        isRead: false as const,
+        readAt: null as null,
+    }));
+
+    await dbClient
+        .insert(userArticleStates)
+        .values(values)
+        .onConflictDoUpdate({
+            target: [userArticleStates.userId, userArticleStates.articleId],
+            set: {isRead: false, readAt: null},
+        });
+
+    return articleRows.length;
+}
+
+export async function markAllArticlesAsReadForFeeds(
+    feedIds: string[],
+    userId: string,
+    dbClient: DbClient = db,
+): Promise<number> {
+    const articleRows = await dbClient
+        .select({id: article.id})
+        .from(article)
+        .where(and(inArray(article.feedId, feedIds), eq(article.userId, userId)));
 
     if (articleRows.length === 0) return 0;
 

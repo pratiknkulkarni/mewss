@@ -1,6 +1,6 @@
 import {db} from "../db/db.js";
 import {feed} from "../db/generated/schema.js";
-import {and, eq, desc} from "drizzle-orm";
+import {and, eq, desc, inArray} from "drizzle-orm";
 import type {NodePgDatabase} from "drizzle-orm/node-postgres";
 
 
@@ -51,4 +51,15 @@ export async function findFeedByIdAndUser(id: string, userId: string, dbClient: 
         .from(feed)
         .where(and(eq(feed.id, id), eq(feed.userId, userId)));
     return rows[0] ?? null;
+}
+
+export async function findFeedsByIdsAndUser(
+    ids: string[],
+    userId: string,
+    dbClient: DbClient = db,
+): Promise<FeedRow[]> {
+    return dbClient
+        .select()
+        .from(feed)
+        .where(and(inArray(feed.id, ids), eq(feed.userId, userId)));
 }

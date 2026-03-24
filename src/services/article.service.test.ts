@@ -30,7 +30,7 @@ import {
     listArticlesGlobal,
     markAllArticlesRead,
     markArticleRead,
-    markFeedArticlesRead,
+    markFeedArticlesRead, markFeedArticlesUnread, markFeedsBulkRead, markFeedsBulkUnread,
 } from "./article.service.js";
 import type {ArticleWithReadState} from "../repositories/article.repository.js";
 
@@ -206,5 +206,78 @@ describe("markAllArticlesRead", () => {
         vi.mocked(articleRepo.markAllArticlesAsReadGlobal).mockResolvedValueOnce(0);
 
         expect(await markAllArticlesRead("user-abc")).toEqual({updatedCount: 0});
+    });
+});
+
+describe("markFeedArticlesUnread", () => {
+    it("returns updatedCount when feed exists", async () => {
+        vi.mocked(feedRepo.findFeedByIdAndUser).mockResolvedValueOnce(makeFeedRow() as any);
+        vi.mocked(articleRepo.markAllArticlesAsUnread).mockResolvedValueOnce(3);
+
+        expect(await markFeedArticlesUnread("feed-123", "user-abc")).toEqual({updatedCount: 3});
+    });
+
+    it("throws NotFoundError when feed does not exist", async () => {
+        vi.mocked(feedRepo.findFeedByIdAndUser).mockResolvedValueOnce(null);
+
+        await expect(markFeedArticlesUnread("missing", "user-abc")).rejects.toBeInstanceOf(NotFoundError);
+        expect(articleRepo.markAllArticlesAsUnread).not.toHaveBeenCalled();
+    });
+});
+
+
+describe("markFeedsBulkRead", () => {
+    it("returns updatedCount when all feedIds belong to the user", async () => {
+        const feedIds = ["feed-1", "feed-2"];
+        vi.mocked(feedRepo.findFeedsByIdsAndUser).mockResolvedValueOnce([
+            makeFeedRow({id: "feed-1"}) as any,
+            makeFeedRow({id: "feed-2"}) as any,
+        ]);
+        vi.mocked(articleRepo.markAllArticlesAsReadForFeeds).mockResolvedValueOnce(8);
+
+        expect(await markFeedsBulkRead(feedIds, "user-abc")).toEqual({updatedCount: 8});
+    });
+
+    it("throws NotFoundError when any feedId does not belong to the user", async () => {
+        // Request 2 feeds, only 1 found
+        vi.mocked(feedRepo.findFeedsByIdsAndUser).mockResolvedValueOnce([
+            makeFeedRow({id: "feed-1"}) as any,
+        ]);
+
+        await expect(
+            markFeedsBulkRead(["feed-1", "feed-unknown"], "user-abc")
+        ).rejects.toBeInstanceOf(NotFoundError);
+
+        expect(articleRepo.markAllArticlesAsReadForFeeds).not.toHaveBeenCalled();
+    });
+
+    it("throws NotFoundError when no feeds found", async () => {
+        vi.mocked(feedRepo.findFeedsByIdsAndUser).mockResolvedValueOnce([]);
+
+        await expect(
+            markFeedsBulkRead(["feed-1"], "user-abc")
+        ).rejects.toBeInstanceOf(NotFoundError);
+    });
+});
+
+describe("markFeedsBulkUnread", () => {
+    it("returns updatedCount when all feedIds belong to the user", async () => {
+        const feedIds = ["feed-1"];
+        vi.mocked(feedRepo.findFeedsByIdsAndUser).mockResolvedValueOnce([
+            makeFeedRow({id: "feed-1"}) as any,
+        ]);
+        vi.mocked(articleRepo.markAllArticlesAsUnreadForFeeds).mockResolvedValueOnce(4);
+
+        expect(await markFeedsBulkUnread(feedIds, "user-abc")).toEqual({updatedCount: 4});
+    });
+
+    it("throws NotFoundError when any feedId does not belong to the user", async () => {
+        vi.mocked(feedRepo.findFeedsByIdsAndUser).mockResolvedValueOnce([]);
+
+        await expect(
+            markFeedsBulkUnread(["feed-unknown"], "user-abc")
+        ).rejects.toBeInstanceOf(NotFoundError);
+
+        expect(articleRepo.markAllArticlesAsUnreadForFeeds).not.toHaveBeenCalled();
     });
 });
