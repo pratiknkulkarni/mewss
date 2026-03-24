@@ -4,13 +4,11 @@ import {Pool} from "pg";
 export const auth = betterAuth({
     database: new Pool({
         connectionString: process.env.DATABASE_URL!,
-        // user: process.env.DATABASE_USER,
-        // host: process.env.DATABASE_HOST,
-        // database: process.env.DATABASE_NAME,
-        // password: process.env.DATABASE_PASSWORD,
-        // port: Number(process.env.DATABASE_PORT),
     }),
-    trustedOrigins: [process.env.FRONTEND_URL!, "http://localhost:3000"],
+    trustedOrigins: [
+        "http://localhost:3000",
+        ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
+    ],
     emailAndPassword: {enabled: true},
     session: {
         expiresIn: 7 * 24 * 60 * 60,

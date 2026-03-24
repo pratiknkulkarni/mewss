@@ -30,7 +30,12 @@ import {
     listArticlesGlobal,
     markAllArticlesRead,
     markArticleRead,
-    markFeedArticlesRead, markFeedArticlesUnread, markFeedsBulkRead, markFeedsBulkUnread,
+    markFeedArticlesRead,
+    markFeedArticlesUnread,
+    markFeedsBulkRead,
+    markFeedsBulkUnread,
+    markArticleUnread,
+    getArticle
 } from "./article.service.js";
 import type {ArticleWithReadState} from "../repositories/article.repository.js";
 
@@ -279,5 +284,37 @@ describe("markFeedsBulkUnread", () => {
         ).rejects.toBeInstanceOf(NotFoundError);
 
         expect(articleRepo.markAllArticlesAsUnreadForFeeds).not.toHaveBeenCalled();
+    });
+});
+
+describe("getArticle", () => {
+    it("returns the article when found", async () => {
+        const a = makeArticle();
+        vi.mocked(articleRepo.findArticleByIdAndUser).mockResolvedValueOnce(a);
+
+        expect(await getArticle("article-123", "user-abc")).toEqual(a);
+    });
+
+    it("throws NotFoundError when article does not exist", async () => {
+        vi.mocked(articleRepo.findArticleByIdAndUser).mockResolvedValueOnce(null);
+
+        await expect(getArticle("missing", "user-abc")).rejects.toBeInstanceOf(NotFoundError);
+    });
+});
+
+describe("markArticleUnread", () => {
+    it("returns updated article with isRead=false", async () => {
+        const a = makeArticle({isRead: false, readAt: null});
+        vi.mocked(articleRepo.markArticleAsUnread).mockResolvedValueOnce(a);
+
+        const result = await markArticleUnread("article-123", "user-abc");
+        expect(result.isRead).toBe(false);
+        expect(result.readAt).toBeNull();
+    });
+
+    it("throws NotFoundError when repo returns null", async () => {
+        vi.mocked(articleRepo.markArticleAsUnread).mockResolvedValueOnce(null);
+
+        await expect(markArticleUnread("missing", "user-abc")).rejects.toBeInstanceOf(NotFoundError);
     });
 });

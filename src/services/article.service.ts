@@ -3,6 +3,7 @@ import * as articleRepo from "../repositories/article.repository.js";
 import {NotFoundError} from "../errors/errors.js";
 import {z} from "zod";
 import {createLogger} from "../lib/logger.js";
+import type {ListOptions} from "../repositories/article.repository.js";
 
 const logger = createLogger("service.article");
 
@@ -35,7 +36,8 @@ export const bulkFeedActionSchema = z.object({
 export async function listArticlesForFeed(
     feedId: string,
     userId: string,
-    query: z.infer<typeof listArticlesSchema>,
+    query: ListOptions,
+    // query: z.infer<typeof listArticlesSchema>,
 ) {
     const feedRow = await feedRepo.findFeedByIdAndUser(feedId, userId);
     if (!feedRow) {
@@ -45,8 +47,13 @@ export async function listArticlesForFeed(
 
     const {page, limit, unread} = query;
 
-    const articles = await articleRepo.listArticlesByFeed(feedId, userId, {unread, page, limit})
-    const totalArticles = await articleRepo.countArticlesByFeedAndUser(feedId, userId, {unread})
+    // const articles = await articleRepo.listArticlesByFeed(feedId, userId, {unread, page, limit})
+    // const totalArticles = await articleRepo.countArticlesByFeedAndUser(feedId, userId, {unread})
+
+    const [articles, totalArticles] = await Promise.all([
+        articleRepo.listArticlesByFeed(feedId, userId, {unread, page, limit}),
+        articleRepo.countArticlesByFeedAndUser(feedId, userId, {unread}),
+    ])
 
     logger.info({feedId, userId, page, limit}, "articles listed for feed");
     return {articles: articles, pagination: buildPagination(page, limit, totalArticles)}
