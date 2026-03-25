@@ -1,0 +1,183 @@
+### Variables
+@baseUrl = http://localhost:3000
+@origin = http://localhost:3000
+@email = admin1@homelab.local
+@password = securepassword123
+
+
+### ========================================
+### AUTH
+### ========================================
+
+### Sign up
+POST {{baseUrl}}/api/auth/sign-up/email
+Content-Type: application/json
+Origin: {{origin}}
+
+{
+  "name": "Test User",
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+
+### Sign in
+# @name signIn
+POST {{baseUrl}}/api/auth/sign-in/email
+Content-Type: application/json
+Origin: {{origin}}
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+
+### Get current session
+GET {{baseUrl}}/api/auth/get-session
+Origin: {{origin}}
+
+
+### Sign out
+POST {{baseUrl}}/api/auth/sign-out
+Origin: {{origin}}
+
+### ========================================
+### FEEDS
+### ========================================
+
+### List all feeds
+GET {{baseUrl}}/api/feeds
+Origin: {{origin}}
+
+
+### List feeds filtered by status
+GET {{baseUrl}}/api/feeds?status=active
+Origin: {{origin}}
+
+
+### Get a single feed
+GET {{baseUrl}}/api/feeds/<FEED_ID>
+Origin: {{origin}}
+
+
+### Add a new feed
+# @name createFeed
+POST {{baseUrl}}/api/feeds
+Content-Type: application/json
+Origin: {{origin}}
+
+{
+  "url": "https://www.thehindu.com/feeder/default.rss",
+  "refreshInterval": "30m"
+}
+
+
+### Add a feed — validation error (bad URL)
+POST {{baseUrl}}/api/feeds
+Content-Type: application/json
+Origin: {{origin}}
+
+{
+  "url": "not-a-url",
+  "refreshInterval": "30m"
+}
+
+
+### VALIDATION ERROR (interval too short) - Add a feed
+POST {{baseUrl}}/api/feeds
+Content-Type: application/json
+Origin: {{origin}}
+
+{
+  "url": "https://feeds.feedburner.com/TheHackersNews",
+  "refreshInterval": "1m"
+}
+
+### VALIDATION ERROR (url not valid) - Add a feed
+POST {{baseUrl}}/api/feeds
+Content-Type: application/json
+Origin: {{origin}}
+
+{
+  "url": "https://feeds.feedburner.com/TheHackersNewsss",
+  "refreshInterval": "100m"
+}
+
+### Trigger manual refresh
+POST {{baseUrl}}/api/feeds/fde60409-964f-4305-a9e2-6c8ef5cccddd/refresh
+Origin: {{origin}}
+
+
+### Delete a feed
+DELETE {{baseUrl}}/api/feeds/<FEED_ID>
+Origin: {{origin}}
+
+### List articles for a feed (defaults: page=1, limit=10)
+GET {{baseUrl}}/api/feeds/fde60409-964f-4305-a9e2-6c8ef5cccddd/articles
+Origin: {{origin}}
+
+
+### List articles for a feed — page 2
+GET {{baseUrl}}/api/feeds/23cafaf6-a7ae-4676-9f89-a039477da92d/articles?page=3&limit=10
+Origin: {{origin}}
+
+
+### List unread articles for a feed
+GET {{baseUrl}}/api/feeds/fde60409-964f-4305-a9e2-6c8ef5cccddd/articles?unread=true
+Origin: {{origin}}
+
+
+### Global inbox — all articles across all feeds
+GET {{baseUrl}}/api/articles
+Origin: {{origin}}
+
+
+### Global inbox — unread only
+GET {{baseUrl}}/api/articles?unread=true
+Origin: {{origin}}
+
+
+### Global inbox — filtered to a specific feed
+GET {{baseUrl}}/api/articles?feedId=<FEED_ID>
+Origin: {{origin}}
+
+
+### Global inbox — unread in a specific feed
+GET {{baseUrl}}/api/articles?feedId=fde60409-964f-4305-a9e2-6c8ef5cccddd&unread=true
+Origin: {{origin}}
+
+
+### Mark a single article as read
+PATCH {{baseUrl}}/api/articles/<ARTICLE_ID>/read
+Origin: {{origin}}
+
+
+### Mark all articles in a feed as read
+POST {{baseUrl}}/api/feeds/fde60409-964f-4305-a9e2-6c8ef5cccddd/articles/read-all
+Origin: {{origin}}
+
+
+### Mark all articles across all feeds as read
+POST {{baseUrl}}/api/articles/read-all
+Origin: {{origin}}
+
+
+### NOT FOUND — articles for non-existent feed
+GET {{baseUrl}}/api/feeds/00000000-0000-0000-0000-000000000000/articles
+Origin: {{origin}}
+
+
+### NOT FOUND — mark non-existent article as read
+PATCH {{baseUrl}}/api/articles/00000000-0000-0000-0000-000000000000/read
+Origin: {{origin}}
+
+
+### VALIDATION ERROR — limit above max (100)
+GET {{baseUrl}}/api/feeds/<FEED_ID>/articles?limit=200
+Origin: {{origin}}
+
+
+### VALIDATION ERROR — page below minimum (1)
+GET {{baseUrl}}/api/feeds/<FEED_ID>/articles?page=0
+Origin: {{origin}}
