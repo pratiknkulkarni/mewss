@@ -36,7 +36,7 @@ const logger = pino({
     timestamp: pino.stdTimeFunctions.isoTime,
     formatters: {
         level(label) {
-            return {level: label}; // return string (like "info") instead of numbers
+            return { level: label }; // return string (like "info") instead of numbers
         },
     },
     serializers: {
@@ -47,13 +47,14 @@ const logger = pino({
         censor: "[REDACTED]",
     },
     level: process.env.LOG_LEVEL ?? "info",
-    transport: isDev
-        ? {target: "pino-pretty", options: {colorize: true, ignore: "pid,hostname,name", translateTime: false}}
-        : undefined,
+    // transport: { target: "pino-pretty" },
+    // transport: isDev
+    //     ? {target: "pino-pretty", options: {colorize: true, ignore: "pid,hostname,name", translateTime: false}}
+    //     : undefined,
 });
 
 export function createLogger(module: string) {
-    return logger.child({module});
+    return logger.child({ module });
 }
 
 export type AppLogger = ReturnType<typeof createLogger>;
