@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
+	"github.com/microcosm-cc/bluemonday"
 	"github.com/mmcdole/gofeed"
 )
 
@@ -37,6 +39,7 @@ func NewGoFeedFetcher(timeout time.Duration, userAgent string) *GoFeedFetcher {
 }
 
 func (f *GoFeedFetcher) Fetch(ctx context.Context, url string, etag *string, lastModified *string) (*FetchResult, error) {
+	//fmt.Println("inside the fetcher")
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
@@ -66,6 +69,11 @@ func (f *GoFeedFetcher) Fetch(ctx context.Context, url string, etag *string, las
 	}
 
 	feed, err := f.parser.Parse(resp.Body)
+
+	for _, item := range feed.Items {
+		item.Content = extractFeedContent(item)
+	}
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse xml: %w", err)
 	}
@@ -84,5 +92,23 @@ func (f *GoFeedFetcher) Fetch(ctx context.Context, url string, etag *string, las
 		LastModified: newLM,
 		NotModified:  false,
 	}, nil
+}
 
+var sanitizer = bluemonday.UGCPolicy()
+
+// extractFeedContent extracts
+func extractFeedContent(item *gofeed.Item) string {
+	var raw string
+
+	if strings.TrimSpace(item.Content) != "" {
+		raw = item.Content
+	} else if strings.TrimSpace(item.Description) != "" {
+		raw = item.Description
+	}
+
+	if raw == "" {
+		return ""
+	}
+
+	return sanitizer.Sanitize(raw)
 }

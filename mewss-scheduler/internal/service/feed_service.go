@@ -141,6 +141,7 @@ func (s *FeedService) mapToArticle(feed model.Feed, item *gofeed.Item) model.Art
 		UserID:       feed.UserID,
 		GUID:         guid,
 		Title:        item.Title,
+		Content:      item.Content,
 		URL:          item.Link,
 		Author:       author,
 		PublishedAt:  item.PublishedParsed,
