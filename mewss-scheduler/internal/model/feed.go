@@ -30,6 +30,7 @@ type Article struct {
 	GUID         *string
 	Title        string
 	URL          string
+	Content      string
 	Author       *string
 	PublishedAt  *time.Time
 	Summary      *string

@@ -162,25 +162,25 @@ func (r *PostgresFeedRepository) SaveArticles(ctx context.Context, articles []mo
 		return nil
 	}
 
-	columnsPerArticle := 9
+	columnsPerArticle := 10
 	valueStrings := make([]string, 0, len(articles))
 	valueArgs := make([]interface{}, 0, len(articles)*columnsPerArticle)
 
 	paramIndex := 1
 	for _, a := range articles {
-		chunk := fmt.Sprintf("($%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d)",
+		chunk := fmt.Sprintf("($%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d)",
 			paramIndex, paramIndex+1, paramIndex+2, paramIndex+3, paramIndex+4,
-			paramIndex+5, paramIndex+6, paramIndex+7, paramIndex+8)
+			paramIndex+5, paramIndex+6, paramIndex+7, paramIndex+8, paramIndex+9)
 		valueStrings = append(valueStrings, chunk)
 
 		valueArgs = append(valueArgs,
-			a.FeedID, a.UserID, a.GUID, a.Title, a.URL,
+			a.FeedID, a.UserID, a.GUID, a.Title, a.URL, a.Content,
 			a.Author, a.PublishedAt, a.Summary, a.IdentityHash)
 		paramIndex += columnsPerArticle
 	}
 
 	query := fmt.Sprintf(`
-		INSERT INTO article (feed_id, user_id, guid, title, url, author, published_at, summary, identity_hash)
+		INSERT INTO article (feed_id, user_id, guid, title, url, content, author, published_at, summary, identity_hash)
 		VALUES %s
 		ON CONFLICT (identity_hash) DO NOTHING
 	`, strings.Join(valueStrings, ","))
