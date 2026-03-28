@@ -68,10 +68,13 @@ Content-Type: application/json
 Origin: {{origin}}
 
 {
-  "url": "https://www.thehindu.com/feeder/default.rss",
+  "url": "https://css-tricks.com/feed/",
   "refreshInterval": "30m"
 }
 
+### Delete a feed
+DELETE {{baseUrl}}/api/feeds/ea1c270b-e0c4-49f1-a2f9-b0784c27af97
+Origin: {{origin}}
 
 ### Add a feed — validation error (bad URL)
 POST {{baseUrl}}/api/feeds
@@ -105,16 +108,11 @@ Origin: {{origin}}
 }
 
 ### Trigger manual refresh
-POST {{baseUrl}}/api/feeds/fde60409-964f-4305-a9e2-6c8ef5cccddd/refresh
-Origin: {{origin}}
-
-
-### Delete a feed
-DELETE {{baseUrl}}/api/feeds/<FEED_ID>
+POST {{baseUrl}}/api/feeds/475d93b1-9a8e-4bf6-9abe-a2e2a00a9407/refresh
 Origin: {{origin}}
 
 ### List articles for a feed (defaults: page=1, limit=10)
-GET {{baseUrl}}/api/feeds/fde60409-964f-4305-a9e2-6c8ef5cccddd/articles
+GET {{baseUrl}}/api/feeds/d683faf6-ad76-41a1-b779-74d5f1ab1a3c/articles
 Origin: {{origin}}
 
 
