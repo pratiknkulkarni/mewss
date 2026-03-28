@@ -1,121 +1,57 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
 import './App.css'
+// import {Button} from "./components/ui/button.tsx";
+import {SidebarInset, SidebarProvider, SidebarTrigger} from "./components/ui/sidebar.tsx";
+import {AppSidebar} from "./components/navbar/app-sidebar.tsx";
+import {Separator} from "@base-ui/react";
 
 function App() {
-  const [count, setCount] = useState(0)
 
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    return (
+        <>
+            <SidebarProvider>
+                <AppSidebar/>
+                <SidebarInset>
+                    <header
+                        className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+                        <div className="flex items-center gap-2 px-4">
+                            <SidebarTrigger className="-ml-1"/>
+                            <Separator
+                                orientation="vertical"
+                                className="mr-2 data-[orientation=vertical]:h-4"
+                            />
 
-      <div className="ticks"></div>
+                        </div>
+                    </header>
+                    <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+                        <div className="grid auto-rows-min gap-4 md:grid-cols-3">
+                            <div className="aspect-video rounded-xl bg-muted/50"/>
+                            <div className="aspect-video rounded-xl bg-muted/50"/>
+                            <div className="aspect-video rounded-xl bg-muted/50"/>
+                        </div>
+                        <div className="min-h-screen flex-1 rounded-xl bg-muted/50 md:min-h-min"/>
+                    </div>
+                </SidebarInset>
+            </SidebarProvider>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+            {/*<div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center gap-4">*/
+            }
+            {/*    <h1 className="text-3xl font-bold">Theme working</h1>*/
+            }
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+            {/*    <div className="flex gap-2">*/
+            }
+            {/*        <Button>Default</Button>*/
+            }
+            {/*        <Button variant="secondary">Secondary</Button>*/
+            }
+            {/*        <Button variant="destructive">Danger</Button>*/
+            }
+            {/*    </div>*/
+            }
+            {/*</div>*/
+            }
+        </>
+    )
 }
 
 export default App
