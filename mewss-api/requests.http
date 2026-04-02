@@ -1,5 +1,5 @@
 ### Variables
-@baseUrl = http://localhost:3000
+@baseUrl = http://localhost:4444
 @origin = http://localhost:3000
 @email = admin1@homelab.local
 @password = securepassword123
@@ -57,7 +57,7 @@ Origin: {{origin}}
 
 
 ### Get a single feed
-GET {{baseUrl}}/api/feeds/<FEED_ID>
+GET {{baseUrl}}/api/feeds/56b37231-9849-4dfe-aa73-22e062f4cd21
 Origin: {{origin}}
 
 
@@ -68,7 +68,7 @@ Content-Type: application/json
 Origin: {{origin}}
 
 {
-  "url": "https://css-tricks.com/feed/",
+  "url": "https://www.theguardian.com/world/india/rss",
   "refreshInterval": "30m"
 }
 
@@ -112,7 +112,7 @@ POST {{baseUrl}}/api/feeds/475d93b1-9a8e-4bf6-9abe-a2e2a00a9407/refresh
 Origin: {{origin}}
 
 ### List articles for a feed (defaults: page=1, limit=10)
-GET {{baseUrl}}/api/feeds/d683faf6-ad76-41a1-b779-74d5f1ab1a3c/articles
+GET {{baseUrl}}/api/feeds/ce72bc96-545f-488a-b456-69867d321200/articles
 Origin: {{origin}}
 
 
