@@ -27,6 +27,7 @@ function buildArticleSelect(userId: string, dbClient: DbClient) {
     return dbClient
         .select({
             ...getTableColumns(article),
+            content: article.content, // overwrite
             isRead: sql<boolean>`COALESCE(
             ${userArticleStates.isRead},
             false
@@ -43,10 +44,10 @@ function buildArticleSelect(userId: string, dbClient: DbClient) {
         );
 }
 
+
 export async function listArticlesByFeed(feedId: string, userId: string,
                                          query: z.infer<typeof listArticlesSchema>,
                                          dbClient: DbClient = db): Promise<ArticleWithReadState[]> {
-
     const {page, limit, unread} = query;
     const offset = (page - 1) * limit;
 
@@ -58,7 +59,6 @@ export async function listArticlesByFeed(feedId: string, userId: string,
     if (unread) {
         conditions.push(isNull(userArticleStates.readAt))
     }
-
     return buildArticleSelect(userId, dbClient)
         .where(and(...conditions))
         .orderBy(sql`${article.publishedAt}

@@ -1,4 +1,4 @@
-import { pgTable, unique, text, boolean, timestamp, foreignKey, uuid, varchar, uniqueIndex, index, bigint, integer, primaryKey } from "drizzle-orm/pg-core"
+import { pgTable, unique, text, boolean, timestamp, foreignKey, uniqueIndex, index, varchar, bigint, integer, uuid, primaryKey } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 
@@ -31,32 +31,6 @@ export const session = pgTable("session", {
 			name: "session_userId_fkey"
 		}).onDelete("cascade"),
 	unique("session_token_key").on(table.token),
-]);
-
-export const article = pgTable("article", {
-	id: uuid().defaultRandom().primaryKey().notNull(),
-	feedId: varchar("feed_id", { length: 255 }).notNull(),
-	userId: varchar("user_id", { length: 255 }).notNull(),
-	guid: text(),
-	title: text().notNull(),
-	url: text().notNull(),
-	author: text(),
-	publishedAt: timestamp("published_at", { withTimezone: true, mode: 'string' }),
-	summary: text(),
-	identityHash: varchar("identity_hash", { length: 64 }).notNull(),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
-}, (table) => [
-	foreignKey({
-			columns: [table.feedId],
-			foreignColumns: [feed.id],
-			name: "article_feed_id_fkey"
-		}).onDelete("cascade"),
-	foreignKey({
-			columns: [table.userId],
-			foreignColumns: [user.id],
-			name: "article_user_id_fkey"
-		}).onDelete("cascade"),
-	unique("article_identity_hash_key").on(table.identityHash),
 ]);
 
 export const feed = pgTable("feed", {
@@ -114,6 +88,33 @@ export const verification = pgTable("verification", {
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).notNull(),
 	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).notNull(),
 });
+
+export const article = pgTable("article", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	feedId: varchar("feed_id", { length: 255 }).notNull(),
+	userId: varchar("user_id", { length: 255 }).notNull(),
+	guid: text(),
+	title: text().notNull(),
+	url: text().notNull(),
+	author: text(),
+	publishedAt: timestamp("published_at", { withTimezone: true, mode: 'string' }),
+	summary: text(),
+	identityHash: varchar("identity_hash", { length: 64 }).notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
+	content: text(),
+}, (table) => [
+	foreignKey({
+			columns: [table.feedId],
+			foreignColumns: [feed.id],
+			name: "article_feed_id_fkey"
+		}).onDelete("cascade"),
+	foreignKey({
+			columns: [table.userId],
+			foreignColumns: [user.id],
+			name: "article_user_id_fkey"
+		}).onDelete("cascade"),
+	unique("article_identity_hash_key").on(table.identityHash),
+]);
 
 export const schemaMigrations = pgTable("schema_migrations", {
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations

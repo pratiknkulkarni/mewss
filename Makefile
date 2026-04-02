@@ -12,10 +12,9 @@ check-api:
  	@echo "==> api: typecheck"
 	cd mewss-api && bun run tsc --noEmit
 	@echo "==> api: unit tests"
-	cd mewss-api && bun run test                
+	cd mewss-api && bun run test
 	@echo "==> api: integration tests"
 	cd mewss-api && bun run test:integration
-
 
 dev-postgres:
 	docker compose up postgres -d

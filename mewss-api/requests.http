@@ -1,5 +1,5 @@
 ### Variables
-@baseUrl = http://localhost:3000
+@baseUrl = http://localhost:4444
 @origin = http://localhost:3000
 @email = admin1@homelab.local
 @password = securepassword123
@@ -57,7 +57,7 @@ Origin: {{origin}}
 
 
 ### Get a single feed
-GET {{baseUrl}}/api/feeds/<FEED_ID>
+GET {{baseUrl}}/api/feeds/56b37231-9849-4dfe-aa73-22e062f4cd21
 Origin: {{origin}}
 
 
@@ -68,10 +68,13 @@ Content-Type: application/json
 Origin: {{origin}}
 
 {
-  "url": "https://www.thehindu.com/feeder/default.rss",
+  "url": "https://www.theguardian.com/world/india/rss",
   "refreshInterval": "30m"
 }
 
+### Delete a feed
+DELETE {{baseUrl}}/api/feeds/ea1c270b-e0c4-49f1-a2f9-b0784c27af97
+Origin: {{origin}}
 
 ### Add a feed — validation error (bad URL)
 POST {{baseUrl}}/api/feeds
@@ -105,16 +108,11 @@ Origin: {{origin}}
 }
 
 ### Trigger manual refresh
-POST {{baseUrl}}/api/feeds/fde60409-964f-4305-a9e2-6c8ef5cccddd/refresh
-Origin: {{origin}}
-
-
-### Delete a feed
-DELETE {{baseUrl}}/api/feeds/<FEED_ID>
+POST {{baseUrl}}/api/feeds/475d93b1-9a8e-4bf6-9abe-a2e2a00a9407/refresh
 Origin: {{origin}}
 
 ### List articles for a feed (defaults: page=1, limit=10)
-GET {{baseUrl}}/api/feeds/fde60409-964f-4305-a9e2-6c8ef5cccddd/articles
+GET {{baseUrl}}/api/feeds/ce72bc96-545f-488a-b456-69867d321200/articles
 Origin: {{origin}}
 
 
