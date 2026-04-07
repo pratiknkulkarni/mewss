@@ -1,5 +1,5 @@
 ### Variables
-@baseUrl = http://localhost:4444
+@baseUrl = http://localhost:3000
 @origin = http://localhost:3000
 @email = admin1@homelab.local
 @password = securepassword123
