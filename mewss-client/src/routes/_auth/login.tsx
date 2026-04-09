@@ -19,14 +19,14 @@ function LoginComponent() {
     const navigate = useNavigate({from: Route.id});
     const handleLogin = async () => {
         await authClient.signIn.email({
-            email: "",
-            password: "",
+            email: "admin1@homelab.local",
+            password: "securepassword123",
             fetchOptions: {
                 onError: (context) => {
-                    // console.log("error from login -> ", context.error)
+                    console.log("error from login -> ", context.error)
                 },
                 onSuccess: () => {
-                    // console.log("success from login")
+                    console.log("success from login")
                     navigate({
                         to: '/home',
                         replace: true
