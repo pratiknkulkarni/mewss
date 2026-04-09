@@ -19,8 +19,8 @@ function LoginComponent() {
     const navigate = useNavigate({from: Route.id});
     const handleLogin = async () => {
         await authClient.signIn.email({
-            email: "admin1@homelab.local",
-            password: "securepassword123",
+            email: "",
+            password: "",
             fetchOptions: {
                 onError: (context) => {
                     console.log("error from login -> ", context.error)
