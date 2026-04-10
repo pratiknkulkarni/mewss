@@ -13,6 +13,7 @@ import {
 
 import { authClient } from "../../features/auth/api/auth-client"
 import { Route } from "../../routes/_auth/login"
+import { toast } from "sonner"
 
 export function LoginForm({
   className,
@@ -35,11 +36,17 @@ export function LoginForm({
         onError: ({ error }) => {
           console.error("Login error:", error)
           setLoading(false)
+          toast.error('Invalid email or password!', {
+            position: "bottom-right"
+          })
         },
         onSuccess: () => {
           navigate({
             to: "/home",
             replace: true,
+          });
+          toast.success('Login success!', {
+            position: "bottom-right",
           })
         },
       },
