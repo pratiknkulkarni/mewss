@@ -6,6 +6,7 @@ import { queryClient } from './lib/query-client.ts'
 import { createRouter, RouterProvider } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen.ts"
 import { Toaster } from 'sonner'
+import { ThemeProvider } from './components/theme-provider.tsx'
 
 const router = createRouter({
   routeTree,
@@ -18,9 +19,16 @@ const router = createRouter({
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-      <Toaster />
-    </QueryClientProvider>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
+    >
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+        <Toaster />
+      </QueryClientProvider>
+    </ThemeProvider>
   </StrictMode>,
 )
