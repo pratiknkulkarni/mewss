@@ -1,45 +1,42 @@
-import {createFileRoute, redirect, useNavigate} from '@tanstack/react-router'
-import {authClient} from "../../features/auth/api/auth-client.ts";
+import { createFileRoute, redirect } from "@tanstack/react-router"
 
-export const Route = createFileRoute('/_auth/login')({
-    beforeLoad: async () => {
-        const {data} = await authClient.getSession();
-        if (data?.user) {
-            throw redirect({
-                to: '/home',
-                replace: true
-            })
-        }
-    },
-    component: LoginComponent,
+import { authClient } from "../../features/auth/api/auth-client"
+import { LoginForm } from "../../components/auth/login-form"
+
+export const Route = createFileRoute("/_auth/login")({
+  beforeLoad: async () => {
+    const { data } = await authClient.getSession()
+
+    if (data?.user) {
+      throw redirect({
+        to: "/home",
+        replace: true,
+      })
+    }
+  },
+  component: LoginComponent,
 })
 
-
 function LoginComponent() {
-    const navigate = useNavigate({from: Route.id});
-    const handleLogin = async () => {
-        await authClient.signIn.email({
-            email: "",
-            password: "",
-            fetchOptions: {
-                onError: (context) => {
-                    console.log("error from login -> ", context.error)
-                },
-                onSuccess: () => {
-                    console.log("success from login")
-                    navigate({
-                        to: '/home',
-                        replace: true
-                    })
-                }
-            }
-        })
-    }
+  return (
+    <div className="grid min-h-svh lg:grid-cols-2">
+      <div className="flex flex-col gap-4 p-6 md:p-10">
+        <div className="flex justify-center md:justify-start">
+          <span className="font-medium">MEWSS</span>
+        </div>
 
-    return (<div>
-        <h2>Hello "/login/"!</h2>
-        <button onClick={handleLogin}>
-            Log In For Now
-        </button>
-    </div>)
+        <div className="flex flex-1 items-center justify-center">
+          <div className="w-full max-w-xs">
+            <LoginForm />
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-center bg-muted">
+        <h1 className="text-lg text-muted-foreground">
+          Add something cool here
+        </h1>
+      </div>
+    </div>
+  )
 }
