@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { useNavigate } from "@tanstack/react-router"
+import { useNavigate, Link } from "@tanstack/react-router"
 
 import { Button } from "../ui/button"
 import { Input } from "../ui/input"
@@ -25,18 +25,18 @@ export function LoginForm({
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
 
-  const handleLogin = async (e: React.SubmitEvent) => {
+  const handleLogin = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault()
     setLoading(true)
 
-    await authClient.signIn.email({
+    authClient.signIn.email({
       email,
       password,
       fetchOptions: {
         onError: ({ error }) => {
           console.error("Login error:", error)
           setLoading(false)
-          toast.error('Invalid email or password!', {
+          toast.error(error.message || 'Invalid email or password!', {
             position: "bottom-right"
           })
         },
@@ -44,7 +44,7 @@ export function LoginForm({
           navigate({
             to: "/home",
             replace: true,
-          });
+          })
           toast.success('Login success!', {
             position: "bottom-right",
           })
@@ -76,15 +76,16 @@ export function LoginForm({
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            disabled={loading}
           />
         </Field>
 
         <Field>
           <div className="flex items-center">
             <FieldLabel htmlFor="password">Password</FieldLabel>
-            <a href="#" className="ml-auto text-sm hover:underline">
+            <Link to="/forgot-password" className="ml-auto text-sm hover:underline">
               Forgot password?
-            </a>
+            </Link>
           </div>
           <Input
             id="password"
@@ -92,6 +93,7 @@ export function LoginForm({
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            disabled={loading}
           />
         </Field>
 
@@ -101,18 +103,16 @@ export function LoginForm({
           </Button>
         </Field>
 
-
         {/* Footer */}
         <Field>
           <FieldDescription className="text-center">
             Don&apos;t have an account?{" "}
-            <a href="/signup" className="underline underline-offset-4">
+            <Link to="/signup" className="underline underline-offset-4">
               Sign up
-            </a>
+            </Link>
           </FieldDescription>
         </Field>
       </FieldGroup>
     </form>
   )
 }
-
