@@ -2,7 +2,8 @@ import { createFileRoute } from '@tanstack/react-router'
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '../../../components/ui/sidebar'
 import { AppSidebar } from '../../../components/ui/app-sidebar'
 import { ScrollArea } from '../../../components/ui/scroll-area'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useGlobalArticles } from '../../../features/articles/hooks/useArticles'
 
 export const Route = createFileRoute('/_app/home/')({
   component: HomeComponent,
@@ -220,6 +221,12 @@ function ArticleCard({ article, isActive, onClick }: {
   onClick: () => void;
   key?: React.Key;
 }) {
+
+  const { data, isLoading, error } = useGlobalArticles();
+
+  console.log(data, isLoading, error)
+
+
   return (
     <div
       onClick={onClick}
