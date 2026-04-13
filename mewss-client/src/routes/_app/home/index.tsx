@@ -226,7 +226,6 @@ function ArticleCard({ article, isActive, onClick }: {
 
   console.log(data, isLoading, error)
 
-
   return (
     <div
       onClick={onClick}
