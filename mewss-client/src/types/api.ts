@@ -1,6 +1,10 @@
 //TODO: I need to find a way to sync all these interfaces with the scheduler and API client.
 // It is going to be a pain later on.
 // Change even a single column or add/remove, it'll be a mess.
+
+/**
+ * Represents a feed that contains articles.
+ */
 export interface Feed {
     id: string;
     userId: string;
@@ -17,6 +21,9 @@ export interface Feed {
     lastModifiedHeader: string | null;
 }
 
+/**
+ * Represents an individual article within a feed.
+ */
 export interface Article {
     id: string;
     feedId: string;
@@ -34,6 +41,9 @@ export interface Article {
     readAt: string | null;
 }
 
+/**
+ * Pagination details for paginated API responses.
+ */
 export interface Pagination {
     page: number;
     limit: number;
@@ -41,21 +51,38 @@ export interface Pagination {
     hasMore: boolean;
 }
 
-// response for /api/articles
+/**
+ * Response structure for article list endpoints (e.g., /api/articles).
+ */
 export interface ArticlesResponse {
+    /** The list of articles retrieved. */
     articles: Article[];
+    /** Pagination metadata for the list. */
     pagination: Pagination;
 }
 
+/**
+ * Parameters for listing articles globally across all feeds.
+ */
 export interface GlobalArticleListParams {
+    /** The page number to retrieve. */
     page?: number;
+    /** The number of articles per page. */
     limit?: number;
+    /** Filter to return only unread articles. */
     unread?: boolean;
+    /** Filter articles by a specific feed ID. */
     feedId?: string;
 }
 
+/**
+ * Parameters for listing articles from a specific feed.
+ */
 export interface ArticleListParams {
+    /** The page number to retrieve. */
     page?: number;
+    /** The number of articles per page. */
     limit?: number;
+    /** Filter to return only unread articles. */
     unread?: boolean;
 }
