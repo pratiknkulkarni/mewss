@@ -52,6 +52,21 @@ async function request<T>(
 export const apiClient = {
     get<T>(path: string, params?: Record<string, unknown>): Promise<T> {
         return request<T>(path, {method: "GET"}, params);
-    }
+    },
+    post<T>(path: string, body?: unknown): Promise<T> {
+        return request<T>(path, {
+            method: "POST",
+            body: body !== undefined ? JSON.stringify(body) : undefined,
+        });
+    },
+    patch<T>(path: string, body?: unknown): Promise<T> {
+        return request<T>(path, {
+            method: "PATCH",
+            body: body !== undefined ? JSON.stringify(body) : undefined,
+        });
+    },
+    delete<T = void>(path: string): Promise<T> {
+        return request<T>(path, {method: "DELETE"});
+    },
 }
 
