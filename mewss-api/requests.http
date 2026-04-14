@@ -68,12 +68,12 @@ Content-Type: application/json
 Origin: {{origin}}
 
 {
-  "url": "https://bleedingcool.com/movies/feed/",
+  "url": "https://cprss.s3.amazonaws.com/golangweekly.com.xml",
   "refreshInterval": "30m"
 }
 
 ### Delete a feed
-DELETE {{baseUrl}}/api/feeds/ea1c270b-e0c4-49f1-a2f9-b0784c27af97
+DELETE {{baseUrl}}/api/feeds/41b5ce57-9b52-4955-8eb1-b8679f1711bb
 Origin: {{origin}}
 
 ### Add a feed — validation error (bad URL)
@@ -152,7 +152,7 @@ Origin: {{origin}}
 
 
 ### Mark all articles in a feed as read
-POST {{baseUrl}}/api/feeds/41b5ce57-9b52-4955-8eb1-b8679f1711bb/articles/read-all
+POST {{baseUrl}}/api/feeds/6fcedf70-00be-4911-b6ae-2985a6cea572/articles/read-all
 Origin: {{origin}}
 
 

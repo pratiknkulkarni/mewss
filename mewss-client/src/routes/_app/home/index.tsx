@@ -1,10 +1,12 @@
-import {createFileRoute} from '@tanstack/react-router'
+import {createFileRoute, useNavigate} from '@tanstack/react-router'
 import {SidebarInset, SidebarProvider} from '../../../components/ui/sidebar'
 import {AppSidebar} from '../../../components/ui/app-sidebar'
 import {
     useGlobalArticles,
 } from '../../../features/articles/hooks/useArticles'
 import ArticleListPanel from "../../../components/article/ArticleListPanel.tsx";
+import {ReadingPane} from "../../../components/article/ReadingPane.tsx";
+import type {Article} from "../../../types/api.ts";
 
 export const Route = createFileRoute('/_app/home/')({
     component: HomeComponent,
@@ -15,6 +17,8 @@ function HomeComponent() {
     // const [selectedArticleId, _] = useState<string | null>(null)
     const articles = data?.articles;
     const {unread, articleId} = Route.useSearch();
+    const selectedArticle: Article | null = articles?.find((a) => a.id === articleId) ?? null
+    const navigate = useNavigate({from: Route.fullPath});
 
     if (isLoading) {
         return (
@@ -31,8 +35,10 @@ function HomeComponent() {
             </div>
         )
     }
-    const handleArticleSelect = () => {
-        console.log("selecting article")
+    const handleArticleSelect = (article: Article) => {
+        navigate({
+            search: (prev) => ({...prev, articleId: article.id}),
+        })
     }
     const handleUnreadToggle = () => {
     }
@@ -53,37 +59,9 @@ function HomeComponent() {
                         unreadOnly={unread}
                         onUnreadToggle={handleUnreadToggle}
                     />
-
-                    {/*<div*/}
-                    {/*    className="flex-none w-[380px] bg-card border-r border-border flex flex-col h-full overflow-hidden">*/}
-                    {/*    <header*/}
-                    {/*        className="relative flex-none h-14 border-b border-border flex items-center px-5 glass sticky top-0 z-10">*/}
-                    {/*        <div className="flex items-center">*/}
-                    {/*            <SidebarTrigger/>*/}
-                    {/*        </div>*/}
-                    {/*        <h2 className="absolute left-1/2 -translate-x-1/2 text-[15px] font-semibold">*/}
-                    {/*            All Articles*/}
-                    {/*        </h2>*/}
-                    {/*    </header>*/}
-
-                    {/*    <ScrollArea className="flex-1 min-h-0">*/}
-                    {/*        {articles.length === 0 ? (*/}
-                    {/*            <p className="px-5 py-8 text-sm text-muted-foreground text-center">*/}
-                    {/*                No articles yet. Add a feed to get started.*/}
-                    {/*            </p>*/}
-                    {/*        ) : (*/}
-                    {/*            articles.map((article) => (*/}
-                    {/*                <ArticleCard*/}
-                    {/*                    key={article.id}*/}
-                    {/*                    article={article}*/}
-                    {/*                    isActive={resolvedSelectedId === article.id}*/}
-                    {/*                    onClick={() => {*/}
-                    {/*                    }}*/}
-                    {/*                />*/}
-                    {/*            ))*/}
-                    {/*        )}*/}
-                    {/*    </ScrollArea>*/}
-                    {/*</div>*/}
+                    <div className="flex flex-1 overflow-hidden">
+                        <ReadingPane article={selectedArticle}/>
+                    </div>
                 </div>
             </SidebarProvider>
         </div>
