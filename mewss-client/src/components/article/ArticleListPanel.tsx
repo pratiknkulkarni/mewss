@@ -2,6 +2,7 @@ import type {Article} from "../../types/api.ts";
 import ArticleCard from "./ArticleCard.tsx";
 import {SidebarTrigger} from "../ui/sidebar.tsx";
 import {ScrollArea} from "../ui/scroll-area.tsx";
+import {PaginationControls} from "./PaginationControls.tsx";
 
 interface ArticleListPanelProps {
     title: string
@@ -12,6 +13,9 @@ interface ArticleListPanelProps {
     onArticleSelect: (article: Article) => void
     unreadOnly: boolean
     onUnreadToggle: () => void
+    handlePageChange: (newPage: number) => void
+    currentPage: number
+    currentLimit: number
 }
 
 
@@ -23,8 +27,12 @@ export default function ArticleListPanel({
                                              selectedArticleId,
                                              onArticleSelect,
                                              unreadOnly,
-                                             onUnreadToggle
+                                             onUnreadToggle,
+                                             handlePageChange,
+                                             // currentLimit,
+                                             currentPage
                                          }: ArticleListPanelProps) {
+
 
     return <div className="flex-none w-[380px] bg-card border-r border-border flex flex-col h-full overflow-hidden">
         <header
@@ -45,7 +53,7 @@ export default function ArticleListPanel({
                 </p>
             )}
 
-            {isLoading && <div>loading...</div>}
+            {/*{isLoading && <div>loading...</div>}*/}
 
             {!isLoading && !error && articles?.length === 0 && (
                 <div className="px-5 py-12 text-center space-y-1">
@@ -73,5 +81,8 @@ export default function ArticleListPanel({
                     />
                 ))}
         </ScrollArea>
+        <div className="flex-none border-t border-border px-4 py-3 bg-card">
+            <PaginationControls handlePageChange={handlePageChange} currentPage={currentPage}/>
+        </div>
     </div>
 }
