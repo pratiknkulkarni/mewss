@@ -1,13 +1,9 @@
 import {Field, FieldLabel} from "../ui/field";
 import {Pagination, PaginationContent, PaginationItem, PaginationNext, PaginationPrevious} from "../ui/pagination.tsx";
 import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "../ui/select.tsx";
-import type {Pagination as PaginationResponseType} from "../../types/api.ts";
+import type {PaginationControlsProps} from "../../types/props.ts";
 
-export function PaginationControls({handlePageChange, currentPage, pagination}: {
-    handlePageChange: (newPage: number) => void,
-    currentPage: number,
-    pagination: PaginationResponseType | undefined
-}) {
+export function PaginationControls({handlePageChange, currentPage, pagination}: PaginationControlsProps) {
     return (
         <div className="flex items-center justify-between gap-4">
             <Field orientation="horizontal" className="w-fit">

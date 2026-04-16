@@ -1,10 +1,4 @@
-import type {Article} from "../../types/api.ts";
-
-interface ArticleCardProps {
-    article: Article
-    isActive: boolean
-    onClick: () => void
-}
+import type {ArticleCardProps} from "../../types/props.ts";
 
 export default function ArticleCard({article, isActive, onClick}: ArticleCardProps) {
     return (

@@ -1,6 +1,6 @@
 import {ExternalLink} from "lucide-react"
-import type {Article} from "../../types/api.ts";
 import {ScrollArea} from "../ui/scroll-area.tsx";
+import type {ReadingPaneProps} from "../../types/props.ts";
 
 function formatReadableDate(dateStr: string | null): string {
     if (!dateStr) return ""
@@ -26,10 +26,6 @@ function EmptyReadingPane() {
             </p>
         </div>
     )
-}
-
-interface ReadingPaneProps {
-    article: Article | null
 }
 
 export function ReadingPane({article}: ReadingPaneProps) {
