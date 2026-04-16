@@ -14,7 +14,7 @@ export function useMarkArticleRead() {
                     return {
                         ...old,
                         articles: old.articles.map((a) =>
-                            a.id === articleId ? {...a, isRead: true} : a
+                            a.id === articleId ? {...a, isRead: true} : a // manually flip the value of isRead
                         ),
                     }
                 }
@@ -25,8 +25,8 @@ export function useMarkArticleRead() {
         //         queryKey: articleKeys.all
         //     })
         // },
-        onError: () => {
-            queryClient.invalidateQueries({queryKey: articleKeys.all})
+        onError: async () => {
+            await queryClient.invalidateQueries({queryKey: articleKeys.all})
         },
         mutationFn: (articleId: string) => articleApi.markRead(articleId),
     })
