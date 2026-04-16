@@ -17,7 +17,6 @@ export interface ReadingPaneProps {
 }
 
 export type ArticleListPanelProps = React.HTMLAttributes<HTMLDivElement> & {
-    title: string;
     articles: Article[] | undefined;
     isLoading: boolean;
     error: string | null;
@@ -29,4 +28,6 @@ export type ArticleListPanelProps = React.HTMLAttributes<HTMLDivElement> & {
     currentPage: number;
     currentLimit: number;
     pagination: Pagination | undefined
+    activeTab: "unread" | "all"
+    onTabChange: (tab: string) => void;
 }

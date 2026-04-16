@@ -20,11 +20,14 @@ function HomeComponent() {
     const [page, setPage] = useState(1)
     const [limit, setLimit] = useState(20)
 
-    const {unread, articleId} = Route.useSearch();
+    const [activeTab, setActiveTab] = useState<"unread" | "all">("unread")
+
+    const {unread} = Route.useSearch();
     const {data, isLoading, error} = useArticles({
         page,
         limit,
-        unread: selectedFeedId === null,
+        // unread: selectedFeedId === null,
+        unread: activeTab === "unread",
         feedId: selectedFeedId ?? undefined,
     });
     const {
@@ -43,16 +46,16 @@ function HomeComponent() {
         setPage(newPage);
     }
 
-    function handleFeedSelect(feedId: string | null) {
-        setSelectedFeedId(feedId)
-        setSelectedArticleId(null) // clear reading pane on feed switch so it doesnt display old article
-        setPage(1)
-    }
-
-    function handleLimitChange(newLimit: number) {
-        setLimit(newLimit)
-        setPage(1)
-    }
+    // function handleFeedSelect(feedId: string | null) {
+    //     setSelectedFeedId(feedId)
+    //     setSelectedArticleId(null) // clear reading pane on feed switch so it doesnt display old article
+    //     setPage(1)
+    // }
+    //
+    // function handleLimitChange(newLimit: number) {
+    //     setLimit(newLimit)
+    //     setPage(1)
+    // }
 
     // console.log(unread, articleId, limit, page, selectedArticle, selectedArticleId);
 
@@ -76,6 +79,12 @@ function HomeComponent() {
     const handleUnreadToggle = () => {
     }
 
+    function handleTabChange(tab: string) {
+        setActiveTab(tab as "unread" | "all")
+        setPage(1)
+        setSelectedArticleId(null)
+    }
+
     return (
         <div className="overflow-y-scroll">
             <SidebarProvider>
@@ -83,7 +92,6 @@ function HomeComponent() {
                 <div className="flex h-screen w-full overflow-hidden bg-card text-foreground font-sans">
                     <AppSidebar/>
                     <ArticleListPanel
-                        title="All Articles"
                         articles={articles}
                         isLoading={isLoading}
                         error={error}
@@ -96,6 +104,8 @@ function HomeComponent() {
                         currentLimit={limit}
                         pagination={data?.pagination}
                         className="flex-1 w-full md:flex-none md:w-80 lg:w-96"
+                        activeTab={activeTab}
+                        onTabChange={handleTabChange}
                     />
                     <div className="md:flex md:flex-1 md:overflow-hidden hidden">
                         <ReadingPane article={selectedArticle}/>

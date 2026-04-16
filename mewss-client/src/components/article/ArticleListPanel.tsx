@@ -6,25 +6,49 @@ import {Tabs, TabsContent, TabsList, TabsTrigger} from "../ui/tabs.tsx";
 import type {ArticleListPanelProps} from "../../types/props.ts";
 
 export default function ArticleListPanel({
-                                             title,
                                              articles,
                                              isLoading,
                                              error,
                                              selectedArticleId,
                                              onArticleSelect,
-                                             unreadOnly,
-                                             onUnreadToggle,
                                              handlePageChange,
                                              currentPage,
                                              pagination,
-                                             className
+                                             className,
+                                             activeTab,
+                                             onTabChange
                                          }: ArticleListPanelProps) {
+
+    //TODO: extract this out
+    const ListContent = () => (
+        <ScrollArea className="flex-1 h-full">
+            {isLoading && <div className="p-4 text-center text-sm">loading...</div>}
+
+            {!isLoading && !error && (!articles || articles.length === 0) && (
+                <div className="px-5 py-12 text-center space-y-1">
+                    <p className="text-sm text-muted-foreground">
+                        {activeTab === "unread" ? "You're all caught up. Touch some grass." : "No articles found."}
+                    </p>
+                </div>
+            )}
+
+            {!isLoading &&
+                articles?.map((article) => (
+                    <ArticleCard
+                        key={article.id}
+                        article={article}
+                        isActive={selectedArticleId === article.id}
+                        onClick={() => onArticleSelect(article)}
+                    />
+                ))}
+        </ScrollArea>
+    )
 
     return (
         <div
             className={`flex-none w-full md:w-[380px] bg-card border-r border-border flex flex-col h-full overflow-hidden ${className ?? ""}`}>
 
-            <Tabs defaultValue="unread" className="flex flex-col flex-1 min-h-0">
+            <Tabs value={activeTab} onValueChange={onTabChange} className="flex flex-col flex-1 min-h-0">
                 <header
                     className="relative flex-none h-14 border-b border-border flex items-center px-4 justify-between sticky top-0 z-10 bg-card">
                     <div className="flex items-center">
@@ -39,55 +63,15 @@ export default function ArticleListPanel({
                     <div className="w-6"/>
                 </header>
 
-                {/*TODO: maybe separate them out each? Or club in a component*/}
-                {/* UNREAD TAB */}
-                <TabsContent
-                    value="unread"
-                    className="m-0 border-none outline-none flex-1 min-h-0 flex-col data-[state=active]:flex"
-                >
-                    <ScrollArea className="flex-1 h-full">
-                        {error && !isLoading && (
-                            <p className="px-5 py-8 text-sm text-destructive text-center">
-                                {error}
-                            </p>
-                        )}
-
-                        {isLoading && <div className="p-4 text-center text-sm">loading...</div>}
-
-                        {!isLoading && !error && articles?.length === 0 && (
-                            <div className="px-5 py-12 text-center space-y-1">
-                                <p className="text-sm text-muted-foreground">
-                                    You're all caught up. Touch some grass.
-                                </p>
-                            </div>
-                        )}
-
-                        {!isLoading &&
-                            articles?.map((article) => (
-                                <ArticleCard
-                                    key={article.id}
-                                    article={article}
-                                    isActive={selectedArticleId === article.id}
-                                    onClick={() => onArticleSelect(article)}
-                                />
-                            ))}
-                    </ScrollArea>
+                <TabsContent value="unread"
+                             className="m-0 border-none outline-none flex-1 min-h-0 flex-col data-[state=active]:flex">
+                    <ListContent/>
                 </TabsContent>
 
-                {/* ALL TAB */}
-                <TabsContent
-                    value="all"
-                    className="m-0 border-none outline-none flex-1 min-h-0 flex-col data-[state=active]:flex"
-                >
-                    <ScrollArea className="flex-1 h-full">
-                        <div className="px-5 py-12 text-center space-y-1">
-                            <p className="text-sm text-muted-foreground">
-                                Empty list for now.
-                            </p>
-                        </div>
-                    </ScrollArea>
+                <TabsContent value="all"
+                             className="m-0 border-none outline-none flex-1 min-h-0 flex-col data-[state=active]:flex">
+                    <ListContent/>
                 </TabsContent>
-
             </Tabs>
 
             <div className="flex-none relative z-10 bg-card border-t border-border px-4 py-3">
