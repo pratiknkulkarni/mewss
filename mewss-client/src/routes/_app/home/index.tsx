@@ -28,9 +28,9 @@ function HomeComponent() {
         feedId: selectedFeedId ?? undefined,
     });
     const {
-        data: markArticleReadData,
-        isLoading: markArticleReadLoading,
-        error: markArticleReadError,
+        // data: markArticleReadData,
+        // isLoading: markArticleReadLoading,
+        // error: markArticleReadError,
         mutate: markArticleReadMutate,
     } = useMarkArticleRead();
 

@@ -1,24 +1,9 @@
-import type {Article, Pagination} from "../../types/api.ts";
 import ArticleCard from "./ArticleCard.tsx";
 import {SidebarTrigger} from "../ui/sidebar.tsx";
 import {ScrollArea} from "../ui/scroll-area.tsx";
 import {PaginationControls} from "./PaginationControls.tsx";
-
-type ArticleListPanelProps = React.HTMLAttributes<HTMLDivElement> & {
-    title: string;
-    articles: Article[] | undefined;
-    isLoading: boolean;
-    error: string | null;
-    selectedArticleId: string | null;
-    onArticleSelect: (article: Article) => void;
-    unreadOnly: boolean;
-    onUnreadToggle: () => void;
-    handlePageChange: (newPage: number) => void;
-    currentPage: number;
-    currentLimit: number;
-    pagination: Pagination | undefined
-}
-
+import {Tabs, TabsContent, TabsList, TabsTrigger} from "../ui/tabs.tsx";
+import type {ArticleListPanelProps} from "../../types/props.ts";
 
 export default function ArticleListPanel({
                                              title,
@@ -35,61 +20,80 @@ export default function ArticleListPanel({
                                              className
                                          }: ArticleListPanelProps) {
 
+    return (
+        <div
+            className={`flex-none w-full md:w-[380px] bg-card border-r border-border flex flex-col h-full overflow-hidden ${className ?? ""}`}>
 
-    if (isLoading) {
-        console.log("we are loading")
-    }
+            <Tabs defaultValue="unread" className="flex flex-col flex-1 min-h-0">
+                <header
+                    className="relative flex-none h-14 border-b border-border flex items-center px-4 justify-between sticky top-0 z-10 bg-card">
+                    <div className="flex items-center">
+                        <SidebarTrigger/>
+                    </div>
 
-    return <div
-        className={`flex-none w-[380px] bg-card border-r border-border flex flex-col h-full overflow-hidden ${className ?? ""}`}>
-        <header
-            className="relative flex-none h-14 border-b border-border flex items-center px-4 sticky top-0 z-10 bg-card">
-            <div className="flex items-center">
-                <SidebarTrigger/>
+                    <TabsList className="h-9">
+                        <TabsTrigger value="all">All</TabsTrigger>
+                        <TabsTrigger value="unread">Unread</TabsTrigger>
+                    </TabsList>
+
+                    <div className="w-6"/>
+                </header>
+
+                {/*TODO: maybe separate them out each? Or club in a component*/}
+                {/* UNREAD TAB */}
+                <TabsContent
+                    value="unread"
+                    className="m-0 border-none outline-none flex-1 min-h-0 flex-col data-[state=active]:flex"
+                >
+                    <ScrollArea className="flex-1 h-full">
+                        {error && !isLoading && (
+                            <p className="px-5 py-8 text-sm text-destructive text-center">
+                                {error}
+                            </p>
+                        )}
+
+                        {isLoading && <div className="p-4 text-center text-sm">loading...</div>}
+
+                        {!isLoading && !error && articles?.length === 0 && (
+                            <div className="px-5 py-12 text-center space-y-1">
+                                <p className="text-sm text-muted-foreground">
+                                    You're all caught up. Touch some grass.
+                                </p>
+                            </div>
+                        )}
+
+                        {!isLoading &&
+                            articles?.map((article) => (
+                                <ArticleCard
+                                    key={article.id}
+                                    article={article}
+                                    isActive={selectedArticleId === article.id}
+                                    onClick={() => onArticleSelect(article)}
+                                />
+                            ))}
+                    </ScrollArea>
+                </TabsContent>
+
+                {/* ALL TAB */}
+                <TabsContent
+                    value="all"
+                    className="m-0 border-none outline-none flex-1 min-h-0 flex-col data-[state=active]:flex"
+                >
+                    <ScrollArea className="flex-1 h-full">
+                        <div className="px-5 py-12 text-center space-y-1">
+                            <p className="text-sm text-muted-foreground">
+                                Empty list for now.
+                            </p>
+                        </div>
+                    </ScrollArea>
+                </TabsContent>
+
+            </Tabs>
+
+            <div className="flex-none relative z-10 bg-card border-t border-border px-4 py-3">
+                <PaginationControls pagination={pagination} handlePageChange={handlePageChange}
+                                    currentPage={currentPage}/>
             </div>
-
-            <h2 className="absolute left-1/2 -translate-x-1/2 text-[15px] font-semibold truncate max-w-[160px]">
-                {title}
-            </h2>
-        </header>
-
-        <ScrollArea className="flex-1 min-h-0">
-            {error && !isLoading && (
-                <p className="px-5 py-8 text-sm text-destructive text-center">
-                    {error}
-                </p>
-            )}
-
-            {isLoading && <div>loading...</div>}
-
-            {!isLoading && !error && articles?.length === 0 && (
-                <div className="px-5 py-12 text-center space-y-1">
-                    <p className="text-sm text-muted-foreground">
-                        {unreadOnly ? "You're all caught up." : "No articles yet."}
-                    </p>
-                    {unreadOnly && (
-                        <button
-                            onClick={onUnreadToggle}
-                            className="text-xs text-primary hover:underline"
-                        >
-                            Show all articles
-                        </button>
-                    )}
-                </div>
-            )}
-
-            {!isLoading &&
-                articles?.map((article) => (
-                    <ArticleCard
-                        key={article.id}
-                        article={article}
-                        isActive={selectedArticleId === article.id}
-                        onClick={() => onArticleSelect(article)}
-                    />
-                ))}
-        </ScrollArea>
-        <div className="flex-none border-t border-border px-4 py-3 bg-card">
-            <PaginationControls pagination={pagination} handlePageChange={handlePageChange} currentPage={currentPage}/>
         </div>
-    </div>
+    )
 }
