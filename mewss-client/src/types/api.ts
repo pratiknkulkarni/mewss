@@ -61,10 +61,14 @@ export interface ArticlesResponse {
     pagination: Pagination;
 }
 
+export interface ArticleResponse {
+    article: Article
+}
+
 /**
  * Parameters for listing articles globally across all feeds.
  */
-export interface GlobalArticleListParams {
+export interface ArticleFilters {
     /** The page number to retrieve. */
     page?: number;
     /** The number of articles per page. */

@@ -2,12 +2,13 @@ import {createFileRoute} from '@tanstack/react-router'
 import {SidebarInset, SidebarProvider} from '../../../components/ui/sidebar'
 import {AppSidebar} from '../../../components/ui/app-sidebar'
 import {
-    useGlobalArticles,
+    useArticles,
 } from '../../../features/articles/hooks/useArticles'
 import ArticleListPanel from "../../../components/article/ArticleListPanel.tsx";
 import {ReadingPane} from "../../../components/article/ReadingPane.tsx";
 import type {Article} from "../../../types/api.ts";
 import {useState} from "react";
+import {useMarkArticleRead} from "../../../features/articles/hooks/useMarkArticleRead.ts";
 
 export const Route = createFileRoute('/_app/home/')({
     component: HomeComponent,
@@ -20,14 +21,20 @@ function HomeComponent() {
     const [limit, setLimit] = useState(20)
 
     const {unread, articleId} = Route.useSearch();
-    const {data, isLoading, error} = useGlobalArticles({
+    const {data, isLoading, error} = useArticles({
         page,
         limit,
         unread: selectedFeedId === null,
         feedId: selectedFeedId ?? undefined,
     });
+    const {
+        data: markArticleReadData,
+        isLoading: markArticleReadLoading,
+        error: markArticleReadError,
+        mutate: markArticleReadMutate,
+    } = useMarkArticleRead();
 
-    console.log(data?.pagination)
+    // console.log(data?.pagination)
 
     const articles = data?.articles;
     const selectedArticle = articles?.find((a) => a.id === selectedArticleId) ?? null
@@ -59,6 +66,10 @@ function HomeComponent() {
 
     const handleArticleSelect = (article: Article) => {
         setSelectedArticleId(article.id);
+
+        console.log("running mutation function")
+        markArticleReadMutate(article.id)
+        console.log("ran mutation function")
     }
 
     // mark the feed as "read" here
