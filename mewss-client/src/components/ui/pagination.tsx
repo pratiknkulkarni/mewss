@@ -49,7 +49,7 @@ function PaginationLink({
         <Button
             variant={isActive ? "outline" : "ghost"}
             size={size}
-            className={cn(disabled && "pointer-events-none opacity-50", className)}
+            className={cn(disabled ? "cursor-not-allowed pointer-events-none opacity-50" : "cursor-pointer", className)}
             nativeButton={false}
             render={
                 <a

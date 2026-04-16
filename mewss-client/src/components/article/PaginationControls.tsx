@@ -30,12 +30,12 @@ export function PaginationControls({handlePageChange, currentPage, pagination}: 
                 <PaginationContent>
                     <PaginationItem>
                         <PaginationPrevious disabled={pagination?.page === 1}
-                                            onClick={() => handlePageChange(currentPage - 1)} size={1}/>
+                                            onClick={() => handlePageChange(currentPage - 1)} size={"sm"}/>
                     </PaginationItem>
                     <PaginationItem>
                         <PaginationNext
                             disabled={!pagination?.hasMore}
-                            onClick={() => handlePageChange(currentPage + 1)} size={1}/>
+                            onClick={() => handlePageChange(currentPage + 1)} size={"sm"}/>
                     </PaginationItem>
                 </PaginationContent>
             </Pagination>
