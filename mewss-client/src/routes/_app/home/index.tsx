@@ -11,18 +11,6 @@ import {useState} from "react";
 
 export const Route = createFileRoute('/_app/home/')({
     component: HomeComponent,
-    // validateSearch: (search) => ({
-    //     page: search.page ? Number(search.page) : undefined,
-    //     limit: search.limit ? Number(search.limit) : undefined,
-    //     unread:
-    //         search.unread === undefined
-    //             ? undefined
-    //             : search.unread !== false && search.unread !== 'false',
-    //     articleId:
-    //         typeof search.articleId === 'string'
-    //             ? search.articleId
-    //             : undefined,
-    // }),
 })
 
 function HomeComponent() {
@@ -38,17 +26,10 @@ function HomeComponent() {
         unread: selectedFeedId === null,
         feedId: selectedFeedId ?? undefined,
     });
-    // const [selectedArticleId, _] = useState<string | null>(null)
     const articles = data?.articles;
-    // const selectedArticle: Article | null = articles?.find((a) => a.id === articleId) ?? null
     const selectedArticle = articles?.find((a) => a.id === selectedArticleId) ?? null
 
-    // const navigate = useNavigate({from: Route.fullPath});
-
     function handlePageChange(newPage: number) {
-        // navigate({
-        //     search: (prev) => ({...prev, page: newPage}),
-        // })
         setPage(newPage);
     }
 
@@ -63,15 +44,7 @@ function HomeComponent() {
         setPage(1)
     }
 
-    console.log(unread, articleId, limit, page, selectedArticle, selectedArticleId);
-
-    // if (isLoading) {
-    //     return (
-    //         <div className="flex h-screen w-full items-center justify-center bg-card text-muted-foreground text-sm">
-    //             Loading articles…
-    //         </div>
-    //     )
-    // }
+    // console.log(unread, articleId, limit, page, selectedArticle, selectedArticleId);
 
     if (error) {
         return (
@@ -80,12 +53,12 @@ function HomeComponent() {
             </div>
         )
     }
+
     const handleArticleSelect = (article: Article) => {
-        // navigate({
-        //     search: (prev) => ({...prev, articleId: article.id}),
-        // })
-        setSelectedArticleId(article.id)
+        setSelectedArticleId(article.id);
     }
+
+    // mark the feed as "read" here
     const handleUnreadToggle = () => {
     }
 
@@ -100,15 +73,16 @@ function HomeComponent() {
                         articles={articles}
                         isLoading={isLoading}
                         error={error}
-                        selectedArticleId={articleId ?? null}
+                        selectedArticleId={selectedArticleId}
                         onArticleSelect={handleArticleSelect}
                         unreadOnly={unread}
                         onUnreadToggle={handleUnreadToggle}
                         handlePageChange={handlePageChange}
                         currentPage={page}
                         currentLimit={limit}
+                        className="flex-1 w-full md:flex-none md:w-80 lg:w-96"
                     />
-                    <div className="flex flex-1 overflow-hidden">
+                    <div className="md:flex md:flex-1 md:overflow-hidden hidden">
                         <ReadingPane article={selectedArticle}/>
                     </div>
                 </div>

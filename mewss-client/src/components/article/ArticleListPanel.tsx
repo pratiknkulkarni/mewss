@@ -4,18 +4,18 @@ import {SidebarTrigger} from "../ui/sidebar.tsx";
 import {ScrollArea} from "../ui/scroll-area.tsx";
 import {PaginationControls} from "./PaginationControls.tsx";
 
-interface ArticleListPanelProps {
-    title: string
-    articles: Article[] | undefined
-    isLoading: boolean
-    error: string | null
-    selectedArticleId: string | null
-    onArticleSelect: (article: Article) => void
-    unreadOnly: boolean
-    onUnreadToggle: () => void
-    handlePageChange: (newPage: number) => void
-    currentPage: number
-    currentLimit: number
+type ArticleListPanelProps = React.HTMLAttributes<HTMLDivElement> & {
+    title: string;
+    articles: Article[] | undefined;
+    isLoading: boolean;
+    error: string | null;
+    selectedArticleId: string | null;
+    onArticleSelect: (article: Article) => void;
+    unreadOnly: boolean;
+    onUnreadToggle: () => void;
+    handlePageChange: (newPage: number) => void;
+    currentPage: number;
+    currentLimit: number;
 }
 
 
@@ -29,12 +29,17 @@ export default function ArticleListPanel({
                                              unreadOnly,
                                              onUnreadToggle,
                                              handlePageChange,
-                                             // currentLimit,
-                                             currentPage
+                                             currentPage,
+                                             className
                                          }: ArticleListPanelProps) {
 
 
-    return <div className="flex-none w-[380px] bg-card border-r border-border flex flex-col h-full overflow-hidden">
+    if (isLoading) {
+        console.log("we are loading")
+    }
+
+    return <div
+        className={`flex-none w-[380px] bg-card border-r border-border flex flex-col h-full overflow-hidden ${className ?? ""}`}>
         <header
             className="relative flex-none h-14 border-b border-border flex items-center px-4 sticky top-0 z-10 bg-card">
             <div className="flex items-center">
@@ -53,7 +58,7 @@ export default function ArticleListPanel({
                 </p>
             )}
 
-            {/*{isLoading && <div>loading...</div>}*/}
+            {isLoading && <div>loading...</div>}
 
             {!isLoading && !error && articles?.length === 0 && (
                 <div className="px-5 py-12 text-center space-y-1">

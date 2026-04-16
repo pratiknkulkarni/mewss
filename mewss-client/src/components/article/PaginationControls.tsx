@@ -27,6 +27,7 @@ export function PaginationControls({handlePageChange, currentPage}: {
             <Pagination className="mx-0 w-auto">
                 <PaginationContent>
                     <PaginationItem>
+                        {/*TODO: fix the bug here, it keeps decrementing even if I reach 1/0*/}
                         <PaginationPrevious onClick={() => handlePageChange(currentPage - 1)} size={1}/>
                     </PaginationItem>
                     <PaginationItem>
