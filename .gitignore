@@ -82,3 +82,4 @@ dist-ssr
 *.sw?
 
 ignore_this_file.http
+*.zip
