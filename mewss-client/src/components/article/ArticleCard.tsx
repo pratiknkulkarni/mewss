@@ -7,7 +7,6 @@ interface ArticleCardProps {
 }
 
 export default function ArticleCard({article, isActive, onClick}: ArticleCardProps) {
-    console.log(isActive);
     return (
         <div
             onClick={onClick}

@@ -26,6 +26,9 @@ function HomeComponent() {
         unread: selectedFeedId === null,
         feedId: selectedFeedId ?? undefined,
     });
+
+    console.log(data?.pagination)
+
     const articles = data?.articles;
     const selectedArticle = articles?.find((a) => a.id === selectedArticleId) ?? null
 
@@ -80,6 +83,7 @@ function HomeComponent() {
                         handlePageChange={handlePageChange}
                         currentPage={page}
                         currentLimit={limit}
+                        pagination={data?.pagination}
                         className="flex-1 w-full md:flex-none md:w-80 lg:w-96"
                     />
                     <div className="md:flex md:flex-1 md:overflow-hidden hidden">

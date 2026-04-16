@@ -1,4 +1,4 @@
-import type {Article} from "../../types/api.ts";
+import type {Article, Pagination} from "../../types/api.ts";
 import ArticleCard from "./ArticleCard.tsx";
 import {SidebarTrigger} from "../ui/sidebar.tsx";
 import {ScrollArea} from "../ui/scroll-area.tsx";
@@ -16,6 +16,7 @@ type ArticleListPanelProps = React.HTMLAttributes<HTMLDivElement> & {
     handlePageChange: (newPage: number) => void;
     currentPage: number;
     currentLimit: number;
+    pagination: Pagination | undefined
 }
 
 
@@ -30,6 +31,7 @@ export default function ArticleListPanel({
                                              onUnreadToggle,
                                              handlePageChange,
                                              currentPage,
+                                             pagination,
                                              className
                                          }: ArticleListPanelProps) {
 
@@ -87,7 +89,7 @@ export default function ArticleListPanel({
                 ))}
         </ScrollArea>
         <div className="flex-none border-t border-border px-4 py-3 bg-card">
-            <PaginationControls handlePageChange={handlePageChange} currentPage={currentPage}/>
+            <PaginationControls pagination={pagination} handlePageChange={handlePageChange} currentPage={currentPage}/>
         </div>
     </div>
 }

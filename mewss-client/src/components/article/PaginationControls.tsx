@@ -1,10 +1,12 @@
 import {Field, FieldLabel} from "../ui/field";
 import {Pagination, PaginationContent, PaginationItem, PaginationNext, PaginationPrevious} from "../ui/pagination.tsx";
 import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "../ui/select.tsx";
+import type {Pagination as PaginationResponseType} from "../../types/api.ts";
 
-export function PaginationControls({handlePageChange, currentPage}: {
+export function PaginationControls({handlePageChange, currentPage, pagination}: {
     handlePageChange: (newPage: number) => void,
-    currentPage: number
+    currentPage: number,
+    pagination: PaginationResponseType | undefined
 }) {
     return (
         <div className="flex items-center justify-between gap-4">
@@ -27,11 +29,12 @@ export function PaginationControls({handlePageChange, currentPage}: {
             <Pagination className="mx-0 w-auto">
                 <PaginationContent>
                     <PaginationItem>
-                        {/*TODO: fix the bug here, it keeps decrementing even if I reach 1/0*/}
-                        <PaginationPrevious onClick={() => handlePageChange(currentPage - 1)} size={1}/>
+                        <PaginationPrevious disabled={pagination?.page === 1}
+                                            onClick={() => handlePageChange(currentPage - 1)} size={1}/>
                     </PaginationItem>
                     <PaginationItem>
                         <PaginationNext
+                            disabled={!pagination?.hasMore}
                             onClick={() => handlePageChange(currentPage + 1)} size={1}/>
                     </PaginationItem>
                 </PaginationContent>
