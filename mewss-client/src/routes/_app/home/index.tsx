@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { SidebarHeader, SidebarInset, SidebarProvider } from '../../../components/ui/sidebar'
+import { SidebarInset, SidebarProvider } from '../../../components/ui/sidebar'
 import { AppSidebar } from '../../../components/ui/app-sidebar'
 import {
     useArticles,
@@ -50,7 +50,7 @@ function HomeComponent() {
     const selectedArticle = articles?.find((a) => a.id === articleId) ?? null
 
     // when usere clicks on a Next/Previous
-    function handlePageChange(newPage: number) {
+    const handlePageChange = (newPage: number) => {
         navigate({ search: (prev: SearchParams) => ({ ...prev, page: newPage }) })
     }
 
@@ -81,6 +81,17 @@ function HomeComponent() {
     const handleUnreadToggle = () => {
     }
 
+    const handleFeedSelect = (newFeedId: string | null) => {
+        navigate({
+            search: (prev: SearchParams) => ({
+                ...prev,
+                feedId: newFeedId ?? undefined,
+                articleId: undefined,
+                page: 1,
+            }),
+        })
+    }
+
     // I have yet to test this out
     if (error) {
         return (
@@ -93,9 +104,9 @@ function HomeComponent() {
     return (
         <SidebarProvider>
             <SidebarInset className="flex flex-row overflow-hidden" />
-
             <div className="flex h-screen w-full overflow-hidden bg-card text-foreground font-sans">
-                <AppSidebar />
+                <AppSidebar selectedFeedId={feedId ?? null}
+                    onFeedSelect={handleFeedSelect} />
                 <ArticleListPanel
                     articles={articles}
                     isLoading={isLoading}

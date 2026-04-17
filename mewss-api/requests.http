@@ -68,8 +68,8 @@ Content-Type: application/json
 Origin: {{origin}}
 
 {
-  "url": "https://www.thehindu.com/news/cities/feeder/default.rss",
-  "refreshInterval": "30m"
+  "url": "https://proton.me/blog/feed",
+  "refreshInterval": "24h"
 }
 
 ### Delete a feed

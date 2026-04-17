@@ -90,3 +90,22 @@ export interface ArticleListParams {
     /** Filter to return only unread articles. */
     unread?: boolean;
 }
+
+export interface FeedFilters {
+    /** Filter to return articles based on active/inactive status. */
+    status?: string;
+    /** Filter articles by a specific feed ID. */
+    feedId?: string;
+}
+
+/**
+ * Response structure for feed list endpoints (e.g., /api/feed).
+ */
+export interface FeedsResponse {
+    /** The list of feeds retrieved. */
+    feeds: Feed[];
+}
+
+export interface FeedResponse {
+    feed: Feed
+}
