@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { SidebarInset, SidebarProvider } from '../../../components/ui/sidebar'
+import { SidebarHeader, SidebarInset, SidebarProvider } from '../../../components/ui/sidebar'
 import { AppSidebar } from '../../../components/ui/app-sidebar'
 import {
     useArticles,
@@ -93,6 +93,7 @@ function HomeComponent() {
     return (
         <SidebarProvider>
             <SidebarInset className="flex flex-row overflow-hidden" />
+
             <div className="flex h-screen w-full overflow-hidden bg-card text-foreground font-sans">
                 <AppSidebar />
                 <ArticleListPanel
