@@ -1,4 +1,4 @@
-import type {Article, Pagination} from "./api.ts";
+import type { Article, Pagination } from "./api.ts";
 
 export interface PaginationControlsProps {
     handlePageChange: (newPage: number) => void,
@@ -14,6 +14,7 @@ export interface ArticleCardProps {
 
 export interface ReadingPaneProps {
     article: Article | null
+    onBack?: () => void;
 }
 
 export type ArticleListPanelProps = React.HTMLAttributes<HTMLDivElement> & {

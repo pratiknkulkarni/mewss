@@ -1,27 +1,27 @@
 import ArticleCard from "./ArticleCard.tsx";
-import {SidebarTrigger} from "../ui/sidebar.tsx";
-import {ScrollArea} from "../ui/scroll-area.tsx";
-import {PaginationControls} from "./PaginationControls.tsx";
-import {Tabs, TabsContent, TabsList, TabsTrigger} from "../ui/tabs.tsx";
-import type {ArticleListPanelProps} from "../../types/props.ts";
+import { SidebarTrigger } from "../ui/sidebar.tsx";
+import { ScrollArea } from "../ui/scroll-area.tsx";
+import { PaginationControls } from "./PaginationControls.tsx";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs.tsx";
+import type { ArticleListPanelProps } from "../../types/props.ts";
 
 export default function ArticleListPanel({
-                                             articles,
-                                             isLoading,
-                                             error,
-                                             selectedArticleId,
-                                             onArticleSelect,
-                                             handlePageChange,
-                                             currentPage,
-                                             pagination,
-                                             className,
-                                             activeTab,
-                                             onTabChange
-                                         }: ArticleListPanelProps) {
+    articles,
+    isLoading,
+    error,
+    selectedArticleId,
+    onArticleSelect,
+    handlePageChange,
+    currentPage,
+    pagination,
+    className,
+    activeTab,
+    onTabChange
+}: ArticleListPanelProps) {
 
-    //TODO: extract this out
-    const ListContent = () => (
-        <ScrollArea className="flex-1 h-full">
+    // moving this from a component to a variable due to re-mounting.
+    const listContent = (
+        <ScrollArea className="flex-1 h-full" key={`${activeTab}-${currentPage}`}>
             {isLoading && <div className="p-4 text-center text-sm">loading...</div>}
 
             {!isLoading && !error && (!articles || articles.length === 0) && (
@@ -52,7 +52,7 @@ export default function ArticleListPanel({
                 <header
                     className="relative flex-none h-14 border-b border-border flex items-center px-4 justify-between sticky top-0 z-10 bg-card">
                     <div className="flex items-center">
-                        <SidebarTrigger/>
+                        <SidebarTrigger />
                     </div>
 
                     <TabsList className="h-9">
@@ -60,23 +60,23 @@ export default function ArticleListPanel({
                         <TabsTrigger value="unread">Unread</TabsTrigger>
                     </TabsList>
 
-                    <div className="w-6"/>
+                    <div className="w-6" />
                 </header>
 
                 <TabsContent value="unread"
-                             className="m-0 border-none outline-none flex-1 min-h-0 flex-col data-[state=active]:flex">
-                    <ListContent/>
+                    className="m-0 border-none outline-none flex-1 min-h-0 flex-col data-[state=active]:flex">
+                    {listContent}
                 </TabsContent>
 
                 <TabsContent value="all"
-                             className="m-0 border-none outline-none flex-1 min-h-0 flex-col data-[state=active]:flex">
-                    <ListContent/>
+                    className="m-0 border-none outline-none flex-1 min-h-0 flex-col data-[state=active]:flex">
+                    {listContent}
                 </TabsContent>
             </Tabs>
 
             <div className="flex-none relative z-10 bg-card border-t border-border px-4 py-3">
                 <PaginationControls pagination={pagination} handlePageChange={handlePageChange}
-                                    currentPage={currentPage}/>
+                    currentPage={currentPage} />
             </div>
         </div>
     )

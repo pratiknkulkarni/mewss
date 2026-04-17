@@ -68,7 +68,7 @@ Content-Type: application/json
 Origin: {{origin}}
 
 {
-  "url": "https://www.thehindu.com/news/international/feeder/default.rss",
+  "url": "https://www.thehindu.com/news/cities/feeder/default.rss",
   "refreshInterval": "30m"
 }
 

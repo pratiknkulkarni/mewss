@@ -1,64 +1,87 @@
-import {createFileRoute} from '@tanstack/react-router'
-import {SidebarInset, SidebarProvider} from '../../../components/ui/sidebar'
-import {AppSidebar} from '../../../components/ui/app-sidebar'
+import { createFileRoute } from '@tanstack/react-router'
+import { SidebarInset, SidebarProvider } from '../../../components/ui/sidebar'
+import { AppSidebar } from '../../../components/ui/app-sidebar'
 import {
     useArticles,
 } from '../../../features/articles/hooks/useArticles'
 import ArticleListPanel from "../../../components/article/ArticleListPanel.tsx";
-import {ReadingPane} from "../../../components/article/ReadingPane.tsx";
-import type {Article} from "../../../types/api.ts";
-import {useState} from "react";
-import {useMarkArticleRead} from "../../../features/articles/hooks/useMarkArticleRead.ts";
+import { ReadingPane } from "../../../components/article/ReadingPane.tsx";
+import type { Article } from "../../../types/api.ts";
+import { useMarkArticleRead } from "../../../features/articles/hooks/useMarkArticleRead.ts";
 
 export const Route = createFileRoute('/_app/home/')({
+    validateSearch: (search: Record<string, unknown>) => {
+        // I am setting values to undefined so that on the "first load" it won't have URL params
+        return {
+            articleId: search.articleId as string | undefined,
+            feedId: search.feedId as string | undefined,
+            tab: search.tab as 'unread' | 'all' | undefined,
+            page: search.page ? Number(search.page) : undefined,
+            limit: search.limit ? Number(search.limit) : undefined,
+        }
+    },
     component: HomeComponent,
 })
 
+
+type SearchParams = {
+    tab?: "unread" | "all" | undefined;
+    page?: number;
+    articleId?: string;
+}
+
 function HomeComponent() {
-    const [selectedFeedId, setSelectedFeedId] = useState<string | null>(null)
-    const [selectedArticleId, setSelectedArticleId] = useState<string | null>(null)
-    const [page, setPage] = useState(1)
-    const [limit, setLimit] = useState(20)
+    //TODO: update limit to set to the dropdown instead of hardcoding
+    const { articleId, feedId, tab = "unread", page = 1, limit = 20 } = Route.useSearch();
+    const navigate = Route.useNavigate()
 
-    const [activeTab, setActiveTab] = useState<"unread" | "all">("unread")
-
-    const {unread} = Route.useSearch();
-    const {data, isLoading, error} = useArticles({
+    const { data, isLoading, error } = useArticles({
         page,
         limit,
-        // unread: selectedFeedId === null,
-        unread: activeTab === "unread",
-        feedId: selectedFeedId ?? undefined,
+        unread: tab === "unread",
+        feedId: feedId
     });
+
     const {
-        // data: markArticleReadData,
-        // isLoading: markArticleReadLoading,
-        // error: markArticleReadError,
         mutate: markArticleReadMutate,
     } = useMarkArticleRead();
 
-    // console.log(data?.pagination)
-
     const articles = data?.articles;
-    const selectedArticle = articles?.find((a) => a.id === selectedArticleId) ?? null
+    const selectedArticle = articles?.find((a) => a.id === articleId) ?? null
 
+    // when usere clicks on a Next/Previous
     function handlePageChange(newPage: number) {
-        setPage(newPage);
+        navigate({ search: (prev: SearchParams) => ({ ...prev, page: newPage }) })
     }
 
-    // function handleFeedSelect(feedId: string | null) {
-    //     setSelectedFeedId(feedId)
-    //     setSelectedArticleId(null) // clear reading pane on feed switch so it doesnt display old article
-    //     setPage(1)
-    // }
-    //
-    // function handleLimitChange(newLimit: number) {
-    //     setLimit(newLimit)
-    //     setPage(1)
-    // }
+    // when user "clicks" on an article, it marks as read by default
+    const handleArticleSelect = (article: Article) => {
+        markArticleReadMutate(article.id)
 
-    // console.log(unread, articleId, limit, page, selectedArticle, selectedArticleId);
+        navigate({
+            search: (prev: SearchParams) => ({ ...prev, articleId: article.id }),
+            resetScroll: false,
+        })
+    }
 
+    // when user toggles between "Unread"(default)/"All"
+    const handleTabChange = (newTab: string) => {
+        navigate({
+            search: (prev: SearchParams) => ({
+                ...prev,
+
+                tab: newTab,
+                page: 1,
+                articleId: undefined
+            })
+        })
+    }
+
+    // when user marks the feed as "Unread", preferrably right click and select that from the dropdown, preferrably right click and select that from the dropdown
+    const handleUnreadToggle = () => {
+    }
+
+    // I have yet to test this out
     if (error) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-card text-destructive text-sm">
@@ -67,51 +90,35 @@ function HomeComponent() {
         )
     }
 
-    const handleArticleSelect = (article: Article) => {
-        setSelectedArticleId(article.id);
-
-        console.log("running mutation function")
-        markArticleReadMutate(article.id)
-        console.log("ran mutation function")
-    }
-
-    // mark the feed as "read" here
-    const handleUnreadToggle = () => {
-    }
-
-    function handleTabChange(tab: string) {
-        setActiveTab(tab as "unread" | "all")
-        setPage(1)
-        setSelectedArticleId(null)
-    }
-
     return (
-        <div className="overflow-y-scroll">
-            <SidebarProvider>
-                <SidebarInset className="flex flex-row overflow-hidden"/>
-                <div className="flex h-screen w-full overflow-hidden bg-card text-foreground font-sans">
-                    <AppSidebar/>
-                    <ArticleListPanel
-                        articles={articles}
-                        isLoading={isLoading}
-                        error={error}
-                        selectedArticleId={selectedArticleId}
-                        onArticleSelect={handleArticleSelect}
-                        unreadOnly={unread}
-                        onUnreadToggle={handleUnreadToggle}
-                        handlePageChange={handlePageChange}
-                        currentPage={page}
-                        currentLimit={limit}
-                        pagination={data?.pagination}
-                        className="flex-1 w-full md:flex-none md:w-80 lg:w-96"
-                        activeTab={activeTab}
-                        onTabChange={handleTabChange}
+        <SidebarProvider>
+            <SidebarInset className="flex flex-row overflow-hidden" />
+            <div className="flex h-screen w-full overflow-hidden bg-card text-foreground font-sans">
+                <AppSidebar />
+                <ArticleListPanel
+                    articles={articles}
+                    isLoading={isLoading}
+                    error={error}
+                    selectedArticleId={articleId}
+                    onArticleSelect={handleArticleSelect}
+                    unreadOnly={tab === "unread"}
+                    onUnreadToggle={handleUnreadToggle}
+                    handlePageChange={handlePageChange}
+                    currentPage={page}
+                    currentLimit={limit}
+                    pagination={data?.pagination}
+                    className={`w-full md:w-80 lg:w-96 ${articleId ? 'hidden md:flex' : 'flex'} flex-col`}
+                    activeTab={tab}
+                    onTabChange={handleTabChange}
+                />
+
+                <div className={`flex-1 overflow-hidden ${articleId ? 'flex' : 'hidden md:flex'}`}>
+                    <ReadingPane
+                        article={selectedArticle}
+                        onBack={() => navigate({ search: (prev: SearchParams) => ({ ...prev, articleId: undefined }) })}
                     />
-                    <div className="md:flex md:flex-1 md:overflow-hidden hidden">
-                        <ReadingPane article={selectedArticle}/>
-                    </div>
                 </div>
-            </SidebarProvider>
-        </div>
+            </div>
+        </SidebarProvider>
     )
 }
