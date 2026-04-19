@@ -14,6 +14,7 @@ import { useFeeds } from '../../features/feeds/hooks/useFeeds.ts'
 import { Library, Rss, Star } from 'lucide-react'
 import type { AppSidebarProps } from '../../types/props.ts'
 import { useUnreadCount } from '../../features/articles/hooks/useUnreadCount.ts'
+import { ScrollArea } from './scroll-area.tsx';
 
 export function AppSidebar({ selectedFeedId, onFeedSelect }: AppSidebarProps) {
   const { data: feeds, isLoading } = useFeeds()
@@ -96,69 +97,71 @@ export function AppSidebar({ selectedFeedId, onFeedSelect }: AppSidebarProps) {
                 </SidebarGroupLabel>
               </div>
 
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {/* TODO: need to replicate this or something simlar for the Articles */}
-                  {isLoading && (
-                    <p className="text-[12px] text-muted-foreground/60 px-1">
-                      Loading…
-                    </p>
-                  )}
+              <ScrollArea className="h-120 border-primary border-2 border-solid" >
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {/* TODO: need to replicate this or something simlar for the Articles */}
+                    {isLoading && (
+                      <p className="text-[12px] text-muted-foreground/60 px-1">
+                        Loading…
+                      </p>
+                    )}
 
-                  {!isLoading && feeds?.length === 0 && (
-                    <p className="text-[12px] text-muted-foreground/60 px-1">
-                      No feeds yet.
-                    </p>
-                  )}
+                    {!isLoading && feeds?.length === 0 && (
+                      <p className="text-[12px] text-muted-foreground/60 px-1">
+                        No feeds yet.
+                      </p>
+                    )}
 
-                  {feeds?.map((feed) => {
-                    const isActive = selectedFeedId === feed.id
+                    {feeds?.map((feed) => {
+                      const isActive = selectedFeedId === feed.id
 
-                    return (
-                      <SidebarMenuItem key={feed.id}>
-                        <SidebarMenuButton
-                          isActive={isActive}
-                          onClick={() => onFeedSelect(feed.id)}
-                          className={`
-                            px-0 py-1.5 h-auto transition-colors group rounded-none
+                      return (
+                        <SidebarMenuItem key={feed.id}>
+                          <SidebarMenuButton
+                            isActive={isActive}
+                            onClick={() => onFeedSelect(feed.id)}
+                            className={`
+                            cursor-pointer px-0 py-1.5 h-auto transition-colors group rounded-none
                             ${isActive ? 'bg-accent/40' : 'hover:bg-accent/30'}
                           `}
-                        >
-                          <div className="flex items-center justify-between w-full">
-                            <div className="flex items-center gap-3 overflow-hidden">
-                              <div className="w-4 h-4 bg-primary/10 shrink-0 flex items-center justify-center">
-                                <Rss className="h-2.5 w-2.5 text-primary" />
-                              </div>
-                              <span
-                                className={`text-[13px] truncate ${isActive ? 'text-primary font-medium' : 'text-foreground/80 group-hover:text-primary'}`}
-                                title={feed.url}
-                              >
-                                {/* TODO: this works, partially. 
+                          >
+                            <div className="flex items-center justify-between w-full">
+                              <div className="flex items-center gap-3 overflow-hidden">
+                                <div className="w-4 h-4 bg-primary/10 shrink-0 flex items-center justify-center">
+                                  <Rss className="h-2.5 w-2.5 text-primary" />
+                                </div>
+                                <span
+                                  className={`text-[13px] truncate ${isActive ? 'text-primary font-medium' : 'text-foreground/80 group-hover:text-primary'}`}
+                                  title={feed.url}
+                                >
+                                  {/* TODO: this works, partially. 
                                 If one TLD gives multiple RSS feeds (ex - https://www.thehindu.com/rssfeeds/), all come up as "thehindu".
                                 */}
-                                {new URL(feed.url).hostname.replace(/^www\./, "")}
-                                {/* {feed.url} */}
-                              </span>
+                                  {new URL(feed.url).hostname.replace(/^www\./, "")}
+                                  {/* {feed.url} */}
+                                </span>
+                              </div>
+                              {feed.status === 'error' && (
+                                <span className="text-[10px] font-mono text-destructive shrink-0 ml-2">
+                                  err
+                                </span>
+                              )}
                             </div>
-                            {feed.status === 'error' && (
-                              <span className="text-[10px] font-mono text-destructive shrink-0 ml-2">
-                                err
-                              </span>
-                            )}
-                          </div>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    )
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      )
+                    })}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </ScrollArea>
             </SidebarGroup>
-          </div>
+          </div >
 
-        </SidebarContent>
-      </SidebarContent>
+        </SidebarContent >
+      </SidebarContent >
 
       <SidebarFooter />
-    </Sidebar>
+    </Sidebar >
   )
 }
