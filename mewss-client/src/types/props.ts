@@ -32,3 +32,8 @@ export type ArticleListPanelProps = React.HTMLAttributes<HTMLDivElement> & {
     activeTab: "unread" | "all"
     onTabChange: (tab: string) => void;
 }
+
+export interface AppSidebarProps {
+    selectedFeedId: string | null
+    onFeedSelect: (feedId: string | null) => void
+}

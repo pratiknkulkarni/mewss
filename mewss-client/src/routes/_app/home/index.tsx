@@ -1,13 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { SidebarInset, SidebarProvider } from '../../../components/ui/sidebar'
 import { AppSidebar } from '../../../components/ui/app-sidebar'
-import {
-    useArticles,
-} from '../../../features/articles/hooks/useArticles'
+import { useArticles } from '../../../features/articles/hooks/useArticles'
 import ArticleListPanel from "../../../components/article/ArticleListPanel.tsx";
 import { ReadingPane } from "../../../components/article/ReadingPane.tsx";
 import type { Article } from "../../../types/api.ts";
 import { useMarkArticleRead } from "../../../features/articles/hooks/useMarkArticleRead.ts";
+import { useEffect } from 'react';
 
 export const Route = createFileRoute('/_app/home/')({
     validateSearch: (search: Record<string, unknown>) => {
@@ -33,6 +32,13 @@ type SearchParams = {
 function HomeComponent() {
     //TODO: update limit to set to the dropdown instead of hardcoding
     const { articleId, feedId, tab = "unread", page = 1, limit = 20 } = Route.useSearch();
+
+    useEffect(() => {
+        console.log(`articleId: ${articleId}, feedId: ${feedId}, tab: ${tab}, page: ${page}, limit: ${limit}`)
+        // queryClient.invalidateQueries({ queryKey: [articleKeys.all, feedKeys.all] })
+    }, [articleId, feedId, tab, page, limit])
+
+
     const navigate = Route.useNavigate()
 
     const { data, isLoading, error } = useArticles({
@@ -47,7 +53,7 @@ function HomeComponent() {
     } = useMarkArticleRead();
 
     const articles = data?.articles;
-    const selectedArticle = articles?.find((a) => a.id === articleId) ?? null
+    const selectedArticle = articles?.find((a) => a.id === articleId) ?? null // user "clicked" article
 
     // when usere clicks on a Next/Previous
     const handlePageChange = (newPage: number) => {

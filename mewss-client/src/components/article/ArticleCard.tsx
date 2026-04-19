@@ -1,6 +1,20 @@
-import type {ArticleCardProps} from "../../types/props.ts";
+import type { ArticleCardProps } from "../../types/props.ts";
+import { formatDistanceToNowStrict, differenceInDays, format } from 'date-fns';
 
-export default function ArticleCard({article, isActive, onClick}: ArticleCardProps) {
+function relativeTime(dateStr: string | null): string {
+    if (!dateStr) return "";
+
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return "";
+
+    if (differenceInDays(Date.now(), date) < 7) {
+        return formatDistanceToNowStrict(date, { addSuffix: true });
+    }
+
+    return format(date, "MMM d");
+}
+
+export default function ArticleCard({ article, isActive, onClick }: ArticleCardProps) {
     return (
         <div
             onClick={onClick}
@@ -12,16 +26,22 @@ export default function ArticleCard({article, isActive, onClick}: ArticleCardPro
         >
             <div className="flex items-start gap-3">
                 {!article.isRead && (
-                    <div className="mt-1.5 w-2 h-2 rounded-full bg-primary flex-shrink-0"/>
+                    <div className="mt-1.5 w-2 h-2 rounded-full bg-primary shrink-0" />
                 )}
                 <div className={`flex-1 ${article.isRead && !isActive ? 'pl-5' : ''}`}>
                     <div className="flex justify-between items-baseline mb-1">
-            <span className="font-mono text-[10px] uppercase text-muted-foreground/60 tracking-wider">
-              {article.url}
-            </span>
+                        <span className="font-mono text-[10px] uppercase text-muted-foreground/60 tracking-wider">
+                            {/*TODO: this works, partially. 
+                                If one TLD gives multiple RSS feeds (ex - https://www.thehindu.com/rssfeeds/), all come up as "thehindu".
+                                Keeping this for now.
+                                */}
+                            {new URL(article.url).hostname.replace(/^www\./, "")}
+                            {/* {article.url} */}
+                        </span>
                         <span className="font-mono text-[10px] text-muted-foreground/40">
-              {article.publishedAt}
-            </span>
+                            {/* {article.publishedAt} */}
+                            {relativeTime(article.publishedAt)}
+                        </span>
                     </div>
                     <h3
                         className={`

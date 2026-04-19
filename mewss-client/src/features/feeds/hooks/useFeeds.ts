@@ -15,7 +15,7 @@ export function useFeeds(status?: string) {
         queryKey: feedKeys.list(status),
         queryFn: () => feedApi.list(status),
         staleTime: 0,
-        //TODO: to unwrap or not to unwrap?
+        // To unwrap or not to unwrap? Unwrap, makes it easier in the user
         select: (data) => data.feeds,
     })
 }

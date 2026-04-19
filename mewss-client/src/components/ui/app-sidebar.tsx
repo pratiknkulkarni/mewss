@@ -12,11 +12,7 @@ import {
 } from './sidebar.tsx'
 import { useFeeds } from '../../features/feeds/hooks/useFeeds.ts'
 import { Library, Rss, Star } from 'lucide-react'
-
-interface AppSidebarProps {
-  selectedFeedId: string | null
-  onFeedSelect: (feedId: string | null) => void
-}
+import type { AppSidebarProps } from '../../types/props.ts'
 
 
 export function AppSidebar({ selectedFeedId, onFeedSelect }: AppSidebarProps) {
@@ -129,7 +125,11 @@ export function AppSidebar({ selectedFeedId, onFeedSelect }: AppSidebarProps) {
                                 className={`text-[13px] truncate ${isActive ? 'text-primary font-medium' : 'text-foreground/80 group-hover:text-primary'}`}
                                 title={feed.url}
                               >
-                                {feed.url}
+                                {/* TODO: this works, partially. 
+                                If one TLD gives multiple RSS feeds (ex - https://www.thehindu.com/rssfeeds/), all come up as "thehindu".
+                                */}
+                                {new URL(feed.url).hostname.replace(/^www\./, "")}
+                                {/* {feed.url} */}
                               </span>
                             </div>
                             {feed.status === 'error' && (

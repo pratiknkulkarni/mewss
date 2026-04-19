@@ -68,7 +68,7 @@ Content-Type: application/json
 Origin: {{origin}}
 
 {
-  "url": "https://proton.me/blog/feed",
+  "url": "https://www.thehindu.com/news/cities/feeder/default.rss",
   "refreshInterval": "24h"
 }
 
