@@ -1,14 +1,14 @@
 import { useState } from "react"
-import { cn } from "../../lib/utils.ts"
-import { Button } from "../ui/button"
+import { cn } from "@/lib/utils.ts"
+import { Button } from "@/components/ui/button"
 import {
   Field,
   FieldDescription,
   FieldGroup,
   FieldLabel,
-} from "../ui/field.tsx"
-import { Input } from "../ui/input"
-import { authClient } from "../../features/auth/api/auth-client.ts"
+} from "@/components/ui/field.tsx"
+import { Input } from "@/components/ui/input"
+import { authClient } from "@/features/auth/api/auth-client.ts"
 import { toast } from "sonner"
 import { Link, useNavigate } from "@tanstack/react-router"
 

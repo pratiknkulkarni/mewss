@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import type { Feed, FeedsResponse } from "../../../types/api.ts";
-import type { ApiError } from "../../../lib/api-error.ts";
-import { feedApi } from "../../../lib/feed-api.ts";
+import type { Feed, FeedsResponse } from "@/types/api.ts";
+import type { ApiError } from "@/lib/api-error.ts";
+import { feedApi } from "@/lib/feed-api.ts";
 
 
 export const feedKeys = {

@@ -1,6 +1,6 @@
 import { ArrowLeft, ExternalLink } from "lucide-react"
-import { ScrollArea } from "../ui/scroll-area.tsx";
-import type { ReadingPaneProps } from "../../types/props.ts";
+import { ScrollArea } from "@/components/ui/scroll-area.tsx";
+import type { ReadingPaneProps } from "@/types/props.ts";
 import { EmptyReadingPane } from "./EmptyReadingPane.tsx";
 
 function formatReadableDate(dateStr: string | null): string {

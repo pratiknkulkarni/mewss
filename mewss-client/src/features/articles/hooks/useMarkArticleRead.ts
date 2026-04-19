@@ -1,7 +1,7 @@
 import {useMutation, useQueryClient} from "@tanstack/react-query";
-import {articleApi} from "../../../lib/article-api.ts";
+import {articleApi} from "@/lib/article-api.ts";
 import {articleKeys} from "./useArticles.ts";
-import type {ArticlesResponse} from "../../../types/api.ts";
+import type {ArticlesResponse} from "@/types/api.ts";
 
 export function useMarkArticleRead() {
     const queryClient = useQueryClient();

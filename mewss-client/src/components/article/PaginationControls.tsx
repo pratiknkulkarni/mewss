@@ -1,7 +1,7 @@
-import {Field, FieldLabel} from "../ui/field";
-import {Pagination, PaginationContent, PaginationItem, PaginationNext, PaginationPrevious} from "../ui/pagination.tsx";
-import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "../ui/select.tsx";
-import type {PaginationControlsProps} from "../../types/props.ts";
+import {Field, FieldLabel} from "@/components/ui/field";
+import {Pagination, PaginationContent, PaginationItem, PaginationNext, PaginationPrevious} from "@/components/ui/pagination.tsx";
+import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select.tsx";
+import type {PaginationControlsProps} from "@/types/props.ts";
 
 export function PaginationControls({handlePageChange, currentPage, pagination}: PaginationControlsProps) {
     return (

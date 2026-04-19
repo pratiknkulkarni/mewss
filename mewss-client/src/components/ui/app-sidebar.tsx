@@ -10,10 +10,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from './sidebar.tsx'
-import { useFeeds } from '../../features/feeds/hooks/useFeeds.ts'
+import { useFeeds } from '@/features/feeds/hooks/useFeeds.ts'
 import { Library, Star } from 'lucide-react'
-import type { AppSidebarProps } from '../../types/props.ts'
-import { useUnreadCount } from '../../features/articles/hooks/useUnreadCount.ts'
+import type { AppSidebarProps } from '@/types/props.ts'
+import { useUnreadCount } from '@/features/articles/hooks/useUnreadCount.ts'
 import { ScrollArea } from './scroll-area.tsx';
 
 export function AppSidebar({ selectedFeedId, onFeedSelect }: AppSidebarProps) {

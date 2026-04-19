@@ -1,5 +1,5 @@
 import {createFileRoute, Outlet, redirect} from '@tanstack/react-router'
-import {authClient} from "../../features/auth/api/auth-client.ts";
+import {authClient} from "@/features/auth/api/auth-client.ts";
 
 export const Route = createFileRoute('/_app')({
     component: RouteComponent,

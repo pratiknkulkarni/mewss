@@ -1,9 +1,9 @@
 import ArticleCard from "./ArticleCard.tsx";
-import { SidebarTrigger } from "../ui/sidebar.tsx";
-import { ScrollArea } from "../ui/scroll-area.tsx";
+import { SidebarTrigger } from "@/components/ui/sidebar.tsx";
+import { ScrollArea } from "@/components/ui/scroll-area.tsx";
 import { PaginationControls } from "./PaginationControls.tsx";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs.tsx";
-import type { ArticleListPanelProps } from "../../types/props.ts";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.tsx";
+import type { ArticleListPanelProps } from "@/types/props.ts";
 
 export default function ArticleListPanel({
     articles,

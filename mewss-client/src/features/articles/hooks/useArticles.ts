@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import type { ArticleFilters, ArticlesResponse } from "../../../types/api.ts";
-import { articleApi } from "../../../lib/article-api.ts";
-import type { ApiError } from "../../../lib/api-error.ts";
+import type { ArticleFilters, ArticlesResponse } from "@/types/api.ts";
+import { articleApi } from "@/lib/article-api.ts";
+import type { ApiError } from "@/lib/api-error.ts";
 
 
 export const articleKeys = {

@@ -1,4 +1,4 @@
-import type { FeedsResponse } from "../types/api";
+import type { FeedsResponse } from "@/types/api";
 import { apiClient } from "./api-client";
 
 export const feedApi = {

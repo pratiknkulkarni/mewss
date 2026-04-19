@@ -1,18 +1,18 @@
 import { useState } from "react"
 import { useNavigate, Link } from "@tanstack/react-router"
 
-import { Button } from "../ui/button"
-import { Input } from "../ui/input"
-import { cn } from "../../lib/utils"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { cn } from "@/lib/utils"
 import {
   Field,
   FieldDescription,
   FieldLabel,
   FieldGroup,
-} from "../ui/field"
+} from "@/components/ui/field"
 
-import { authClient } from "../../features/auth/api/auth-client"
-import { Route } from "../../routes/_auth/login"
+import { authClient } from "@/features/auth/api/auth-client"
+import { Route } from "@/routes/_auth/login"
 import { toast } from "sonner"
 
 export function LoginForm({

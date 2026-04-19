@@ -1,4 +1,4 @@
-import type { ArticlesResponse, ArticleFilters, ArticleResponse } from "../types/api.ts";
+import type { ArticlesResponse, ArticleFilters, ArticleResponse } from "@/types/api.ts";
 import { apiClient } from "./api-client.ts";
 
 export const articleApi = {
