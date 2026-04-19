@@ -11,7 +11,7 @@ import {
   SidebarMenuItem,
 } from './sidebar.tsx'
 import { useFeeds } from '../../features/feeds/hooks/useFeeds.ts'
-import { Library, Rss, Star } from 'lucide-react'
+import { Library, Star } from 'lucide-react'
 import type { AppSidebarProps } from '../../types/props.ts'
 import { useUnreadCount } from '../../features/articles/hooks/useUnreadCount.ts'
 import { ScrollArea } from './scroll-area.tsx';
@@ -35,7 +35,7 @@ export function AppSidebar({ selectedFeedId, onFeedSelect }: AppSidebarProps) {
             mewss
           </h1>
           <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60">
-            your feeds, your way
+            your feeds, my way
           </p>
         </div>
       </SidebarHeader>
@@ -115,6 +115,8 @@ export function AppSidebar({ selectedFeedId, onFeedSelect }: AppSidebarProps) {
 
                     {feeds?.map((feed) => {
                       const isActive = selectedFeedId === feed.id
+                      const cleanURL = new URL(feed.url).hostname.replace(/^www\./, "")
+                      console.log(cleanURL);
 
                       return (
                         <SidebarMenuItem key={feed.id}>
@@ -129,7 +131,7 @@ export function AppSidebar({ selectedFeedId, onFeedSelect }: AppSidebarProps) {
                             <div className="flex items-center justify-between w-full">
                               <div className="flex items-center gap-3 overflow-hidden">
                                 <div className="w-4 h-4 bg-primary/10 shrink-0 flex items-center justify-center">
-                                  <Rss className="h-2.5 w-2.5 text-primary" />
+                                  <img alt='favicon' src={`https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${cleanURL}&size=16`} />
                                 </div>
                                 <span
                                   className={`text-[13px] truncate ${isActive ? 'text-primary font-medium' : 'text-foreground/80 group-hover:text-primary'}`}
@@ -138,8 +140,7 @@ export function AppSidebar({ selectedFeedId, onFeedSelect }: AppSidebarProps) {
                                   {/* TODO: this works, partially. 
                                 If one TLD gives multiple RSS feeds (ex - https://www.thehindu.com/rssfeeds/), all come up as "thehindu".
                                 */}
-                                  {new URL(feed.url).hostname.replace(/^www\./, "")}
-                                  {/* {feed.url} */}
+                                  {cleanURL}
                                 </span>
                               </div>
                               {feed.status === 'error' && (
