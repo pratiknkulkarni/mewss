@@ -57,7 +57,7 @@ Origin: {{origin}}
 
 
 ### Get a single feed
-GET {{baseUrl}}/api/feeds/56b37231-9849-4dfe-aa73-22e062f4cd21
+GET {{baseUrl}}/api/feeds/24a0bce9-0e37-4429-a7cd-02392a2260fe
 Origin: {{origin}}
 
 
@@ -73,7 +73,7 @@ Origin: {{origin}}
 }
 
 ### Delete a feed
-DELETE {{baseUrl}}/api/feeds/41b5ce57-9b52-4955-8eb1-b8679f1711bb
+DELETE {{baseUrl}}/api/feeds/24a0bce9-0e37-4429-a7cd-02392a2260fe
 Origin: {{origin}}
 
 ### Add a feed — validation error (bad URL)
@@ -112,7 +112,7 @@ POST {{baseUrl}}/api/feeds/475d93b1-9a8e-4bf6-9abe-a2e2a00a9407/refresh
 Origin: {{origin}}
 
 ### List articles for a feed (defaults: page=1, limit=10)
-GET {{baseUrl}}/api/feeds/0965d3f2-cb97-401a-92a9-a0cc2cd9b8ef/articles
+GET {{baseUrl}}/api/feeds/914dec1b-31bf-4bf0-bb14-6e490ef2ca24/articles?unread=true&limit=1&page=1
 Origin: {{origin}}
 
 

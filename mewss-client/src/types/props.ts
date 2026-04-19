@@ -36,4 +36,5 @@ export type ArticleListPanelProps = React.HTMLAttributes<HTMLDivElement> & {
 export interface AppSidebarProps {
     selectedFeedId: string | null
     onFeedSelect: (feedId: string | null) => void
+    unreadCount?: number
 }

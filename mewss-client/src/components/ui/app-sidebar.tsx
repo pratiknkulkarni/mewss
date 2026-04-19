@@ -13,10 +13,11 @@ import {
 import { useFeeds } from '../../features/feeds/hooks/useFeeds.ts'
 import { Library, Rss, Star } from 'lucide-react'
 import type { AppSidebarProps } from '../../types/props.ts'
-
+import { useUnreadCount } from '../../features/articles/hooks/useUnreadCount.ts'
 
 export function AppSidebar({ selectedFeedId, onFeedSelect }: AppSidebarProps) {
   const { data: feeds, isLoading } = useFeeds()
+  const { data: unreadCount } = useUnreadCount()
 
   // Maybe I can add more? Say Archive or Not Working?
   const mainNav = [
@@ -72,6 +73,13 @@ export function AppSidebar({ selectedFeedId, onFeedSelect }: AppSidebarProps) {
                         <span className="font-sans text-[11px] uppercase tracking-widest font-medium">
                           {item.title}
                         </span>
+
+                        {item.feedId === null && unreadCount ? (
+                          <span className="ml-auto font-mono text-[10px] tabular-nums text-muted-foreground/60">
+                            {unreadCount}
+                          </span>
+                        ) : null}
+
                       </div>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

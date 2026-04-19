@@ -33,12 +33,6 @@ function HomeComponent() {
     //TODO: update limit to set to the dropdown instead of hardcoding
     const { articleId, feedId, tab = "unread", page = 1, limit = 20 } = Route.useSearch();
 
-    useEffect(() => {
-        console.log(`articleId: ${articleId}, feedId: ${feedId}, tab: ${tab}, page: ${page}, limit: ${limit}`)
-        // queryClient.invalidateQueries({ queryKey: [articleKeys.all, feedKeys.all] })
-    }, [articleId, feedId, tab, page, limit])
-
-
     const navigate = Route.useNavigate()
 
     const { data, isLoading, error } = useArticles({
@@ -112,7 +106,9 @@ function HomeComponent() {
             <SidebarInset className="flex flex-row overflow-hidden" />
             <div className="flex h-screen w-full overflow-hidden bg-card text-foreground font-sans">
                 <AppSidebar selectedFeedId={feedId ?? null}
-                    onFeedSelect={handleFeedSelect} />
+                    onFeedSelect={handleFeedSelect}
+                    unreadCount={data?.pagination?.total}
+                />
                 <ArticleListPanel
                     articles={articles}
                     isLoading={isLoading}

@@ -17,8 +17,8 @@ export const articleKeys = {
     detail: (id: string) => [...articleKeys.all, "detail", id] as const,
 }
 
-const ARTICLE_STALE_TIME_MS = 60000
-const ARTICLE_POLL_INTERVAL_MS = 60000
+export const ARTICLE_STALE_TIME_MS = 60000
+export const ARTICLE_POLL_INTERVAL_MS = 60000
 
 export function useArticles(filters?: ArticleFilters) {
     const { feedId, ...rest } = filters ?? {};
