@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
-import { AppSidebar } from '@/components/ui/app-sidebar'
+import { AppSidebar } from '@/components/app-sidebar/app-sidebar'
 import { useArticles } from '@/features/articles/hooks/useArticles'
 import ArticleListPanel from "@/components/article/ArticleListPanel.tsx";
 import { ReadingPane } from "@/components/article/ReadingPane.tsx";
