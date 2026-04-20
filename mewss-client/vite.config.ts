@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import { tanstackRouter } from "@tanstack/router-plugin/vite"
 import tailwindcss from "@tailwindcss/vite";
 import * as path from "node:path";
+import { visualizer } from "rollup-plugin-visualizer";
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -12,7 +13,13 @@ export default defineConfig({
       autoCodeSplitting: true
     }),
     react(),
-    tailwindcss()
+    tailwindcss(),
+    // visualizer({
+    //   template: "treemap",
+    //   open: true,
+    //   gzipSize: true,
+    //   filename: "bundle-stats.html",
+    // })
   ],
   resolve: {
     alias: {

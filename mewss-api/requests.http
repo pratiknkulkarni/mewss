@@ -68,7 +68,7 @@ Content-Type: application/json
 Origin: {{origin}}
 
 {
-  "url": "https://www.thehindu.com/life-and-style/food/feeder/default.rss",
+  "url": "https://www.relay.fm/rocket/feed",
   "refreshInterval": "24h"
 }
 

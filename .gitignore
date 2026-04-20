@@ -83,3 +83,6 @@ dist-ssr
 
 ignore_this_file.http
 *.zip
+
+bundle-stats.html
+.tanstack/

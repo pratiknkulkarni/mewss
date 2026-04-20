@@ -19,7 +19,7 @@ function RootComponent() {
             {(
                 <>
                     <ReactQueryDevtools initialIsOpen={false} position="bottom-right" />
-                    <TanStackRouterDevtools position="bottom-left" />
+                    {/* <TanStackRouterDevtools position="bottom-left" /> */}
                 </>
             )}
         </>
