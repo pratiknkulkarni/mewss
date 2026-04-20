@@ -2,11 +2,8 @@
 
 import {
     BadgeCheck,
-    Bell,
     ChevronsUpDown,
-    CreditCard,
     LogOut,
-    Sparkles,
 } from "lucide-react"
 import {
     Avatar,
@@ -89,23 +86,29 @@ export function NavUser({
 
                         <DropdownMenuSeparator />
 
-                        <DropdownMenuItem className="cursor-pointer" >
-                            <LogOut onClick={() => {
-                                authClient.signOut({
-                                    fetchOptions: {
-                                        onSuccess: () => {
-                                            navigate({
-                                                to: "/login",
-                                                replace: true
-                                            })
+                        <DropdownMenuItem className="cursor-pointer" onClick={() => {
+                            authClient.signOut({
+                                fetchOptions: {
+                                    onSuccess: () => {
+                                        navigate({
+                                            to: "/login",
+                                            replace: true
+                                        })
 
-                                            toast.success('Logout success!', {
-                                                position: "bottom-right",
-                                            })
-                                        }
+                                        toast.success('Logout success!', {
+                                            position: "bottom-right",
+                                        })
+                                    },
+                                    onError: (err) => {
+                                        toast.error(`${err.error.message}`, {
+                                            position: "bottom-right",
+                                        })
                                     }
-                                })
-                            }} />
+                                }
+                            })
+                        }}
+                        >
+                            <LogOut />
                             Log out
                         </DropdownMenuItem>
                     </DropdownMenuContent>
