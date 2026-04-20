@@ -4,6 +4,7 @@ import {
     BadgeCheck,
     ChevronsUpDown,
     LogOut,
+    Settings,
 } from "lucide-react"
 import {
     Avatar,
@@ -27,6 +28,7 @@ import {
 import { authClient } from "@/features/auth/api/auth-client"
 import { useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"
+import { ModeToggle } from "../theme-toggle"
 
 export function NavUser({
     user,
@@ -83,6 +85,12 @@ export function NavUser({
                                 Account
                             </DropdownMenuItem>
                         </DropdownMenuGroup>
+
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="cursor-pointer">
+                            <Settings />
+                            <ModeToggle />
+                        </DropdownMenuItem>
 
                         <DropdownMenuSeparator />
 
