@@ -1,7 +1,6 @@
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -16,10 +15,12 @@ import type { AppSidebarProps } from '@/types/props.ts'
 import { useUnreadCount } from '@/features/articles/hooks/useUnreadCount.ts'
 import { ScrollArea } from './scroll-area.tsx';
 import { NavUser } from './nav-user.tsx'
+import { authClient } from '@/features/auth/api/auth-client.ts'
 
 export function AppSidebar({ selectedFeedId, onFeedSelect }: AppSidebarProps) {
   const { data: feeds, isLoading } = useFeeds()
   const { data: unreadCount } = useUnreadCount()
+  const { data: userData } = authClient.useSession();
 
   // Maybe I can add more? Say Archive or Not Working?
   const mainNav = [
@@ -30,11 +31,9 @@ export function AppSidebar({ selectedFeedId, onFeedSelect }: AppSidebarProps) {
   const user: {
     name: string
     email: string
-    avatar: string
   } = {
-    avatar: "",
-    name: "Django The Cat",
-    email: "django@catmail.com"
+    name: userData?.user?.name || "",
+    email: userData?.user?.email || "",
   }
 
   return (

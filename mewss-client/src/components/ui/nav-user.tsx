@@ -4,6 +4,7 @@ import {
     BadgeCheck,
     ChevronsUpDown,
     LogOut,
+    Settings,
 } from "lucide-react"
 import {
     Avatar,
@@ -27,6 +28,7 @@ import {
 import { authClient } from "@/features/auth/api/auth-client"
 import { useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"
+import { ModeToggle } from "../theme-toggle"
 
 export function NavUser({
     user,
@@ -34,7 +36,6 @@ export function NavUser({
     user: {
         name: string
         email: string
-        avatar: string
     }
 }) {
     const { isMobile } = useSidebar();
@@ -49,7 +50,7 @@ export function NavUser({
                             className="w-full data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground cursor-pointer"
                         >
                             <Avatar className="h-8 w-8 rounded-lg">
-                                <AvatarImage src={user.avatar} alt={user.name} />
+                                <AvatarImage src="" alt={user.name} />
                                 <AvatarFallback className="rounded-lg">CN</AvatarFallback>
                             </Avatar>
                             <div className="grid flex-1 text-left text-sm leading-tight">
@@ -67,7 +68,7 @@ export function NavUser({
                     >
                         <div className="flex items-center gap-2 px-2 py-1.5 text-left text-sm">
                             <Avatar className="h-8 w-8 rounded-lg">
-                                <AvatarImage src={user.avatar} alt={user.name} />
+                                <AvatarImage src="" alt={user.name} />
                                 <AvatarFallback className="rounded-lg">CN</AvatarFallback>
                             </Avatar>
                             <div className="grid flex-1 text-left text-sm leading-tight">
@@ -83,6 +84,12 @@ export function NavUser({
                                 Account
                             </DropdownMenuItem>
                         </DropdownMenuGroup>
+
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="cursor-pointer">
+                            <Settings />
+                            <ModeToggle />
+                        </DropdownMenuItem>
 
                         <DropdownMenuSeparator />
 

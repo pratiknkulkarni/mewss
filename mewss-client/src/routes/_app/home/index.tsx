@@ -6,6 +6,7 @@ import ArticleListPanel from "@/components/article/ArticleListPanel.tsx";
 import { ReadingPane } from "@/components/article/ReadingPane.tsx";
 import type { Article } from "@/types/api.ts";
 import { useMarkArticleRead } from "@/features/articles/hooks/useMarkArticleRead.ts";
+import { authClient } from '@/features/auth/api/auth-client';
 
 export const Route = createFileRoute('/_app/home/')({
   validateSearch: (search: Record<string, unknown>) => {
