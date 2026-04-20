@@ -10,7 +10,7 @@ import {
   SidebarMenuItem,
 } from './sidebar.tsx'
 import { useFeeds } from '@/features/feeds/hooks/useFeeds.ts'
-import { Library, Star } from 'lucide-react'
+import { Library, Star, PlusCircle } from 'lucide-react'
 import type { AppSidebarProps } from '@/types/props.ts'
 import { useUnreadCount } from '@/features/articles/hooks/useUnreadCount.ts'
 import { ScrollArea } from './scroll-area.tsx';
@@ -26,6 +26,7 @@ export function AppSidebar({ selectedFeedId, onFeedSelect }: AppSidebarProps) {
   const mainNav = [
     { title: 'All Articles', icon: Library, feedId: null },
     { title: 'Starred', icon: Star, feedId: '__starred__' }, //TODO: this needs to be changed
+    { title: 'Add Feed', icon: PlusCircle, feedId: '__add_feed__' }, //TODO: this needs to be changed
   ]
 
   const user: {
@@ -67,7 +68,7 @@ export function AppSidebar({ selectedFeedId, onFeedSelect }: AppSidebarProps) {
                     }
                   }}
                   className={`
-                flex items-center justify-between py-2 px-4 rounded-none
+                cursor-pointer flex items-center justify-between py-2 px-4 rounded-none
                 transition-all duration-150 group
                 ${isActive
                       ? 'bg-accent/50 text-sidebar-primary font-bold border-l-2 border-sidebar-primary'
