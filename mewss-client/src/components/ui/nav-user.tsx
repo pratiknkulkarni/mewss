@@ -18,7 +18,6 @@ import {
     DropdownMenuContent,
     DropdownMenuGroup,
     DropdownMenuItem,
-    DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
@@ -28,6 +27,9 @@ import {
     SidebarMenuItem,
     useSidebar,
 } from "@/components/ui/sidebar"
+import { authClient } from "@/features/auth/api/auth-client"
+import { useNavigate } from "@tanstack/react-router"
+import { toast } from "sonner"
 
 export function NavUser({
     user,
@@ -38,15 +40,16 @@ export function NavUser({
         avatar: string
     }
 }) {
-    const { isMobile } = useSidebar()
+    const { isMobile } = useSidebar();
+    const navigate = useNavigate();
     return (
         <SidebarMenu>
             <SidebarMenuItem>
                 <DropdownMenu>
-                    <DropdownMenuTrigger>
+                    <DropdownMenuTrigger className="w-full focus-visible:outline-none">
                         <SidebarMenuButton
                             size="lg"
-                            className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                            className="w-full data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground cursor-pointer"
                         >
                             <Avatar className="h-8 w-8 rounded-lg">
                                 <AvatarImage src={user.avatar} alt={user.name} />
@@ -54,54 +57,55 @@ export function NavUser({
                             </Avatar>
                             <div className="grid flex-1 text-left text-sm leading-tight">
                                 <span className="truncate font-medium">{user.name}</span>
-                                <span className="truncate text-xs">{user.email}</span>
                             </div>
                             <ChevronsUpDown className="ml-auto size-4" />
                         </SidebarMenuButton>
                     </DropdownMenuTrigger>
+
                     <DropdownMenuContent
-                        className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
-                        side={isMobile ? "bottom" : "right"}
+                        className="w-(--anchor-width) min-w-56 rounded-lg"
+                        side={isMobile ? "bottom" : "top"}
                         align="end"
                         sideOffset={4}
                     >
-                        <DropdownMenuLabel className="p-0 font-normal">
-                            <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                                <Avatar className="h-8 w-8 rounded-lg">
-                                    <AvatarImage src={user.avatar} alt={user.name} />
-                                    <AvatarFallback className="rounded-lg">CN</AvatarFallback>
-                                </Avatar>
-                                <div className="grid flex-1 text-left text-sm leading-tight">
-                                    <span className="truncate font-medium">{user.name}</span>
-                                    <span className="truncate text-xs">{user.email}</span>
-                                </div>
+                        <div className="flex items-center gap-2 px-2 py-1.5 text-left text-sm">
+                            <Avatar className="h-8 w-8 rounded-lg">
+                                <AvatarImage src={user.avatar} alt={user.name} />
+                                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                            </Avatar>
+                            <div className="grid flex-1 text-left text-sm leading-tight">
+                                <span className="truncate font-medium">{user.name}</span>
+                                <span className="truncate text-xs text-muted-foreground">{user.email}</span>
                             </div>
-                        </DropdownMenuLabel>
+                        </div>
                         <DropdownMenuSeparator />
+
                         <DropdownMenuGroup>
-                            <DropdownMenuItem>
-                                <Sparkles />
-                                Upgrade to Pro
-                            </DropdownMenuItem>
-                        </DropdownMenuGroup>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuGroup>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer">
                                 <BadgeCheck />
                                 Account
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
-                                <CreditCard />
-                                Billing
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                                <Bell />
-                                Notifications
-                            </DropdownMenuItem>
                         </DropdownMenuGroup>
+
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem>
-                            <LogOut />
+
+                        <DropdownMenuItem className="cursor-pointer" >
+                            <LogOut onClick={() => {
+                                authClient.signOut({
+                                    fetchOptions: {
+                                        onSuccess: () => {
+                                            navigate({
+                                                to: "/login",
+                                                replace: true
+                                            })
+
+                                            toast.success('Logout success!', {
+                                                position: "bottom-right",
+                                            })
+                                        }
+                                    }
+                                })
+                            }} />
                             Log out
                         </DropdownMenuItem>
                     </DropdownMenuContent>

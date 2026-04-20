@@ -33,8 +33,8 @@ export function AppSidebar({ selectedFeedId, onFeedSelect }: AppSidebarProps) {
     avatar: string
   } = {
     avatar: "",
-    name: "",
-    email: ""
+    name: "Django The Cat",
+    email: "django@catmail.com"
   }
 
   return (
@@ -154,12 +154,9 @@ export function AppSidebar({ selectedFeedId, onFeedSelect }: AppSidebarProps) {
         </div>
       </SidebarContent>
 
-      <div className="flex-none relative z-10 bg-card border-t border-border px-4 py-3">
-        <SidebarFooter>
-          <NavUser user={user} />
-        </SidebarFooter>
+      <div className="flex-none relative z-10 bg-card">
+        <NavUser user={user} />
       </div>
-
     </Sidebar>
   )
 }

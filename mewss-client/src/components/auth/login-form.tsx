@@ -34,7 +34,7 @@ export function LoginForm({
       password,
       fetchOptions: {
         onError: ({ error }) => {
-          console.error("Login error:", error)
+          // console.error("Login error:", error)
           setLoading(false)
           toast.error(error.message || 'Invalid email or password!', {
             position: "bottom-right"
