@@ -109,3 +109,8 @@ export interface FeedsResponse {
 export interface FeedResponse {
     feed: Feed
 }
+
+export interface CreateFeedInput {
+    url: string
+    refreshInterval: string
+}
