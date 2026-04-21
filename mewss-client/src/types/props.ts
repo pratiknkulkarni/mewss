@@ -38,3 +38,8 @@ export interface AppSidebarProps {
     onFeedSelect: (feedId: string | null) => void
     unreadCount?: number
 }
+
+export interface FeedModalProps {
+    isOpen: boolean
+    onClose: () => void
+}

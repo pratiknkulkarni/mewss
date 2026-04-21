@@ -2,6 +2,7 @@ import { useState } from "react"
 import { useUnreadCount } from "@/features/articles/hooks/useUnreadCount"
 import { SidebarMenu as Menu, SidebarMenuButton, SidebarMenuItem } from "../ui/sidebar"
 import { Library, Star, PlusCircle } from 'lucide-react'
+import { FeedModal } from "../feed/feed-modal"
 
 export function SidebarMenu({
     selectedFeedId,
@@ -11,7 +12,7 @@ export function SidebarMenu({
     onFeedSelect: (feedId: string | null) => void
 }) {
     const { data: unreadCount } = useUnreadCount()
-    const [_, setIsAddModalOpen] = useState(false)
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false)
 
     const getMenuClasses = (isActive: boolean) => `
         cursor-pointer flex items-center justify-between py-2 px-4 rounded-none
@@ -77,6 +78,9 @@ export function SidebarMenu({
                     </SidebarMenuItem>
                 </Menu>
             </div>
+
+            <FeedModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
+
         </>
     )
 }
