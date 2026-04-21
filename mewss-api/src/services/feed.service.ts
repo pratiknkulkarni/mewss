@@ -1,9 +1,9 @@
-import {randomUUID} from "node:crypto";
+import { randomUUID } from "node:crypto";
 import * as feedRepo from "../repositories/feed.repository.js";
-import {z} from "zod";
-import {createLogger} from "../lib/logger.js";
-import {validateFeedUrl} from "../lib/scheduler-client.js";
-import {ConflictError, NotFoundError} from "../errors/errors.js";
+import { z } from "zod";
+import { createLogger } from "../lib/logger.js";
+import { validateFeedUrl } from "../lib/scheduler-client.js";
+import { ConflictError, NotFoundError } from "../errors/errors.js";
 
 const INTERVAL_REGEX = /^(\d+)([mh])$/;
 const log = createLogger("service.feed");
@@ -33,101 +33,105 @@ export function parseRefreshInterval(refreshInterval: string): number {
 
 export const createFeedSchema = z.object({
     url: z.url(),
-    refreshInterval: z.string()
-        .regex(INTERVAL_REGEX, "Use a string like 10m or 1h")
-        .refine((v) => {
-            try {
-                parseRefreshInterval(v);
-                return true;
-            } catch (error) {
-                return false;
-            }
-        }, {
-            error: "Interval must be between 5m and 24h"
-        })
+    refreshInterval: z.number().int("Interval must be a whole number of seconds").min(300, "Minimum refresh interval is 5 minutes")
+    // refreshInterval: z.string()
+    //     .regex(INTERVAL_REGEX, "Use a string like 10m or 1h")
+    //     .refine((v) => {
+    //         try {
+    //             parseRefreshInterval(v);
+    //             return true;
+    //         } catch (error) {
+    //             return false;
+    //         }
+    //     }, {
+    //         error: "Interval must be between 5m and 24h"
+    //     })
 })
 
 export const updateFeedSchema = z.object({
-    refreshInterval: z.string()
-        .regex(INTERVAL_REGEX, "Use a string like 10m or 1h")
-        .refine((v) => {
-            try {
-                parseRefreshInterval(v);
-                return true;
-            } catch {
-                return false;
-            }
-        }, {error: "Interval must be between 5m and 24h"})
-        .optional(),
+    // refreshInterval: z.string()
+    //     .regex(INTERVAL_REGEX, "Use a string like 10m or 1h")
+    //     .refine((v) => {
+    //         try {
+    //             parseRefreshInterval(v);
+    //             return true;
+    //         } catch {
+    //             return false;
+    //         }
+    //     }, { error: "Interval must be between 5m and 24h" })
+    //     .optional(),
+    refreshInterval: z.number().int("Interval must be a whole number of seconds").min(300, "Minimum refresh interval is 5 minutes").optional(),
     status: z.enum(["active", "paused"]).optional(),
 }).refine(
     (data) => data.refreshInterval !== undefined || data.status !== undefined,
-    {error: "At least one of refreshInterval or status must be provided"},
+    { error: "At least one of refreshInterval or status must be provided" },
 );
 
 export async function createFeed(userId: string, createFeedInput: z.infer<typeof createFeedSchema>) {
     const feedURLValidation = await validateFeedUrl(createFeedInput.url);
-    log.debug({userId, url: createFeedInput.url, feedURLValidation}, "feed validation successful")
+    log.debug({ userId, url: createFeedInput.url, feedURLValidation }, "feed validation successful")
 
     try {
-        log.info({userId, url: createFeedInput.url}, "creating feed");
+        log.info({ userId, url: createFeedInput.url }, "creating feed");
 
         const now = new Date().toISOString();
         const newFeed = await feedRepo.createFeed({
             id: randomUUID(),
             userId,
             url: createFeedInput.url,
-            refreshInterval: parseRefreshInterval(createFeedInput.refreshInterval),
+            // refreshInterval: parseRefreshInterval(createFeedInput.refreshInterval),
+            refreshInterval: convertToNanoseconds(createFeedInput.refreshInterval),
             forceRefresh: true,
             nextFetchAfter: now,
             createdAt: now,
             updatedAt: now,
         });
 
-        log.info({userId, url: createFeedInput.url}, "feed added successfully");
+        log.info({ userId, url: createFeedInput.url }, "feed added successfully");
 
-        return {...newFeed, title: feedURLValidation.title, description: feedURLValidation.description};
+        return { ...newFeed, title: feedURLValidation.title, description: feedURLValidation.description };
     } catch (err: any) {
-        if (err?.code === "23505") {
-            log.warn({userId, url: createFeedInput.url}, "duplicate feed subscription attempt");
+        const errorCode = err?.cause?.code || err?.code;
+        if (errorCode === "23505") {
+            log.warn({ userId, url: createFeedInput.url }, "duplicate feed subscription attempt");
             throw new ConflictError("You are already subscribed to this feed.");
         }
-        log.error({err, userId}, "feed creation failed");
+        log.error({ err, userId }, "feed creation failed");
         throw err;
     }
 }
 
 export async function listFeeds(userId: string, status?: string) {
-    log.info({userId, status}, "listing feeds");
+    log.info({ userId, status }, "listing feeds");
     return feedRepo.listFeedsByUser(userId, status);
 }
 
 export async function deleteFeed(id: string, userId: string) {
     const deleted = await feedRepo.deleteFeedByIdAndUser(id, userId);
     if (!deleted) {
-        log.warn({id, userId}, "feed not found for deletion")
+        log.warn({ id, userId }, "feed not found for deletion")
         throw new NotFoundError();
     }
-    log.info({id, userId}, "feed deleted")
+    log.info({ id, userId }, "feed deleted")
 }
 
 export async function refreshFeed(id: string, userId: string) {
     const triggered = await feedRepo.triggerFeedRefresh(id, userId);
     if (!triggered) {
-        log.warn({id, userId}, "feed not found")
+        log.warn({ id, userId }, "feed not found")
         throw new NotFoundError();
     }
-    log.info({id, userId}, "feed refresh triggered")
+    log.info({ id, userId }, "feed refresh triggered")
 }
 
 export async function getFeed(id: string, userId: string) {
     const row = await feedRepo.findFeedByIdAndUser(id, userId);
     if (!row) {
-        log.warn({id, userId}, "feed not found");
+        log.warn({ id, userId }, "feed not found");
         throw new NotFoundError();
     }
 
-    log.info({id, userId}, "feed retrieved")
+    log.info({ id, userId }, "feed retrieved")
     return row;
 }
 
@@ -135,14 +139,15 @@ export async function getFeed(id: string, userId: string) {
 export async function updateFeed(id: string, userId: string, input: z.infer<typeof updateFeedSchema>) {
     const existing = await feedRepo.findFeedByIdAndUser(id, userId);
     if (!existing) {
-        log.warn({id, userId}, "feed not found for update");
+        log.warn({ id, userId }, "feed not found for update");
         throw new NotFoundError();
     }
 
     const updates: Parameters<typeof feedRepo.updateFeed>[2] = {};
 
     if (input.refreshInterval !== undefined) {
-        const intervalNs = parseRefreshInterval(input.refreshInterval);
+        // const intervalNs = parseRefreshInterval(input.refreshInterval);
+        const intervalNs = convertToNanoseconds(input.refreshInterval);
         updates.refreshInterval = intervalNs;
         updates.nextFetchAfter = new Date(Date.now() + intervalNs / 1_000_000).toISOString();
     }
@@ -155,7 +160,18 @@ export async function updateFeed(id: string, userId: string, input: z.infer<type
     }
 
     const updated = await feedRepo.updateFeed(id, userId, updates);
-    log.info({id, userId, updates}, "feed updated");
+    log.info({ id, userId, updates }, "feed updated");
     return updated!;
 }
 
+export function convertToNanoseconds(seconds: number): number {
+    if (typeof seconds !== 'number' || isNaN(seconds)) {
+        throw new Error("Invalid format. Expected an integer representing seconds.");
+    }
+
+    if (seconds < 300) {
+        throw new Error("Minimum refresh interval is 5 minutes (300 seconds).");
+    }
+
+    return seconds * 1_000_000_000; // this is bedcause Go is storing nanoseconds which is in the database
+}
