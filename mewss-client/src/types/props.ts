@@ -43,3 +43,14 @@ export interface FeedModalProps {
     isOpen: boolean
     onClose: () => void
 }
+
+export interface FeedModalFormProps {
+    url: string,
+    setUrl: (url: string) => void,
+    refreshInterval: string,
+    setRefreshInterval: (interval: string) => void,
+    handleSubmit: (event: React.SyntheticEvent) => void,
+    isSubmitting: boolean,
+    formError: string | null
+    handleClose: () => void
+}
