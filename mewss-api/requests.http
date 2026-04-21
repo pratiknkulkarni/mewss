@@ -68,7 +68,7 @@ Content-Type: application/json
 Origin: {{origin}}
 
 {
-  "url": "https://www.relay.fm/rocket/feed",
+  "url": "https://www.thehindu.com/entertainment/dancee/feeder/default.rss",
   "refreshInterval": "24h"
 }
 
@@ -93,7 +93,7 @@ Content-Type: application/json
 Origin: {{origin}}
 
 {
-  "url": "https://feeds.feedburner.com/TheHackersNews",
+  "url": "https://feeds.feedburner.com/TheHackersNew",
   "refreshInterval": "1m"
 }
 
