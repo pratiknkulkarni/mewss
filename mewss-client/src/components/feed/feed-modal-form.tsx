@@ -88,7 +88,9 @@ export function FeedModalForm({
                     <Select
                         value={refreshInterval}
                         onValueChange={(v) => {
-                            setRefreshInterval(v)
+                            if (v) {
+                                setRefreshInterval(v)
+                            }
                             if (errors.interval) setErrors((p) => ({ ...p, interval: null }))
                         }}
                     >
