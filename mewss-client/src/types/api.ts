@@ -123,5 +123,5 @@ export interface CreateFeedInput {
      * The interval string (e.g., "30m", "1h") representing how often 
      * the system should fetch new articles. 
      */
-    refreshInterval: string;
+    refreshInterval: number;
 }

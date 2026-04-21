@@ -4,6 +4,7 @@ import { FeedModalHeader } from "./feed-modal-header";
 import { FeedModalForm, secondsToIntervalString } from "./feed-modal-form";
 import { useCreateFeed } from "@/features/feeds/hooks/useCreateFeed";
 import React, { useState } from "react";
+import { ApiError } from "@/lib/api-error";
 
 // FeedModal is intentionally generic (not Add/UpdateFeedModal) so it can be
 // reused for editing an existing feed later — just pass in initial values.
@@ -29,7 +30,8 @@ export function FeedModal({ isOpen, onClose }: FeedModalProps) {
         event.preventDefault()
         setFormError(null)
 
-        const intervalString = secondsToIntervalString(parseInt(refreshInterval, 10))
+        // const intervalString = secondsToIntervalString(parseInt(refreshInterval, 10))
+        const intervalString = Number(refreshInterval);
 
         mutate(
             { url, refreshInterval: intervalString },
@@ -38,6 +40,16 @@ export function FeedModal({ isOpen, onClose }: FeedModalProps) {
                     resetForm()
                     onClose()
                 },
+                onError: (error) => {
+                    if (error instanceof ApiError) {
+                        console.log(error.message)
+                        setFormError(error?.message)
+                    } else {
+                        console.log("error from creating feed -> ")
+                        console.log(error);
+                        console.log("<- error from creating feed ")
+                    }
+                }
             }
         )
     }

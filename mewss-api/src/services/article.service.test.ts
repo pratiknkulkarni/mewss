@@ -1,5 +1,5 @@
 // GENERATED USING Claude based on the feed.service.test.ts as a reference
-import {beforeEach, describe, expect, it, vi} from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../repositories/feed.repository.js", () => ({
     findFeedByIdAndUser: vi.fn(),
@@ -21,7 +21,7 @@ vi.mock("../repositories/article.repository.js", () => ({
     markAllArticlesAsUnreadForFeeds: vi.fn(),
 }));
 
-import {NotFoundError} from "../errors/errors.js";
+import { NotFoundError } from "../errors/errors.js";
 import * as feedRepo from "../repositories/feed.repository.js";
 import * as articleRepo from "../repositories/article.repository.js";
 import {
@@ -37,7 +37,7 @@ import {
     markArticleUnread,
     getArticle
 } from "./article.service.js";
-import type {ArticleWithReadState} from "../repositories/article.repository.js";
+import type { ArticleWithReadState } from "../repositories/article.repository.js";
 
 function makeFeedRow(overrides: Record<string, unknown> = {}) {
     return {
@@ -65,6 +65,7 @@ function makeArticle(overrides: Partial<ArticleWithReadState> = {}): ArticleWith
         createdAt: new Date().toISOString(),
         isRead: false,
         readAt: null,
+        content: "Test content",
         ...overrides,
     };
 }
@@ -100,7 +101,7 @@ describe("buildPagination", () => {
 });
 
 describe("listArticlesForFeed", () => {
-    const query = {page: 1, limit: 20, unread: undefined};
+    const query = { page: 1, limit: 20, unread: undefined };
 
     it("throws NotFoundError when feed does not exist", async () => {
         vi.mocked(feedRepo.findFeedByIdAndUser).mockResolvedValueOnce(null);
@@ -118,7 +119,7 @@ describe("listArticlesForFeed", () => {
         const result = await listArticlesForFeed("feed-123", "user-abc", query);
 
         expect(result.articles).toHaveLength(1);
-        expect(result.pagination).toEqual({page: 1, limit: 20, total: 1, hasMore: false});
+        expect(result.pagination).toEqual({ page: 1, limit: 20, total: 1, hasMore: false });
     });
 
     it("does not call article repo when feed check fails", async () => {
@@ -136,10 +137,10 @@ describe("listArticlesForFeed", () => {
         vi.mocked(articleRepo.listArticlesByFeed).mockResolvedValueOnce([]);
         vi.mocked(articleRepo.countArticlesByFeedAndUser).mockResolvedValueOnce(0);
 
-        await listArticlesForFeed("feed-123", "user-abc", {page: 1, limit: 20, unread: true});
+        await listArticlesForFeed("feed-123", "user-abc", { page: 1, limit: 20, unread: true });
 
         expect(articleRepo.listArticlesByFeed).toHaveBeenCalledWith(
-            "feed-123", "user-abc", {page: 1, limit: 20, unread: true}
+            "feed-123", "user-abc", { page: 1, limit: 20, unread: true }
         );
     });
 });
@@ -149,7 +150,7 @@ describe("listArticlesGlobal", () => {
         vi.mocked(articleRepo.listArticlesGlobal).mockResolvedValueOnce([makeArticle()]);
         vi.mocked(articleRepo.countArticlesGlobal).mockResolvedValueOnce(1);
 
-        const result = await listArticlesGlobal("user-abc", {page: 1, limit: 20, unread: undefined});
+        const result = await listArticlesGlobal("user-abc", { page: 1, limit: 20, unread: undefined });
 
         expect(result.articles).toHaveLength(1);
         expect(result.pagination.total).toBe(1);
@@ -159,18 +160,18 @@ describe("listArticlesGlobal", () => {
         vi.mocked(articleRepo.listArticlesGlobal).mockResolvedValueOnce([]);
         vi.mocked(articleRepo.countArticlesGlobal).mockResolvedValueOnce(0);
 
-        await listArticlesGlobal("user-abc", {page: 1, limit: 20, unread: undefined, feedId: "feed-123"});
+        await listArticlesGlobal("user-abc", { page: 1, limit: 20, unread: undefined, feedId: "feed-123" });
 
         expect(articleRepo.listArticlesGlobal).toHaveBeenCalledWith(
             "user-abc",
-            expect.objectContaining({feedId: "feed-123"}),
+            expect.objectContaining({ feedId: "feed-123" }),
         );
     });
 });
 
 describe("markArticleRead", () => {
     it("returns updated article with isRead=true", async () => {
-        const article = makeArticle({isRead: true, readAt: new Date().toISOString()});
+        const article = makeArticle({ isRead: true, readAt: new Date().toISOString() });
         vi.mocked(articleRepo.markArticleAsRead).mockResolvedValueOnce(article);
 
         const result = await markArticleRead("article-123", "user-abc");
@@ -189,7 +190,7 @@ describe("markFeedArticlesRead", () => {
         vi.mocked(feedRepo.findFeedByIdAndUser).mockResolvedValueOnce(makeFeedRow() as any);
         vi.mocked(articleRepo.markAllArticlesAsRead).mockResolvedValueOnce(5);
 
-        expect(await markFeedArticlesRead("feed-123", "user-abc")).toEqual({updatedCount: 5});
+        expect(await markFeedArticlesRead("feed-123", "user-abc")).toEqual({ updatedCount: 5 });
     });
 
     it("throws NotFoundError when feed does not exist", async () => {
@@ -204,13 +205,13 @@ describe("markAllArticlesRead", () => {
     it("returns updatedCount from repository", async () => {
         vi.mocked(articleRepo.markAllArticlesAsReadGlobal).mockResolvedValueOnce(10);
 
-        expect(await markAllArticlesRead("user-abc")).toEqual({updatedCount: 10});
+        expect(await markAllArticlesRead("user-abc")).toEqual({ updatedCount: 10 });
     });
 
     it("returns 0 when user has no articles", async () => {
         vi.mocked(articleRepo.markAllArticlesAsReadGlobal).mockResolvedValueOnce(0);
 
-        expect(await markAllArticlesRead("user-abc")).toEqual({updatedCount: 0});
+        expect(await markAllArticlesRead("user-abc")).toEqual({ updatedCount: 0 });
     });
 });
 
@@ -219,7 +220,7 @@ describe("markFeedArticlesUnread", () => {
         vi.mocked(feedRepo.findFeedByIdAndUser).mockResolvedValueOnce(makeFeedRow() as any);
         vi.mocked(articleRepo.markAllArticlesAsUnread).mockResolvedValueOnce(3);
 
-        expect(await markFeedArticlesUnread("feed-123", "user-abc")).toEqual({updatedCount: 3});
+        expect(await markFeedArticlesUnread("feed-123", "user-abc")).toEqual({ updatedCount: 3 });
     });
 
     it("throws NotFoundError when feed does not exist", async () => {
@@ -235,18 +236,18 @@ describe("markFeedsBulkRead", () => {
     it("returns updatedCount when all feedIds belong to the user", async () => {
         const feedIds = ["feed-1", "feed-2"];
         vi.mocked(feedRepo.findFeedsByIdsAndUser).mockResolvedValueOnce([
-            makeFeedRow({id: "feed-1"}) as any,
-            makeFeedRow({id: "feed-2"}) as any,
+            makeFeedRow({ id: "feed-1" }) as any,
+            makeFeedRow({ id: "feed-2" }) as any,
         ]);
         vi.mocked(articleRepo.markAllArticlesAsReadForFeeds).mockResolvedValueOnce(8);
 
-        expect(await markFeedsBulkRead(feedIds, "user-abc")).toEqual({updatedCount: 8});
+        expect(await markFeedsBulkRead(feedIds, "user-abc")).toEqual({ updatedCount: 8 });
     });
 
     it("throws NotFoundError when any feedId does not belong to the user", async () => {
         // Request 2 feeds, only 1 found
         vi.mocked(feedRepo.findFeedsByIdsAndUser).mockResolvedValueOnce([
-            makeFeedRow({id: "feed-1"}) as any,
+            makeFeedRow({ id: "feed-1" }) as any,
         ]);
 
         await expect(
@@ -269,11 +270,11 @@ describe("markFeedsBulkUnread", () => {
     it("returns updatedCount when all feedIds belong to the user", async () => {
         const feedIds = ["feed-1"];
         vi.mocked(feedRepo.findFeedsByIdsAndUser).mockResolvedValueOnce([
-            makeFeedRow({id: "feed-1"}) as any,
+            makeFeedRow({ id: "feed-1" }) as any,
         ]);
         vi.mocked(articleRepo.markAllArticlesAsUnreadForFeeds).mockResolvedValueOnce(4);
 
-        expect(await markFeedsBulkUnread(feedIds, "user-abc")).toEqual({updatedCount: 4});
+        expect(await markFeedsBulkUnread(feedIds, "user-abc")).toEqual({ updatedCount: 4 });
     });
 
     it("throws NotFoundError when any feedId does not belong to the user", async () => {
@@ -304,7 +305,7 @@ describe("getArticle", () => {
 
 describe("markArticleUnread", () => {
     it("returns updated article with isRead=false", async () => {
-        const a = makeArticle({isRead: false, readAt: null});
+        const a = makeArticle({ isRead: false, readAt: null });
         vi.mocked(articleRepo.markArticleAsUnread).mockResolvedValueOnce(a);
 
         const result = await markArticleUnread("article-123", "user-abc");
