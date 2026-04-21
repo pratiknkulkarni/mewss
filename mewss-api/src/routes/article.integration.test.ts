@@ -54,7 +54,7 @@ async function createFeedViaApi(cookie: string): Promise<string> {
         new Request("http://localhost/api/feeds", {
             method: "POST",
             headers: {"Content-Type": "application/json", Cookie: cookie},
-            body: JSON.stringify({url: makeUrl(), refreshInterval: "30m"}),
+            body: JSON.stringify({url: makeUrl(), refreshInterval: 3000}),
         }),
     );
     expect(res.status).toBe(201);

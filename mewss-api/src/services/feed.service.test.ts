@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, it, vi} from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../repositories/feed.repository.js", () => ({
     createFeed: vi.fn(),
@@ -21,7 +21,7 @@ import {
     SchedulerUnavailableError,
     UnprocessableError,
 } from "../errors/errors.js";
-import {validateFeedUrl} from "../lib/scheduler-client.js";
+import { validateFeedUrl } from "../lib/scheduler-client.js";
 import * as feedRepo from "../repositories/feed.repository.js";
 import {
     createFeed, deleteFeed, getFeed, listFeeds, refreshFeed,
@@ -48,14 +48,14 @@ function makeFeedRow(overrides: Record<string, unknown> = {}) {
 
 describe("createFeed", () => {
     const userId = "user-abc";
-    const input = {url: "https://example.com/feed.xml", refreshInterval: "30m"};
+    const input = { url: "https://example.com/feed.xml", refreshInterval: 1800 };
 
     beforeEach(() => {
         vi.clearAllMocks();
     });
 
     it("calls validateFeedUrl with the submitted URL", async () => {
-        vi.mocked(validateFeedUrl).mockResolvedValueOnce({title: "Blog", description: ""});
+        vi.mocked(validateFeedUrl).mockResolvedValueOnce({ title: "Blog", description: "" });
         vi.mocked(feedRepo.createFeed).mockResolvedValueOnce(makeFeedRow());
 
         await createFeed(userId, input);
@@ -64,7 +64,7 @@ describe("createFeed", () => {
     });
 
     it("inserts feed with forceRefresh=true and correct nanosecond interval", async () => {
-        vi.mocked(validateFeedUrl).mockResolvedValueOnce({title: "Blog", description: ""});
+        vi.mocked(validateFeedUrl).mockResolvedValueOnce({ title: "Blog", description: "" });
         vi.mocked(feedRepo.createFeed).mockResolvedValueOnce(makeFeedRow());
 
         await createFeed(userId, input);
@@ -76,7 +76,7 @@ describe("createFeed", () => {
     });
 
     it("merges title and description from scheduler into returned feed", async () => {
-        vi.mocked(validateFeedUrl).mockResolvedValueOnce({title: "My Feed", description: "A great feed"});
+        vi.mocked(validateFeedUrl).mockResolvedValueOnce({ title: "My Feed", description: "A great feed" });
         vi.mocked(feedRepo.createFeed).mockResolvedValueOnce(makeFeedRow());
 
         const result = await createFeed(userId, input);
@@ -100,16 +100,16 @@ describe("createFeed", () => {
     });
 
     it("converts Postgres 23505 unique violation into ConflictError", async () => {
-        vi.mocked(validateFeedUrl).mockResolvedValueOnce({title: "Blog", description: ""});
+        vi.mocked(validateFeedUrl).mockResolvedValueOnce({ title: "Blog", description: "" });
         vi.mocked(feedRepo.createFeed).mockRejectedValueOnce(
-            Object.assign(new Error("duplicate key"), {code: "23505"}),
+            Object.assign(new Error("duplicate key"), { code: "23505" }),
         );
 
         await expect(createFeed(userId, input)).rejects.toBeInstanceOf(ConflictError);
     });
 
     it("re-throws unknown DB errors unchanged", async () => {
-        vi.mocked(validateFeedUrl).mockResolvedValueOnce({title: "Blog", description: ""});
+        vi.mocked(validateFeedUrl).mockResolvedValueOnce({ title: "Blog", description: "" });
         vi.mocked(feedRepo.createFeed).mockRejectedValueOnce(new Error("connection reset"));
 
         await expect(createFeed(userId, input)).rejects.toThrow("connection reset");
