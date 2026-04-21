@@ -106,11 +106,22 @@ export interface FeedsResponse {
     feeds: Feed[];
 }
 
+/**
+ * Response structure when a single feed is created or retrieved.
+ */
 export interface FeedResponse {
-    feed: Feed
+    feed: Feed;
 }
 
+/**
+ * Payload required to create a new feed subscription.
+ */
 export interface CreateFeedInput {
-    url: string
-    refreshInterval: string
+    /** The valid URL of the RSS or Atom feed. */
+    url: string;
+    /** 
+     * The interval string (e.g., "30m", "1h") representing how often 
+     * the system should fetch new articles. 
+     */
+    refreshInterval: string;
 }
