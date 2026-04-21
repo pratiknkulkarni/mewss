@@ -68,7 +68,7 @@ Content-Type: application/json
 Origin: {{origin}}
 
 {
-  "url": "https://www.thehindu.com/entertainment/dancee/feeder/default.rss",
+  "url": "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml",
   "refreshInterval": "24h"
 }
 
