@@ -30,7 +30,6 @@ export function FeedModal({ isOpen, onClose }: FeedModalProps) {
         event.preventDefault()
         setFormError(null)
 
-        // const intervalString = secondsToIntervalString(parseInt(refreshInterval, 10))
         const intervalString = Number(refreshInterval);
 
         mutate(
@@ -44,10 +43,6 @@ export function FeedModal({ isOpen, onClose }: FeedModalProps) {
                     if (error instanceof ApiError) {
                         console.log(error.message)
                         setFormError(error?.message)
-                    } else {
-                        console.log("error from creating feed -> ")
-                        console.log(error);
-                        console.log("<- error from creating feed ")
                     }
                 }
             }

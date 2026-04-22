@@ -19,6 +19,8 @@ export interface Feed {
     updatedAt: string | null;
     etag: string | null;
     lastModifiedHeader: string | null;
+    title: string | null;
+    description: string | null;
 }
 
 /**

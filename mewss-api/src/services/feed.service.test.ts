@@ -42,6 +42,8 @@ function makeFeedRow(overrides: Record<string, unknown> = {}) {
         updatedAt: new Date().toISOString(),
         etag: null,
         lastModifiedHeader: null,
+        title: "test title",
+        description: "test description",
         ...overrides,
     };
 }
