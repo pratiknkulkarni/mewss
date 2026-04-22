@@ -102,7 +102,7 @@ function HomeComponent() {
 
   return (
     <SidebarProvider>
-      <SidebarInset className="flex flex-row overflow-hidden" />
+      {/* <SidebarInset className="flex flex-row overflow-hidden" /> */}
       <div className="flex h-screen w-full overflow-hidden bg-card text-foreground font-sans">
         <AppSidebar selectedFeedId={feedId ?? null}
           onFeedSelect={handleFeedSelect}
