@@ -10,6 +10,8 @@ import { cors } from 'hono/cors';
 export const app = new Hono()
 const logger = createLogger("app");
 
+app.get("/api/health", (c) => c.json({ status: "ok" }));
+
 // commenting this out for now since HTTPIE is throwing up
 app.use(
     "/api/*",
@@ -43,4 +45,4 @@ app.on(["POST", "GET"], "/api/auth/*", (c) => {
 
 app.route("/api/feeds", feedRouter);
 app.route("/api", articleRouter);
-app.route("/api/health", healthRouter);
+// app.route("/api/health", healthRouter);
