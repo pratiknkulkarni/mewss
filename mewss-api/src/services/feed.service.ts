@@ -85,6 +85,8 @@ export async function createFeed(userId: string, createFeedInput: z.infer<typeof
             nextFetchAfter: now,
             createdAt: now,
             updatedAt: now,
+            title: feedURLValidation.title,
+            description: feedURLValidation.description,
         });
 
         log.info({ userId, url: createFeedInput.url }, "feed added successfully");

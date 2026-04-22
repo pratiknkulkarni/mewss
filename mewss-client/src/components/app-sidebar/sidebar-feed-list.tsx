@@ -47,7 +47,8 @@ export function SidebarFeedList({ selectedFeedId, onFeedSelect }: { selectedFeed
                                                             className={`text-[13px] truncate ${isActive ? 'text-primary font-medium' : 'text-foreground/80 group-hover:text-primary'}`}
                                                             title={feed.url}
                                                         >
-                                                            {cleanURL}
+                                                            {/* {cleanURL} */}
+                                                            {feed?.title || cleanURL}
                                                         </span>
                                                     </div>
                                                     {feed.status === 'error' && (
