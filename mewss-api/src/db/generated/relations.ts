@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { user, session, feed, account, article, userArticleStates } from "./schema.js";
+import { user, session, account, feed, article, userArticleStates } from "./schema";
 
 export const sessionRelations = relations(session, ({one}) => ({
 	user: one(user, {
@@ -10,18 +10,10 @@ export const sessionRelations = relations(session, ({one}) => ({
 
 export const userRelations = relations(user, ({many}) => ({
 	sessions: many(session),
-	feeds: many(feed),
 	accounts: many(account),
 	articles: many(article),
+	feeds: many(feed),
 	userArticleStates: many(userArticleStates),
-}));
-
-export const feedRelations = relations(feed, ({one, many}) => ({
-	user: one(user, {
-		fields: [feed.userId],
-		references: [user.id]
-	}),
-	articles: many(article),
 }));
 
 export const accountRelations = relations(account, ({one}) => ({
@@ -41,6 +33,14 @@ export const articleRelations = relations(article, ({one, many}) => ({
 		references: [user.id]
 	}),
 	userArticleStates: many(userArticleStates),
+}));
+
+export const feedRelations = relations(feed, ({one, many}) => ({
+	articles: many(article),
+	user: one(user, {
+		fields: [feed.userId],
+		references: [user.id]
+	}),
 }));
 
 export const userArticleStatesRelations = relations(userArticleStates, ({one}) => ({
