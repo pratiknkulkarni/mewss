@@ -34,32 +34,9 @@ export function parseRefreshInterval(refreshInterval: string): number {
 export const createFeedSchema = z.object({
     url: z.url(),
     refreshInterval: z.number().int("Interval must be a whole number of seconds").min(300, "Minimum refresh interval is 5 minutes")
-    // refreshInterval: z.string()
-    //     .regex(INTERVAL_REGEX, "Use a string like 10m or 1h")
-    //     .refine((v) => {
-    //         try {
-    //             parseRefreshInterval(v);
-    //             return true;
-    //         } catch (error) {
-    //             return false;
-    //         }
-    //     }, {
-    //         error: "Interval must be between 5m and 24h"
-    //     })
 })
 
 export const updateFeedSchema = z.object({
-    // refreshInterval: z.string()
-    //     .regex(INTERVAL_REGEX, "Use a string like 10m or 1h")
-    //     .refine((v) => {
-    //         try {
-    //             parseRefreshInterval(v);
-    //             return true;
-    //         } catch {
-    //             return false;
-    //         }
-    //     }, { error: "Interval must be between 5m and 24h" })
-    //     .optional(),
     refreshInterval: z.number().int("Interval must be a whole number of seconds").min(300, "Minimum refresh interval is 5 minutes").optional(),
     status: z.enum(["active", "paused"]).optional(),
 }).refine(
@@ -79,7 +56,6 @@ export async function createFeed(userId: string, createFeedInput: z.infer<typeof
             id: randomUUID(),
             userId,
             url: createFeedInput.url,
-            // refreshInterval: parseRefreshInterval(createFeedInput.refreshInterval),
             refreshInterval: convertToNanoseconds(createFeedInput.refreshInterval),
             forceRefresh: true,
             nextFetchAfter: now,
@@ -148,7 +124,6 @@ export async function updateFeed(id: string, userId: string, input: z.infer<type
     const updates: Parameters<typeof feedRepo.updateFeed>[2] = {};
 
     if (input.refreshInterval !== undefined) {
-        // const intervalNs = parseRefreshInterval(input.refreshInterval);
         const intervalNs = convertToNanoseconds(input.refreshInterval);
         updates.refreshInterval = intervalNs;
         updates.nextFetchAfter = new Date(Date.now() + intervalNs / 1_000_000).toISOString();

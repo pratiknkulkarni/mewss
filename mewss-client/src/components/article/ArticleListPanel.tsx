@@ -19,6 +19,19 @@ export default function ArticleListPanel({
     onTabChange
 }: ArticleListPanelProps) {
 
+    if (error) {
+        return (
+            <div className="flex flex-col items-center justify-center h-full p-6 text-center">
+                <p className="text-sm font-medium text-destructive">Failed to load articles.</p>
+                <p className="text-xs text-muted-foreground mt-1">{error?.message}</p>
+            </div>
+        )
+    }
+
+    if (isLoading) {
+        return <div>Loading...</div>
+    }
+
     // moving this from a component to a variable due to re-mounting.
     const listContent = (
         <ScrollArea className="flex-1 h-full" key={`${activeTab}-${currentPage}`}>

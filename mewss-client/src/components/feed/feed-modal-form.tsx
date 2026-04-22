@@ -18,11 +18,6 @@ const DEFAULT_PRESETS: { seconds: number; label: string }[] = [
     { seconds: 86400, label: "24 hours" },
 ]
 
-export function secondsToIntervalString(seconds: number): string {
-    if (seconds % 3600 === 0) return `${seconds / 3600}h`
-    return `${seconds / 60}m`
-}
-
 export function FeedModalForm({
     url,
     setUrl,

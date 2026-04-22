@@ -20,8 +20,9 @@ export interface ReadingPaneProps {
 export type ArticleListPanelProps = React.HTMLAttributes<HTMLDivElement> & {
     articles: Article[] | undefined;
     isLoading: boolean;
-    error: string | null;
-    selectedArticleId: string | null;
+    // error: string | null;
+    error: Error | null;
+    selectedArticleId: string | null | undefined;
     onArticleSelect: (article: Article) => void;
     unreadOnly: boolean;
     onUnreadToggle: () => void;
