@@ -39,7 +39,6 @@ func NewGoFeedFetcher(timeout time.Duration, userAgent string) *GoFeedFetcher {
 }
 
 func (f *GoFeedFetcher) Fetch(ctx context.Context, url string, etag *string, lastModified *string) (*FetchResult, error) {
-	//fmt.Println("inside the fetcher")
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)

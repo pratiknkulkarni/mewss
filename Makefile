@@ -9,7 +9,7 @@ check-scheduler:
 	cd mewss-scheduler && go test -v -race ./...
 
 check-api:
- 	@echo "==> api: typecheck"
+	@echo "==> api: typecheck"
 	cd mewss-api && bun run tsc --noEmit
 	@echo "==> api: unit tests"
 	cd mewss-api && bun run test
