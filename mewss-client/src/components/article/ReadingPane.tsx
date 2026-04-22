@@ -2,6 +2,7 @@ import { ArrowLeft, ExternalLink } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area.tsx";
 import type { ReadingPaneProps } from "@/types/props.ts";
 import { EmptyReadingPane } from "./EmptyReadingPane.tsx";
+import DOMPurify from 'dompurify';
 
 function formatReadableDate(dateStr: string | null): string {
     if (!dateStr) return ""
@@ -18,8 +19,6 @@ function formatReadableDate(dateStr: string | null): string {
         return dateStr
     }
 }
-
-
 
 export function ReadingPane({ article, onBack }: ReadingPaneProps) {
     if (!article) {
@@ -71,8 +70,7 @@ export function ReadingPane({ article, onBack }: ReadingPaneProps) {
                     {body ? (
                         <div
                             className="prose prose-sm dark:prose-invert max-w-none text-foreground/90 leading-relaxed"
-                            // TODO: sanitize with DOMPurify or some library before finalizing
-                            dangerouslySetInnerHTML={{ __html: body }}
+                            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(body) }}
                         />
                     ) : (
                         <div className="py-12 text-center text-sm text-muted-foreground">
