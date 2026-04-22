@@ -1,10 +1,9 @@
-//TODO: get this from the env
-import {ApiError} from "./api-error.ts";
+import { ApiError } from "./api-error.ts";
 
 /**
  * Base URL for API requests.
  */
-const BASE_URL: string = "http://localhost:3333";
+const BASE_URL = import.meta.env.VITE_API_BASE_URL
 
 /**
  * Converts a record of parameters into a URL search string.
@@ -81,7 +80,7 @@ export const apiClient = {
      * @returns A promise that resolves to the response data.
      */
     get<T>(path: string, params?: Record<string, unknown>): Promise<T> {
-        return request<T>(path, {method: "GET"}, params);
+        return request<T>(path, { method: "GET" }, params);
     },
 
     /**
@@ -122,7 +121,7 @@ export const apiClient = {
      * @returns A promise that resolves when the deletion is complete.
      */
     delete<T = void>(path: string): Promise<T> {
-        return request<T>(path, {method: "DELETE"});
+        return request<T>(path, { method: "DELETE" });
     },
 }
 

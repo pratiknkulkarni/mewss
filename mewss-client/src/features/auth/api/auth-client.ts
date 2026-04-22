@@ -1,8 +1,9 @@
 import { createAuthClient } from "better-auth/react";
 
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export const authClient = createAuthClient({
-    //TODO: fix from environment variable
-    baseURL: "http://localhost:3333"
+    baseURL: BASE_URL,
 })
 
 export type Session = typeof authClient.$Infer.Session

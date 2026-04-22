@@ -1,7 +1,7 @@
 import type { FeedModalProps } from "@/types/props";
 import { Dialog, DialogContent } from "../ui/dialog";
 import { FeedModalHeader } from "./feed-modal-header";
-import { FeedModalForm, secondsToIntervalString } from "./feed-modal-form";
+import { FeedModalForm } from "./feed-modal-form";
 import { useCreateFeed } from "@/features/feeds/hooks/useCreateFeed";
 import React, { useState } from "react";
 import { ApiError } from "@/lib/api-error";
