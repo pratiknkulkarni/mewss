@@ -102,6 +102,9 @@ func (f *GoFeedFetcher) Fetch(ctx context.Context, url string, etag *string, las
 		return nil, fmt.Errorf("http error: %d %s", resp.StatusCode, resp.Status)
 	}
 
+	// adding a limit to 10 MB to prevent memory exhaustion from huge feeds as a safety net.
+	resp.Body = http.MaxBytesReader(nil, resp.Body, 10*1024*1024)
+
 	feed, err := f.parser.Parse(resp.Body)
 
 	if err != nil {
