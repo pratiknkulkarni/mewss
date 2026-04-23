@@ -2,7 +2,9 @@ package fetcher
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"strings"
 	"time"
@@ -32,6 +34,39 @@ func NewGoFeedFetcher(timeout time.Duration, userAgent string) *GoFeedFetcher {
 	return &GoFeedFetcher{
 		client: &http.Client{
 			Timeout: timeout,
+			Transport: &http.Transport{
+				Proxy: http.ProxyFromEnvironment,
+				DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+					host, port, err := net.SplitHostPort(addr)
+					if err != nil {
+						return nil, err
+					}
+
+					ips, err := net.DefaultResolver.LookupIPAddr(ctx, host)
+					if err != nil {
+						return nil, err
+					}
+
+					for _, ip := range ips {
+						if ip.IP.IsPrivate() || ip.IP.IsLoopback() ||
+							ip.IP.IsLinkLocalUnicast() || ip.IP.IsLinkLocalMulticast() ||
+							ip.IP.IsUnspecified() {
+							return nil, errors.New("unable to dial to private or loopback IPs")
+						}
+					}
+
+					dialer := &net.Dialer{
+						Timeout:   10 * time.Second,
+						KeepAlive: 30 * time.Second,
+					}
+					return dialer.DialContext(ctx, network, net.JoinHostPort(ips[0].String(), port))
+				},
+				ForceAttemptHTTP2:     true,
+				MaxIdleConns:          100,
+				IdleConnTimeout:       90 * time.Second,
+				TLSHandshakeTimeout:   10 * time.Second,
+				ExpectContinueTimeout: 1 * time.Second,
+			},
 		},
 		userAgent: userAgent,
 		parser:    gofeed.NewParser(),
