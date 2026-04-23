@@ -61,6 +61,12 @@ services:
     ports:
       - "3333:3000"
     restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -qO- http://localhost:3000/api/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
 
   mewss-client:
     build:

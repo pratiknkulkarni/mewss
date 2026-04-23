@@ -3,7 +3,7 @@ import { ApiError } from "./api-error.ts";
 /**
  * Base URL for API requests.
  */
-const BASE_URL = import.meta.env.VITE_API_BASE_URL
+const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
 
 /**
  * Converts a record of parameters into a URL search string.

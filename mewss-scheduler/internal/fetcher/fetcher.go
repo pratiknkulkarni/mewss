@@ -69,12 +69,12 @@ func (f *GoFeedFetcher) Fetch(ctx context.Context, url string, etag *string, las
 
 	feed, err := f.parser.Parse(resp.Body)
 
-	for _, item := range feed.Items {
-		item.Content = extractFeedContent(item)
-	}
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse xml: %w", err)
+	}
+
+	for _, item := range feed.Items {
+		item.Content = extractFeedContent(item)
 	}
 
 	var newEtag, newLM *string
