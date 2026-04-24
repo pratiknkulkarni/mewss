@@ -1,4 +1,4 @@
-import type { Article, Pagination } from "./api.ts";
+import type { Article, Feed, Pagination } from "./api.ts";
 
 export interface PaginationControlsProps {
     handlePageChange: (newPage: number) => void,
@@ -20,7 +20,6 @@ export interface ReadingPaneProps {
 export type ArticleListPanelProps = React.HTMLAttributes<HTMLDivElement> & {
     articles: Article[] | undefined;
     isLoading: boolean;
-    // error: string | null;
     error: Error | null;
     selectedArticleId: string | null | undefined;
     onArticleSelect: (article: Article) => void;
@@ -32,6 +31,9 @@ export type ArticleListPanelProps = React.HTMLAttributes<HTMLDivElement> & {
     pagination: Pagination | undefined
     activeTab: "unread" | "all"
     onTabChange: (tab: string) => void;
+    onRefresh: () => void;
+    isRefreshing: boolean;
+    feedId?: string;
 }
 
 export interface AppSidebarProps {
@@ -43,6 +45,8 @@ export interface AppSidebarProps {
 export interface FeedModalProps {
     isOpen: boolean
     onClose: () => void
+
+    feed?: Feed // this is for the EDIT mode, optionally
 }
 
 export interface FeedModalFormProps {
@@ -54,4 +58,8 @@ export interface FeedModalFormProps {
     isSubmitting: boolean,
     formError: string | null
     handleClose: () => void
+
+    isEditMode?: boolean
+    status?: string
+    setStatus?: (status: string) => void
 }

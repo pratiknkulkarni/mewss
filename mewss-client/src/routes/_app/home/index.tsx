@@ -6,6 +6,8 @@ import ArticleListPanel from "@/components/article/ArticleListPanel.tsx";
 import { ReadingPane } from "@/components/article/ReadingPane.tsx";
 import type { Article } from "@/types/api.ts";
 import { useMarkArticleRead } from "@/features/articles/hooks/useMarkArticleRead.ts";
+import { useRefreshFeed } from '@/features/feeds/hooks/useRefreshFeed';
+import { useFeeds } from '@/features/feeds/hooks/useFeeds';
 
 export const Route = createFileRoute('/_app/home/')({
   validateSearch: (search: Record<string, unknown>) => {
@@ -44,6 +46,9 @@ function HomeComponent() {
   const {
     mutate: markArticleReadMutate,
   } = useMarkArticleRead();
+
+  const { mutate: refreshMutate, isPending: isRefreshing } = useRefreshFeed();
+  const { data: feeds } = useFeeds(); // required for refreshing...
 
   const articles = data?.articles;
   const selectedArticle = articles?.find((a) => a.id === articleId) ?? null // user "clicked" article
@@ -90,6 +95,15 @@ function HomeComponent() {
       }),
     })
   }
+  const handleRefresh = () => {
+    if (feedId) {
+      refreshMutate([feedId])
+    } else {
+      const allIds = feeds?.map((f) => f.id) ?? []
+      if (allIds.length > 0) refreshMutate(allIds)
+    }
+  }
+
 
   // I have yet to test this out
   if (error) {
@@ -123,6 +137,8 @@ function HomeComponent() {
           className={`w-full md:w-80 lg:w-96 ${articleId ? 'hidden md:flex' : 'flex'} flex-col`}
           activeTab={tab}
           onTabChange={handleTabChange}
+          onRefresh={handleRefresh}
+          isRefreshing={isRefreshing}
         />
 
         <div className={`flex-1 overflow-hidden ${articleId ? 'flex' : 'hidden md:flex'}`}>

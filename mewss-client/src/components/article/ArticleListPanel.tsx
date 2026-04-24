@@ -4,6 +4,10 @@ import { ScrollArea } from "@/components/ui/scroll-area.tsx";
 import { PaginationControls } from "./PaginationControls.tsx";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.tsx";
 import type { ArticleListPanelProps } from "@/types/props.ts";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip.tsx";
+import { cn } from "@/lib/utils.ts";
+import { RefreshCw } from "lucide-react";
+import { Button } from "../ui/button.tsx";
 
 export default function ArticleListPanel({
     articles,
@@ -16,7 +20,10 @@ export default function ArticleListPanel({
     pagination,
     className,
     activeTab,
-    onTabChange
+    onTabChange,
+    isRefreshing,
+    onRefresh,
+    feedId
 }: ArticleListPanelProps) {
 
     if (error) {
@@ -72,6 +79,32 @@ export default function ArticleListPanel({
                         <TabsTrigger value="all">All</TabsTrigger>
                         <TabsTrigger value="unread">Unread</TabsTrigger>
                     </TabsList>
+
+                    <TooltipProvider delay={400}>
+                        <div className="flex items-center gap-0.5">
+                            <Tooltip>
+                                <TooltipTrigger>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon-sm"
+                                        onClick={onRefresh}
+                                        disabled={isRefreshing}
+                                        aria-label="Refresh"
+                                    >
+                                        <RefreshCw
+                                            className={cn(
+                                                'size-4 text-muted-foreground',
+                                                isRefreshing && 'animate-spin',
+                                            )}
+                                        />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    {feedId ? 'Refresh this feed' : 'Refresh all feeds'}
+                                </TooltipContent>
+                            </Tooltip>
+                        </div>
+                    </TooltipProvider>
 
                     <div className="w-6" />
                 </header>
