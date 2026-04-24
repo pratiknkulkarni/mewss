@@ -232,7 +232,7 @@ func TestPostgresFeedRepository_MarkFeedAsFailed(t *testing.T) {
 	nextFetchTime := time.Now().Add(1 * time.Hour).Round(time.Second)
 
 	// Worker failed again, incrementing error count to 3
-	err = repo.MarkFeedAsFailed(ctx, feedID, 3, nextFetchTime)
+	err = repo.MarkFeedAsFailed(ctx, feedID, 3, nextFetchTime, false)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
