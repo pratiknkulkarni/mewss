@@ -20,5 +20,11 @@ export const articleApi = {
 
     markRead: (id: string): Promise<ArticleResponse> => {
         return apiClient.patch<ArticleResponse>(`/api/articles/${id}/read`)
-    }
+    },
+
+    get: (id: string): Promise<ArticleResponse> =>
+        apiClient.get<ArticleResponse>(`/api/articles/${id}`),
+
+    markAllRead: (): Promise<{ updatedCount: number }> =>
+        apiClient.post<{ updatedCount: number }>('/api/articles/read-all'),
 }

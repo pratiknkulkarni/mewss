@@ -1,4 +1,4 @@
-import type { CreateFeedInput, FeedResponse, FeedsResponse } from "@/types/api";
+import type { CreateFeedInput, FeedResponse, FeedsResponse, UpdateFeedInput } from "@/types/api";
 import { apiClient } from "./api-client";
 
 export const feedApi = {
@@ -7,4 +7,16 @@ export const feedApi = {
 
     create: (input: CreateFeedInput) =>
         apiClient.post<FeedResponse>('/api/feeds', input),
+
+    update: (id: string, input: UpdateFeedInput) =>
+        apiClient.patch<FeedResponse>(`/api/feeds/${id}`, input),
+
+    delete: (id: string): Promise<void> =>
+        apiClient.delete<void>(`/api/feeds/${id}`),
+
+    refresh: (id: string): Promise<{ message: string }> =>
+        apiClient.post<{ message: string }>(`/api/feeds/${id}/refresh`),
+
+    markAllRead: (feedId: string): Promise<{ updatedCount: number }> =>
+        apiClient.post<{ updatedCount: number }>(`/api/feeds/${feedId}/articles/read-all`),
 }

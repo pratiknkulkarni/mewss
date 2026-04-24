@@ -127,3 +127,10 @@ export interface CreateFeedInput {
      */
     refreshInterval: number;
 }
+
+export interface UpdateFeedInput {
+    /** New refresh interval in seconds (min 300). */
+    refreshInterval?: number
+    /** Toggle the feed between active and paused states. */
+    status?: 'active' | 'paused'
+}
