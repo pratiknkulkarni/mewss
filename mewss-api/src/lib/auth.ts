@@ -49,11 +49,11 @@ export const auth = betterAuth({
             updatedAt: "updated_at",
         }
     },
-    rateLimit: {
-        enabled: true,
-        window: 60,
-        max: 10,
-    }
+    // rateLimit: {
+    //     enabled: true,
+    //     window: 60,
+    //     max: 10,
+    // }
 })
 
 export type Auth = typeof auth

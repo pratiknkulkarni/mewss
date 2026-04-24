@@ -1,14 +1,22 @@
-import {createFileRoute, Outlet, redirect} from '@tanstack/react-router'
-import {authClient} from "@/features/auth/api/auth-client.ts";
+import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
+import { authClient } from "@/features/auth/api/auth-client.ts";
+import { queryClient } from '@/lib/query-client';
+import { authKeys } from '@/lib/query-keys';
 
 export const Route = createFileRoute('/_app')({
     component: RouteComponent,
     beforeLoad: async () => {
-        const {data, error} = await authClient.getSession();
-        console.log(data, error);
-        const user = data?.user || null;
+        const session = await queryClient.fetchQuery({
+            queryKey: authKeys.session(),
+            queryFn: async () => {
+                const { data, error } = await authClient.getSession();
+                if (error) throw error;
+                return data;
+            },
+            staleTime: 1000 * 60 * 15,
+        })
 
-        if (!user) {
+        if (!session?.user) {
             throw redirect({
                 to: '/login',
                 search: {
@@ -17,7 +25,7 @@ export const Route = createFileRoute('/_app')({
             })
         }
 
-        return {user}
+        return { user: session?.user }
     }
 })
 

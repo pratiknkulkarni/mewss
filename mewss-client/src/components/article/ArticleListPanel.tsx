@@ -94,7 +94,7 @@ export default function ArticleListPanel({
                                         <RefreshCw
                                             className={cn(
                                                 'size-4 text-muted-foreground',
-                                                isRefreshing && 'animate-spin',
+                                                isRefreshing && 'animate-spin border-2 border-black border-solid',
                                             )}
                                         />
                                     </Button>

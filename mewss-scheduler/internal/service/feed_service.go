@@ -41,6 +41,17 @@ func NewFeedService(repo FeedRepository, fetcher fetcher.Fetcher) *FeedService {
 func (s *FeedService) ProcessFeed(ctx context.Context, feed model.Feed) {
 	logger := slog.With("feed_id", feed.ID, "url", feed.URL)
 
+	const maxErrors = 10
+
+	// early return, there could be some Race condition where a disabled feed slips through
+	if feed.ErrorCount >= maxErrors {
+		logger.Warn("skipping feed that exceeds max error threshold, disabling",
+			"error_count", feed.ErrorCount,
+		)
+		_ = s.repo.MarkFeedAsFailed(context.Background(), feed.ID, feed.ErrorCount, time.Now(), true)
+		return
+	}
+
 	fetchCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 

@@ -25,10 +25,8 @@ import {
     SidebarMenuItem,
     useSidebar,
 } from "@/components/ui/sidebar"
-import { authClient } from "@/features/auth/api/auth-client"
-import { useNavigate } from "@tanstack/react-router"
-import { toast } from "sonner"
 import { ModeToggle } from "../theme-toggle"
+import { useLogout } from "@/features/auth/hooks/useLogout"
 
 export function NavUser({
     user,
@@ -39,7 +37,7 @@ export function NavUser({
     }
 }) {
     const { isMobile } = useSidebar();
-    const navigate = useNavigate();
+    const { mutate: logout, isPending } = useLogout();
     return (
         <SidebarMenu>
             <SidebarMenuItem>
@@ -93,28 +91,7 @@ export function NavUser({
 
                         <DropdownMenuSeparator />
 
-                        <DropdownMenuItem className="cursor-pointer" onClick={() => {
-                            authClient.signOut({
-                                fetchOptions: {
-                                    onSuccess: () => {
-                                        navigate({
-                                            to: "/login",
-                                            replace: true
-                                        })
-
-                                        toast.success('Logout success!', {
-                                            position: "bottom-right",
-                                        })
-                                    },
-                                    onError: (err) => {
-                                        toast.error(`${err.error.message}`, {
-                                            position: "bottom-right",
-                                        })
-                                    }
-                                }
-                            })
-                        }}
-                        >
+                        <DropdownMenuItem className="cursor-pointer" onClick={() => { logout() }} disabled={isPending}>
                             <LogOut />
                             Log out
                         </DropdownMenuItem>

@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import type { ArticlesResponse } from "@/types/api";
 import type { ApiError } from "@/lib/api-error";
-import { ARTICLE_POLL_INTERVAL_MS, ARTICLE_STALE_TIME_MS, articleKeys } from "./useArticles";
+import { ARTICLE_POLL_INTERVAL_MS, ARTICLE_STALE_TIME_MS } from "./useArticles";
 import { articleApi } from "@/lib/article-api";
+import { articleKeys } from "@/lib/query-keys";
 
 // Here I am limiting to one because it still gives total articles present.
 // The condition (unread) filters it further ONLY FOR UNREAD ARTICLES.

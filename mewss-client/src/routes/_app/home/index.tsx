@@ -8,6 +8,7 @@ import type { Article } from "@/types/api.ts";
 import { useMarkArticleRead } from "@/features/articles/hooks/useMarkArticleRead.ts";
 import { useRefreshFeed } from '@/features/feeds/hooks/useRefreshFeed';
 import { useFeeds } from '@/features/feeds/hooks/useFeeds';
+// import { useEffect } from 'react';
 
 export const Route = createFileRoute('/_app/home/')({
   validateSearch: (search: Record<string, unknown>) => {
