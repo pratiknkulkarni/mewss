@@ -3,16 +3,20 @@ import { createFileRoute, redirect } from "@tanstack/react-router"
 import { authClient } from "@/features/auth/api/auth-client"
 import { LoginForm } from "@/components/auth/login-form"
 import { PhraseComponent } from "@/components/auth/phrase-component"
+import { authKeys } from "@/lib/query-keys"
 
 export const Route = createFileRoute("/_auth/login")({
-  beforeLoad: async () => {
-    const { data } = await authClient.getSession()
-
-    if (data?.user) {
-      throw redirect({
-        to: "/home",
-        replace: true,
-      })
+  beforeLoad: async ({ context }) => {
+    const session = await context.queryClient.fetchQuery({
+      queryKey: authKeys.session(),
+      queryFn: async () => {
+        const { data } = await authClient.getSession()
+        return data
+      },
+      staleTime: 1000 * 60 * 15,
+    })
+    if (session?.user) {
+      throw redirect({ to: "/home", replace: true })
     }
   },
   component: LoginComponent,

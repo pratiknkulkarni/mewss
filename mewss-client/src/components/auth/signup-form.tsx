@@ -8,9 +8,11 @@ import {
   FieldLabel,
 } from "@/components/ui/field.tsx"
 import { Input } from "@/components/ui/input"
-import { authClient } from "@/features/auth/api/auth-client.ts"
 import { toast } from "sonner"
 import { Link, useNavigate } from "@tanstack/react-router"
+import { queryClient } from "@/lib/query-client"
+import { authKeys } from "@/lib/query-keys"
+import { useSignUp } from "@/features/auth/hooks/useSignup"
 
 export function SignupForm({
   className,
@@ -20,9 +22,9 @@ export function SignupForm({
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
-  const [loading, setLoading] = useState(false)
 
   const navigate = useNavigate()
+  const { mutate: signUp, isPending } = useSignUp()
 
   const handleSignUp = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -32,31 +34,21 @@ export function SignupForm({
       return
     }
 
-    setLoading(true)
-
-    authClient.signUp.email({
-      email,
-      password,
-      name,
-      fetchOptions: {
-        onError: ({ error }) => {
-          console.error("Signup error:", error)
-          setLoading(false)
-          toast.error(error.message || 'Failed to create account', {
-            position: "bottom-right"
-          })
+    signUp(
+      { email, password, name },
+      {
+        onSuccess: (sessionData) => {
+          queryClient.setQueryData(authKeys.session(), sessionData)
+          toast.success('Account created successfully!', { position: 'bottom-right' })
+          navigate({ to: '/home', replace: true })
         },
-        onSuccess: () => {
-          navigate({
-            to: "/home",
-            replace: true,
-          })
-          toast.success('Account created successfully!', {
-            position: "bottom-right",
+        onError: (err: any) => {
+          toast.error(err.message || 'Failed to create account', {
+            position: 'bottom-right',
           })
         },
       },
-    })
+    )
   }
 
   return (
@@ -77,7 +69,7 @@ export function SignupForm({
             placeholder="Django The Kitten"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            disabled={loading}
+            disabled={isPending}
             required
           />
         </Field>
@@ -90,7 +82,7 @@ export function SignupForm({
             placeholder="django@kittenmail.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            disabled={loading}
+            disabled={isPending}
             required
           />
         </Field>
@@ -102,7 +94,7 @@ export function SignupForm({
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            disabled={loading}
+            disabled={isPending}
             required
           />
           <FieldDescription>
@@ -117,15 +109,15 @@ export function SignupForm({
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            disabled={loading}
+            disabled={isPending}
             required
           />
           <FieldDescription>Please confirm your password.</FieldDescription>
         </Field>
 
         <Field>
-          <Button type="submit" disabled={loading}>
-            {loading ? "Creating Account..." : "Create Account"}
+          <Button type="submit" disabled={isPending}>
+            {isPending ? "Creating Account..." : "Create Account"}
           </Button>
         </Field>
 

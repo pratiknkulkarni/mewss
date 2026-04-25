@@ -10,10 +10,11 @@ import {
   FieldLabel,
   FieldGroup,
 } from "@/components/ui/field"
-
-import { authClient } from "@/features/auth/api/auth-client"
 import { Route } from "@/routes/_auth/login"
 import { toast } from "sonner"
+import { useLogin } from "@/features/auth/hooks/useLogin"
+import { authKeys } from "@/lib/query-keys"
+import { queryClient } from "@/lib/query-client"
 
 export function LoginForm({
   className,
@@ -23,34 +24,27 @@ export function LoginForm({
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [loading, setLoading] = useState(false)
+  const { mutate: signIn, isPending } = useLogin()
 
   const handleLogin = async (e: React.SubmitEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setLoading(true)
 
-    authClient.signIn.email({
-      email,
-      password,
-      fetchOptions: {
-        onError: ({ error }) => {
-          // console.error("Login error:", error)
-          setLoading(false)
-          toast.error(error.message || 'Invalid email or password!', {
-            position: "bottom-right"
-          })
+    e.preventDefault()
+
+    signIn(
+      { email, password },
+      {
+        onSuccess: (sessionData) => {
+          queryClient.setQueryData(authKeys.session(), sessionData) // adding this in the cache manually so it doesn't fire a request
+          toast.success('Login success!', { position: 'bottom-right' })
+          navigate({ to: '/home', replace: true })
         },
-        onSuccess: () => {
-          navigate({
-            to: "/home",
-            replace: true,
-          })
-          toast.success('Login success!', {
-            position: "bottom-right",
+        onError: (err: any) => {
+          toast.error(err.message || 'Invalid email or password!', {
+            position: 'bottom-right',
           })
         },
       },
-    })
+    )
   }
 
   return (
@@ -76,7 +70,7 @@ export function LoginForm({
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            disabled={loading}
+            disabled={isPending}
           />
         </Field>
 
@@ -93,13 +87,13 @@ export function LoginForm({
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            disabled={loading}
+            disabled={isPending}
           />
         </Field>
 
         <Field>
-          <Button type="submit" disabled={loading}>
-            {loading ? "Logging in..." : "Login"}
+          <Button type="submit" disabled={isPending}>
+            {isPending ? "Logging in..." : "Login"}
           </Button>
         </Field>
 
