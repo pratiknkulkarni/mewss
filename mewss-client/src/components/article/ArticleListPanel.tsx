@@ -94,7 +94,7 @@ export default function ArticleListPanel({
                                         <RefreshCw
                                             className={cn(
                                                 'size-4 text-muted-foreground',
-                                                isRefreshing && 'animate-spin border-2 border-black border-solid',
+                                                isRefreshing && 'animate-spin',
                                             )}
                                         />
                                     </Button>
@@ -124,6 +124,6 @@ export default function ArticleListPanel({
                 <PaginationControls pagination={pagination} handlePageChange={handlePageChange}
                     currentPage={currentPage} />
             </div>
-        </div>
+        </div >
     )
 }

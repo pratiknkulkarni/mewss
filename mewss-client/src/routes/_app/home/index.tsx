@@ -8,7 +8,7 @@ import type { Article } from "@/types/api.ts";
 import { useMarkArticleRead } from "@/features/articles/hooks/useMarkArticleRead.ts";
 import { useRefreshFeed } from '@/features/feeds/hooks/useRefreshFeed';
 import { useFeeds } from '@/features/feeds/hooks/useFeeds';
-// import { useEffect } from 'react';
+import { toast } from 'sonner';
 
 export const Route = createFileRoute('/_app/home/')({
   validateSearch: (search: Record<string, unknown>) => {
@@ -99,9 +99,11 @@ function HomeComponent() {
   const handleRefresh = () => {
     if (feedId) {
       refreshMutate([feedId])
+      toast.success("Refresh Feed Queued", { position: 'bottom-right' })
     } else {
       const allIds = feeds?.map((f) => f.id) ?? []
       if (allIds.length > 0) refreshMutate(allIds)
+      toast.success("Refresh Feed Queued", { position: 'bottom-right' })
     }
   }
 
