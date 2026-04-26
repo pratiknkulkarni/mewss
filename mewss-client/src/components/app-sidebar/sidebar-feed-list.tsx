@@ -1,3 +1,4 @@
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { ScrollArea } from "../ui/scroll-area"
 import { SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "../ui/sidebar"
 import { useFeeds } from "@/features/feeds/hooks/useFeeds"
@@ -29,33 +30,41 @@ export function SidebarFeedList({ selectedFeedId, onFeedSelect }: { selectedFeed
                                     const faviconURL = `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${cleanURL}&size=16`
 
                                     return (
-                                        <SidebarMenuItem key={feed.id}>
-                                            <SidebarMenuButton
-                                                isActive={isActive}
-                                                onClick={() => onFeedSelect(feed.id)}
-                                                className={`
+                                        <SidebarMenuItem className="cursor-pointer" key={feed.id}>
+                                            <TooltipProvider delay={400}>
+                                                <Tooltip>
+                                                    <SidebarMenuButton
+                                                        isActive={isActive}
+                                                        onClick={() => onFeedSelect(feed.id)}
+                                                        className={`
                         cursor-pointer px-0 py-1.5 h-auto transition-colors group rounded-none
                         ${isActive ? 'bg-accent/40' : 'hover:bg-accent/30'}
                       `}
-                                            >
-                                                <div className="flex items-center justify-between w-full">
-                                                    <div className="flex items-center gap-3 overflow-hidden">
-                                                        <div className="w-4 h-4 bg-primary/10 shrink-0 flex items-center justify-center">
-                                                            <img alt='favicon' src={faviconURL} />
-                                                        </div>
-                                                        <span
-                                                            className={`text-[13px] truncate ${isActive ? 'text-primary font-medium' : 'text-foreground/80 group-hover:text-primary'}`}
-                                                            title={feed.url}
-                                                        >
-                                                            {/* {cleanURL} */}
+                                                    >
+                                                        <TooltipTrigger>
+                                                            <div className="max-w-40 flex items-center justify-between w-full">
+                                                                <div className="flex items-center gap-3 overflow-hidden">
+                                                                    <div className="w-4 h-4 bg-primary/10 shrink-0 flex items-center justify-center">
+                                                                        <img alt='favicon' src={faviconURL} />
+                                                                    </div>
+                                                                    <span
+                                                                        className={`cursor-pointer text-[13px] truncate ${isActive ? 'text-primary font-medium' : 'text-foreground/80 group-hover:text-primary'}`}
+                                                                        title={feed.url}
+                                                                    >
+                                                                        {feed?.title || cleanURL}
+                                                                    </span>
+                                                                </div>
+                                                                {feed.status === 'error' && (
+                                                                    <span className="text-[10px] font-mono text-destructive shrink-0 ml-2">err</span>
+                                                                )}
+                                                            </div>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>
                                                             {feed?.title || cleanURL}
-                                                        </span>
-                                                    </div>
-                                                    {feed.status === 'error' && (
-                                                        <span className="text-[10px] font-mono text-destructive shrink-0 ml-2">err</span>
-                                                    )}
-                                                </div>
-                                            </SidebarMenuButton>
+                                                        </TooltipContent>
+                                                    </SidebarMenuButton>
+                                                </Tooltip>
+                                            </TooltipProvider>
                                         </SidebarMenuItem>
                                     )
                                 })}
@@ -64,7 +73,7 @@ export function SidebarFeedList({ selectedFeedId, onFeedSelect }: { selectedFeed
                     </ScrollArea>
                 </SidebarGroup>
             </div>
-        </SidebarContent>
+        </SidebarContent >
 
     )
 }
