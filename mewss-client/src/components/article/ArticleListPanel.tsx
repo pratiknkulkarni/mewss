@@ -6,9 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.t
 import type { ArticleListPanelProps } from "@/types/props.ts";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip.tsx";
 import { cn } from "@/lib/utils.ts";
-import { RefreshCw } from "lucide-react";
+import { CheckCheck, RefreshCw } from "lucide-react";
 import { Button } from "../ui/button.tsx";
-import { useEffect } from "react";
 
 export default function ArticleListPanel({
     articles,
@@ -104,10 +103,30 @@ export default function ArticleListPanel({
                                     {feedId ? 'Refresh this feed' : 'Refresh all feeds'}
                                 </TooltipContent>
                             </Tooltip>
+                            <Tooltip>
+                                <TooltipTrigger>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon-sm"
+                                        // onClick={onRefresh}
+                                        // disabled={isRefreshing}
+                                        aria-label="Mark as read"
+                                    >
+                                        <CheckCheck
+                                            className={cn(
+                                                'size-4 text-muted-foreground',
+                                                // isRefreshing && 'animate-spin',
+                                            )}
+                                        />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    {feedId ? 'Mark this feed as read' : 'Mark ALL feeds as read'}
+                                </TooltipContent>
+                            </Tooltip>
                         </div>
                     </TooltipProvider>
 
-                    <div className="w-6" />
                 </header>
 
                 <TabsContent value="unread"
