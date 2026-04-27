@@ -21,6 +21,8 @@ import type { FeedItemProps, SidebarFeedListProps } from "@/types/props"
 import { useRefreshFeed } from "@/features/feeds/hooks/useRefreshFeed"
 import { useMarkAllRead } from "@/features/feeds/hooks/useMarkAllRead"
 import { toast } from "sonner"
+import { useDeleteFeed } from "@/features/feeds/hooks/useDeleteFeed"
+import { useNavigate } from "@tanstack/react-router"
 
 function FeedItem({ id, url, title, status, isActive, onSelect }: FeedItemProps) {
     const [hovered, setHovered] = useState(false)
@@ -34,6 +36,9 @@ function FeedItem({ id, url, title, status, isActive, onSelect }: FeedItemProps)
 
     const { mutate: refreshMutate } = useRefreshFeed();
     const { mutate: markAllReadMutate } = useMarkAllRead();
+    const { mutate: deleteFeedMutate } = useDeleteFeed();
+
+    const navigate = useNavigate();
 
     function handleRefreshFeed() {
         refreshMutate([id])
@@ -43,6 +48,12 @@ function FeedItem({ id, url, title, status, isActive, onSelect }: FeedItemProps)
     function handleMarkFeedRead() {
         markAllReadMutate(id)
         toast.success("Mark Feed Read Queued", { position: 'bottom-right' })
+    }
+
+    function handleDeleteFeedConfirmation() {
+        deleteFeedMutate(id)
+        toast.success("Feed deleted", { position: 'bottom-right' })
+        navigate({ to: '/home', replace: true })
     }
 
     return (
@@ -127,7 +138,7 @@ function FeedItem({ id, url, title, status, isActive, onSelect }: FeedItemProps)
 
                         <DropdownMenuSeparator />
 
-                        <DropdownMenuItem className="gap-2 cursor-pointer text-[13px] text-destructive focus:text-destructive">
+                        <DropdownMenuItem className="gap-2 cursor-pointer text-[13px] text-destructive focus:text-destructive" onClick={handleDeleteFeedConfirmation}>
                             <Trash2 className="h-3.5 w-3.5" />
                             Delete feed
                         </DropdownMenuItem>

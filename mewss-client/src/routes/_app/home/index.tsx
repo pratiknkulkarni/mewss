@@ -50,7 +50,7 @@ function HomeComponent() {
   } = useMarkArticleRead();
 
   const { mutate: refreshMutate, isPending: isRefreshing } = useRefreshFeed();
-  const { mutate: markAllReadMutate, isPending: isMarkingAllRead } = useMarkAllRead();
+  const { mutate: markAllReadMutate } = useMarkAllRead();
   const { data: feeds } = useFeeds(); // required for refreshing...
 
   const articles = data?.articles;
