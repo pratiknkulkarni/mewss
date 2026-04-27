@@ -8,6 +8,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/
 import { cn } from "@/lib/utils.ts";
 import { RefreshCw } from "lucide-react";
 import { Button } from "../ui/button.tsx";
+import { useEffect } from "react";
 
 export default function ArticleListPanel({
     articles,

@@ -142,6 +142,7 @@ function HomeComponent() {
           onTabChange={handleTabChange}
           onRefresh={handleRefresh}
           isRefreshing={isRefreshing}
+          feedId={feedId ?? undefined}
         />
 
         <div className={`flex-1 overflow-hidden ${articleId ? 'flex' : 'hidden md:flex'}`}>
