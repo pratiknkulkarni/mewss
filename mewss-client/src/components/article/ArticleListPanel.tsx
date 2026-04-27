@@ -109,7 +109,7 @@ export default function ArticleListPanel({
                                     <Button
                                         variant="ghost"
                                         size="icon-sm"
-                                        onClick={markAllRead} //TODO: rename this
+                                        onClick={markAllRead}
                                         aria-label="Mark as read"
                                     >
                                         <CheckCheck

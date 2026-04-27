@@ -11,13 +11,16 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
+    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useFeeds } from "@/features/feeds/hooks/useFeeds"
-import { MoreHorizontal, Trash2, PencilIcon, RefreshCw } from "lucide-react"
+import { MoreHorizontal, Trash2, PencilIcon, RefreshCw, CheckCheckIcon } from "lucide-react"
 import { useState } from "react"
 import type { FeedItemProps, SidebarFeedListProps } from "@/types/props"
 import { useRefreshFeed } from "@/features/feeds/hooks/useRefreshFeed"
+import { useMarkAllRead } from "@/features/feeds/hooks/useMarkAllRead"
+import { toast } from "sonner"
 
 function FeedItem({ id, url, title, status, isActive, onSelect }: FeedItemProps) {
     const [hovered, setHovered] = useState(false)
@@ -30,10 +33,16 @@ function FeedItem({ id, url, title, status, isActive, onSelect }: FeedItemProps)
     const showEllipsis = hovered || menuOpen
 
     const { mutate: refreshMutate } = useRefreshFeed();
+    const { mutate: markAllReadMutate } = useMarkAllRead();
 
     function handleRefreshFeed() {
-        console.log(`Refreshing feed with ID: ${id}`);
         refreshMutate([id])
+        toast.success("Feed refresh queued", { position: 'bottom-right' })
+    }
+
+    function handleMarkFeedRead() {
+        markAllReadMutate(id)
+        toast.success("Mark Feed Read Queued", { position: 'bottom-right' })
     }
 
     return (
@@ -110,6 +119,13 @@ function FeedItem({ id, url, title, status, isActive, onSelect }: FeedItemProps)
                             <RefreshCw className="h-3.5 w-3.5" />
                             Refresh feed
                         </DropdownMenuItem>
+
+                        <DropdownMenuItem className="gap-2 cursor-pointer text-[13px]" onClick={handleMarkFeedRead}>
+                            <CheckCheckIcon className="h-3.5 w-3.5" />
+                            Mark feed read
+                        </DropdownMenuItem>
+
+                        <DropdownMenuSeparator />
 
                         <DropdownMenuItem className="gap-2 cursor-pointer text-[13px] text-destructive focus:text-destructive">
                             <Trash2 className="h-3.5 w-3.5" />
