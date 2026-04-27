@@ -14,11 +14,12 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useFeeds } from "@/features/feeds/hooks/useFeeds"
-import { MoreHorizontal, Trash2, PencilIcon } from "lucide-react"
+import { MoreHorizontal, Trash2, PencilIcon, RefreshCw } from "lucide-react"
 import { useState } from "react"
 import type { FeedItemProps, SidebarFeedListProps } from "@/types/props"
+import { useRefreshFeed } from "@/features/feeds/hooks/useRefreshFeed"
 
-function FeedItem({ url, title, status, isActive, onSelect }: FeedItemProps) {
+function FeedItem({ id, url, title, status, isActive, onSelect }: FeedItemProps) {
     const [hovered, setHovered] = useState(false)
     const [menuOpen, setMenuOpen] = useState(false)
 
@@ -27,6 +28,13 @@ function FeedItem({ url, title, status, isActive, onSelect }: FeedItemProps) {
     const label = title || hostname
 
     const showEllipsis = hovered || menuOpen
+
+    const { mutate: refreshMutate } = useRefreshFeed();
+
+    function handleRefreshFeed() {
+        console.log(`Refreshing feed with ID: ${id}`);
+        refreshMutate([id])
+    }
 
     return (
         <SidebarMenuItem
@@ -97,6 +105,12 @@ function FeedItem({ url, title, status, isActive, onSelect }: FeedItemProps) {
                             <PencilIcon className="h-3.5 w-3.5 text-muted-foreground" />
                             Edit feed
                         </DropdownMenuItem>
+
+                        <DropdownMenuItem className="gap-2 cursor-pointer text-[13px]" onClick={handleRefreshFeed}>
+                            <RefreshCw className="h-3.5 w-3.5" />
+                            Refresh feed
+                        </DropdownMenuItem>
+
                         <DropdownMenuItem className="gap-2 cursor-pointer text-[13px] text-destructive focus:text-destructive">
                             <Trash2 className="h-3.5 w-3.5" />
                             Delete feed
