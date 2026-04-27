@@ -63,3 +63,17 @@ export interface FeedModalFormProps {
     status?: string
     setStatus?: (status: string) => void
 }
+
+export interface SidebarFeedListProps {
+    selectedFeedId: string | null
+    onFeedSelect: (feedId: string | null) => void
+}
+
+export interface FeedItemProps {
+    id: string
+    url: string
+    title?: string | null
+    status?: string | null
+    isActive: boolean
+    onSelect: () => void
+}

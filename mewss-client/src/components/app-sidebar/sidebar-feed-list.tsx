@@ -1,79 +1,163 @@
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { ScrollArea } from "../ui/scroll-area"
-import { SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "../ui/sidebar"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import {
+    SidebarContent,
+    SidebarGroup,
+    SidebarGroupLabel,
+    SidebarGroupContent,
+    SidebarMenu,
+    SidebarMenuItem,
+} from "@/components/ui/sidebar"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { useFeeds } from "@/features/feeds/hooks/useFeeds"
+import { MoreHorizontal, Trash2, PencilIcon } from "lucide-react"
+import { useState } from "react"
+import type { FeedItemProps, SidebarFeedListProps } from "@/types/props"
 
-export function SidebarFeedList({ selectedFeedId, onFeedSelect }: { selectedFeedId: string | null, onFeedSelect: (feedId: string | null) => void }) {
-    const { data: feeds, isLoading } = useFeeds()
+function FeedItem({ url, title, status, isActive, onSelect }: FeedItemProps) {
+    const [hovered, setHovered] = useState(false)
+    const [menuOpen, setMenuOpen] = useState(false)
+
+    const hostname = new URL(url).hostname.replace(/^www\./, "")
+    const faviconURL = `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${hostname}&size=16`
+    const label = title || hostname
+
+    const showEllipsis = hovered || menuOpen
+
     return (
-        <SidebarContent className="px-0 flex flex-col overflow-hidden flex-1 min-h-0">
-            <div className="flex flex-col min-h-0 flex-1 pt-4">
-                <SidebarGroup className="flex flex-col min-h-0 flex-1">
-                    <div className="flex items-center justify-start mb-4">
-                        <SidebarGroupLabel className="p-0 pl-2 h-auto text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">
-                            Feeds
-                        </SidebarGroupLabel>
-                    </div>
+        <SidebarMenuItem
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+        >
+            <button
+                onClick={onSelect}
+                className={`
+                    group w-full flex items-center gap-2
+                    px-3 py-1.5 rounded-md
+                    text-left text-[13px] leading-snug
+                    cursor-pointer select-none
+                    transition-colors duration-100
+                    focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring
+                    hover:bg-accent/30 hover:text-foreground
+                    ${isActive
+                        ? "bg-accent/60 text-foreground font-medium"
+                        : "text-muted-foreground hover:bg-accent/30 hover:text-foreground"
+                    }
+                `}
+            >
+                <img
+                    src={faviconURL}
+                    alt=""
+                    aria-hidden="true"
+                    className="w-3.5 h-3.5 shrink-0 rounded-[3px] opacity-80"
+                    onError={(e) => {
+                        ; (e.target as HTMLImageElement).style.display = "none"
+                    }}
+                />
 
+                <span className="truncate flex-1 min-w-0">{label}</span>
+
+                {status === "error" && (
+                    <span className="shrink-0 text-[9px] font-mono font-bold uppercase tracking-wide text-destructive/80 bg-destructive/10 px-1 py-0.5 rounded">
+                        err
+                    </span>
+                )}
+
+                <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+                    <DropdownMenuTrigger>
+                        <span
+                            role="button"
+                            aria-label="Feed options"
+                            onClick={(e) => e.stopPropagation()}
+                            className={`
+                                shrink-0 flex h-5 w-5 items-center justify-center rounded-md
+                                text-muted-foreground/70
+                                hover:text-foreground hover:bg-black/10 dark:hover:bg-white/10
+                                focus-visible:outline-none
+                                transition-opacity duration-100
+                                ${showEllipsis ? "opacity-100" : "opacity-0 pointer-events-none"}
+                            `}
+                        >
+                            <MoreHorizontal className="h-3.5 w-3.5" />
+                        </span>
+                    </DropdownMenuTrigger>
+
+                    <DropdownMenuContent
+                        side="bottom"
+                        align="end"
+                        sideOffset={4}
+                        className="w-44 rounded-xl"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <DropdownMenuItem className="gap-2 cursor-pointer text-[13px]">
+                            <PencilIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                            Edit feed
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="gap-2 cursor-pointer text-[13px] text-destructive focus:text-destructive">
+                            <Trash2 className="h-3.5 w-3.5" />
+                            Delete feed
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </button>
+        </SidebarMenuItem>
+    )
+}
+
+export function SidebarFeedList({ selectedFeedId, onFeedSelect }: SidebarFeedListProps) {
+    const { data: feeds, isLoading } = useFeeds()
+
+    return (
+        <SidebarContent className="flex flex-col flex-1 min-h-0 overflow-hidden px-0">
+            <SidebarGroup className="flex flex-col flex-1 min-h-0 pt-4 gap-0">
+
+                <SidebarGroupLabel className="
+                    px-3 mb-2 h-auto
+                    text-[10px] uppercase tracking-[0.2em] font-semibold
+                    text-muted-foreground/60
+                ">
+                    Feeds
+                </SidebarGroupLabel>
+
+                <SidebarGroupContent className="flex flex-col flex-1 min-h-0">
                     <ScrollArea className="flex-1 min-h-0">
-                        <SidebarGroupContent>
-                            <SidebarMenu>
-                                {isLoading && (
-                                    <p className="text-[12px] text-muted-foreground/60 px-1">Loading…</p>
-                                )}
-                                {!isLoading && feeds?.length === 0 && (
-                                    <p className="text-[12px] text-muted-foreground/60 px-1">No feeds yet.</p>
-                                )}
-                                {feeds?.map((feed) => {
-                                    const isActive = selectedFeedId === feed.id
-                                    const cleanURL = new URL(feed.url).hostname.replace(/^www\./, "")
-                                    const faviconURL = `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${cleanURL}&size=16`
+                        <SidebarMenu className="gap-0.5 px-2">
 
-                                    return (
-                                        <SidebarMenuItem className="cursor-pointer" key={feed.id}>
-                                            <TooltipProvider delay={400}>
-                                                <Tooltip>
-                                                    <SidebarMenuButton
-                                                        isActive={isActive}
-                                                        onClick={() => onFeedSelect(feed.id)}
-                                                        className={`
-                        cursor-pointer px-0 py-1.5 h-auto transition-colors group rounded-none
-                        ${isActive ? 'bg-accent/40' : 'hover:bg-accent/30'}
-                      `}
-                                                    >
-                                                        <TooltipTrigger>
-                                                            <div className="max-w-40 flex items-center justify-between w-full">
-                                                                <div className="flex items-center gap-3 overflow-hidden">
-                                                                    <div className="w-4 h-4 bg-primary/10 shrink-0 flex items-center justify-center">
-                                                                        <img alt='favicon' src={faviconURL} />
-                                                                    </div>
-                                                                    <span
-                                                                        className={`cursor-pointer text-[13px] truncate ${isActive ? 'text-primary font-medium' : 'text-foreground/80 group-hover:text-primary'}`}
-                                                                        title={feed.url}
-                                                                    >
-                                                                        {feed?.title || cleanURL}
-                                                                    </span>
-                                                                </div>
-                                                                {feed.status === 'error' && (
-                                                                    <span className="text-[10px] font-mono text-destructive shrink-0 ml-2">err</span>
-                                                                )}
-                                                            </div>
-                                                        </TooltipTrigger>
-                                                        <TooltipContent>
-                                                            {feed?.title || cleanURL}
-                                                        </TooltipContent>
-                                                    </SidebarMenuButton>
-                                                </Tooltip>
-                                            </TooltipProvider>
-                                        </SidebarMenuItem>
-                                    )
-                                })}
-                            </SidebarMenu>
-                        </SidebarGroupContent>
+                            {isLoading && Array.from({ length: 4 }).map((_, i) => (
+                                <div
+                                    key={i}
+                                    className="h-8 mx-1 my-0.5 rounded-md bg-muted/40 animate-pulse"
+                                    style={{ opacity: 1 - i * 0.2 }}
+                                />
+                            ))}
+
+                            {!isLoading && feeds?.length === 0 && (
+                                <p className="px-3 py-2 text-[12px] text-muted-foreground/50 italic">
+                                    No feeds yet. Add one above.
+                                </p>
+                            )}
+
+                            {feeds?.map((feed) => (
+                                <FeedItem
+                                    key={feed.id}
+                                    id={feed.id}
+                                    url={feed.url}
+                                    title={feed.title}
+                                    status={feed?.status}
+                                    isActive={selectedFeedId === feed.id}
+                                    onSelect={() => onFeedSelect(feed.id)}
+                                />
+                            ))}
+
+                        </SidebarMenu>
                     </ScrollArea>
-                </SidebarGroup>
-            </div>
-        </SidebarContent >
+                </SidebarGroupContent>
 
+            </SidebarGroup>
+        </SidebarContent>
     )
 }
