@@ -19,4 +19,7 @@ export const feedApi = {
 
     markAllRead: (feedId: string): Promise<{ updatedCount: number }> =>
         apiClient.post<{ updatedCount: number }>(`/api/feeds/${feedId}/articles/read-all`),
+
+    markAllReadGlobal: (): Promise<{ updatedCount: number }> =>
+        apiClient.post<{ updatedCount: number }>(`/api/articles/read-all`),
 }

@@ -34,6 +34,7 @@ export type ArticleListPanelProps = React.HTMLAttributes<HTMLDivElement> & {
     onRefresh: () => void;
     isRefreshing: boolean;
     feedId?: string;
+    onMarkAllRead: () => void;
 }
 
 export interface AppSidebarProps {

@@ -23,7 +23,8 @@ export default function ArticleListPanel({
     onTabChange,
     isRefreshing,
     onRefresh,
-    feedId
+    feedId,
+    onMarkAllRead: markAllRead,
 }: ArticleListPanelProps) {
 
     if (error) {
@@ -108,14 +109,12 @@ export default function ArticleListPanel({
                                     <Button
                                         variant="ghost"
                                         size="icon-sm"
-                                        // onClick={onRefresh}
-                                        // disabled={isRefreshing}
+                                        onClick={markAllRead} //TODO: rename this
                                         aria-label="Mark as read"
                                     >
                                         <CheckCheck
                                             className={cn(
                                                 'size-4 text-muted-foreground',
-                                                // isRefreshing && 'animate-spin',
                                             )}
                                         />
                                     </Button>

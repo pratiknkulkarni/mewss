@@ -9,6 +9,7 @@ import { useMarkArticleRead } from "@/features/articles/hooks/useMarkArticleRead
 import { useRefreshFeed } from '@/features/feeds/hooks/useRefreshFeed';
 import { useFeeds } from '@/features/feeds/hooks/useFeeds';
 import { toast } from 'sonner';
+import { useMarkAllRead } from '@/features/feeds/hooks/useMarkAllRead';
 
 export const Route = createFileRoute('/_app/home/')({
   validateSearch: (search: Record<string, unknown>) => {
@@ -49,6 +50,7 @@ function HomeComponent() {
   } = useMarkArticleRead();
 
   const { mutate: refreshMutate, isPending: isRefreshing } = useRefreshFeed();
+  const { mutate: markAllReadMutate, isPending: isMarkingAllRead } = useMarkAllRead();
   const { data: feeds } = useFeeds(); // required for refreshing...
 
   const articles = data?.articles;
@@ -107,6 +109,17 @@ function HomeComponent() {
     }
   }
 
+  const handleMarkAllRead = () => {
+    if (feedId) {
+      markAllReadMutate(feedId)
+      console.log(`Marking all read for feed ${feedId}`)
+      toast.success("Mark All Read Queued", { position: 'bottom-right' })
+    } else {
+      markAllReadMutate(null)
+      console.log("Marking all read globally")
+      toast.success("Mark All Read Queued", { position: 'bottom-right' })
+    }
+  }
 
   // I have yet to test this out
   if (error) {
@@ -143,6 +156,7 @@ function HomeComponent() {
           onRefresh={handleRefresh}
           isRefreshing={isRefreshing}
           feedId={feedId ?? undefined}
+          onMarkAllRead={handleMarkAllRead}
         />
 
         <div className={`flex-1 overflow-hidden ${articleId ? 'flex' : 'hidden md:flex'}`}>
