@@ -1,15 +1,16 @@
-import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
-import { authClient } from "@/features/auth/api/auth-client.ts";
+import {createFileRoute, Outlet, redirect} from '@tanstack/react-router'
+import {authClient} from "@/features/auth/api/auth-client.ts";
 // import { queryClient } from '@/lib/query-client';
-import { authKeys } from '@/lib/query-keys';
+import {authKeys} from '@/lib/query-keys';
+import {ConfirmDialogProvider} from "@/components/ui/confirm-dialog-context.tsx";
 
 export const Route = createFileRoute('/_app')({
     component: RouteComponent,
-    beforeLoad: async ({ context }) => {
+    beforeLoad: async ({context}) => {
         const session = await context.queryClient.fetchQuery({
             queryKey: authKeys.session(),
             queryFn: async () => {
-                const { data, error } = await authClient.getSession();
+                const {data, error} = await authClient.getSession();
                 if (error) throw new Error(error.message || 'Failed to fetch session');
                 return data;
             },
@@ -25,12 +26,14 @@ export const Route = createFileRoute('/_app')({
             })
         }
 
-        return { user: session?.user }
+        return {user: session?.user}
     }
 })
 
 function RouteComponent() {
     return (<div>
-        <Outlet />
+        <ConfirmDialogProvider>
+            <Outlet/>
+        </ConfirmDialogProvider>
     </div>)
 }
