@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import {useFeeds} from "@/features/feeds/hooks/useFeeds"
 import {MoreHorizontal, Trash2, PencilIcon, RefreshCw, CheckCheckIcon} from "lucide-react"
-import {useState} from "react"
+import {useEffect, useState} from "react"
 import type {FeedItemProps, SidebarFeedListProps} from "@/types/props"
 import {useRefreshFeed} from "@/features/feeds/hooks/useRefreshFeed"
 import {useMarkAllRead} from "@/features/feeds/hooks/useMarkAllRead"
@@ -24,8 +24,10 @@ import {toast} from "sonner"
 import {useDeleteFeed} from "@/features/feeds/hooks/useDeleteFeed"
 import {useNavigate} from "@tanstack/react-router"
 import {useConfirm} from "@/hooks/use-confirm.ts";
+import type {Feed} from "@/types/api.ts";
+import {FeedModal} from "@/components/feed/feed-modal.tsx";
 
-function FeedItem({id, url, title, status, isActive, onSelect}: FeedItemProps) {
+function FeedItem({id, url, title, status, isActive, onSelect, onEdit}: FeedItemProps) {
     const [hovered, setHovered] = useState(false)
     const [menuOpen, setMenuOpen] = useState(false)
 
@@ -134,7 +136,7 @@ function FeedItem({id, url, title, status, isActive, onSelect}: FeedItemProps) {
                         className="w-44 rounded-xl"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <DropdownMenuItem className="gap-2 cursor-pointer text-[13px]">
+                        <DropdownMenuItem className="gap-2 cursor-pointer text-[13px]" onClick={onEdit}>
                             <PencilIcon className="h-3.5 w-3.5 text-muted-foreground"/>
                             Edit feed
                         </DropdownMenuItem>
@@ -166,6 +168,7 @@ function FeedItem({id, url, title, status, isActive, onSelect}: FeedItemProps) {
 
 export function SidebarFeedList({selectedFeedId, onFeedSelect}: SidebarFeedListProps) {
     const {data: feeds, isLoading} = useFeeds()
+    const [editingFeed, setEditingFeed] = useState<Feed | null>(null);
 
     return (
         <SidebarContent className="flex flex-col flex-1 min-h-0 overflow-hidden px-0">
@@ -206,6 +209,7 @@ export function SidebarFeedList({selectedFeedId, onFeedSelect}: SidebarFeedListP
                                     status={feed?.status}
                                     isActive={selectedFeedId === feed.id}
                                     onSelect={() => onFeedSelect(feed.id)}
+                                    onEdit={() => setEditingFeed(feed)}
                                 />
                             ))}
 
@@ -214,6 +218,12 @@ export function SidebarFeedList({selectedFeedId, onFeedSelect}: SidebarFeedListP
                 </SidebarGroupContent>
 
             </SidebarGroup>
+
+            <FeedModal isOpen={Boolean(editingFeed)}
+                       onClose={() => setEditingFeed(null)}
+                       feed={editingFeed ?? undefined}
+                       key={editingFeed?.id || 'new'}/>
+
         </SidebarContent>
     )
 }

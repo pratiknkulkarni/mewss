@@ -1,4 +1,4 @@
-import type { Article, Feed, Pagination } from "./api.ts";
+import type {Article, Feed, Pagination} from "./api.ts";
 
 export interface PaginationControlsProps {
     handlePageChange: (newPage: number) => void,
@@ -61,8 +61,6 @@ export interface FeedModalFormProps {
     handleClose: () => void
 
     isEditMode?: boolean
-    status?: string
-    setStatus?: (status: string) => void
 }
 
 export interface SidebarFeedListProps {
@@ -77,4 +75,9 @@ export interface FeedItemProps {
     status?: string | null
     isActive: boolean
     onSelect: () => void
+    onEdit: () => void
+}
+
+export interface FeedModalHeaderProps {
+    isEditMode?: boolean
 }
