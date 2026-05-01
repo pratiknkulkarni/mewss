@@ -10,12 +10,15 @@ type DbClient = NodePgDatabase;
 export type ArticleWithReadState = typeof article.$inferSelect & {
     isRead: boolean;
     readAt: string | null;
+    isStarred: boolean;
+    starredAt: string | null;
 };
 
 export interface ListOptions {
     page: number;
     limit: number;
     unread?: boolean;
+    starred?: boolean;
 }
 
 export interface GlobalListOptions extends ListOptions {
@@ -33,6 +36,8 @@ function buildArticleSelect(userId: string, dbClient: DbClient) {
             false
             )`,
             readAt: userArticleStates.readAt,
+            isStarred: sql<boolean>`COALESCE(${userArticleStates.isStarred}, false)`,
+            starredAt: userArticleStates.starredAt,
         })
         .from(article)
         .leftJoin(
@@ -103,12 +108,13 @@ export async function listArticlesGlobal(
     options: GlobalListOptions,
     dbClient: DbClient = db,
 ): Promise<ArticleWithReadState[]> {
-    const { page, limit, unread, feedId } = options;
+    const { page, limit, unread, feedId, starred } = options;
     const offset = (page - 1) * limit;
 
     const conditions = [eq(article.userId, userId)];
     if (feedId) conditions.push(eq(article.feedId, feedId));
     if (unread) conditions.push(isNull(userArticleStates.readAt));
+    if (starred) conditions.push(eq(userArticleStates.isStarred, true));
 
     return buildArticleSelect(userId, dbClient)
         .where(and(...conditions))
@@ -383,5 +389,62 @@ export async function findArticleByIdAndUser(
 ): Promise<ArticleWithReadState | null> {
     const result = await buildArticleSelect(userId, dbClient)
         .where(and(eq(article.id, articleId), eq(article.userId, userId)));
+    return (result[0] as ArticleWithReadState) ?? null;
+}
+
+export async function starArticle(
+    articleId: string,
+    userId: string,
+    dbClient: DbClient = db,
+): Promise<ArticleWithReadState | null> {
+    const rows = await dbClient
+        .select()
+        .from(article)
+        .where(and(eq(article.id, articleId), eq(article.userId, userId)));
+
+    if (rows.length === 0) return null;
+
+    await dbClient
+        .insert(userArticleStates)
+        .values({
+            userId,
+            articleId,
+            isStarred: true,
+            starredAt: new Date().toISOString(),
+        })
+        .onConflictDoUpdate({
+            target: [userArticleStates.userId, userArticleStates.articleId],
+            set: { isStarred: true, starredAt: new Date().toISOString() },
+        });
+
+    const result = await buildArticleSelect(userId, dbClient)
+        .where(and(eq(article.id, articleId), eq(article.userId, userId)));
+
+    return (result[0] as ArticleWithReadState) ?? null;
+}
+
+export async function unstarArticle(
+    articleId: string,
+    userId: string,
+    dbClient: DbClient = db,
+): Promise<ArticleWithReadState | null> {
+    const rows = await dbClient
+        .select()
+        .from(article)
+        .where(and(eq(article.id, articleId), eq(article.userId, userId)));
+
+    if (rows.length === 0) return null;
+
+    await dbClient
+        .insert(userArticleStates)
+        .values({ userId, articleId, isStarred: false, starredAt: null })
+        .onConflictDoUpdate({
+            target: [userArticleStates.userId, userArticleStates.articleId],
+            set: { isStarred: false, starredAt: null },
+        });
+
+    const result = await buildArticleSelect(userId, dbClient)
+        .where(and(eq(article.id, articleId), eq(article.userId, userId)));
+
     return (result[0] as ArticleWithReadState) ?? null;
 }

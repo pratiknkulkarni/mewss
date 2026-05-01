@@ -129,7 +129,10 @@ export const userArticleStates = pgTable("user_article_states", {
 	articleId: uuid("article_id").notNull(),
 	isRead: boolean("is_read").default(false).notNull(),
 	readAt: timestamp("read_at", { withTimezone: true, mode: 'string' }),
+	isStarred: boolean("is_starred").default(false).notNull(),
+	starredAt: timestamp("starred_at", { withTimezone: true, mode: 'string' }),
 }, (table) => [
+	index("idx_user_article_states_starred").using("btree", table.userId.asc().nullsLast().op("text_ops"), table.isStarred.asc().nullsLast().op("bool_ops")).where(sql`(is_starred = true)`),
 	foreignKey({
 			columns: [table.userId],
 			foreignColumns: [user.id],

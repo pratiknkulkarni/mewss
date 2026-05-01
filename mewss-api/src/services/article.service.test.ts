@@ -19,6 +19,8 @@ vi.mock("../repositories/article.repository.js", () => ({
     markAllArticlesAsReadGlobal: vi.fn(),
     markAllArticlesAsReadForFeeds: vi.fn(),
     markAllArticlesAsUnreadForFeeds: vi.fn(),
+    starArticle: vi.fn(),
+    unstarArticle: vi.fn(),
 }));
 
 import { NotFoundError } from "../errors/errors.js";
@@ -35,7 +37,9 @@ import {
     markFeedsBulkRead,
     markFeedsBulkUnread,
     markArticleUnread,
-    getArticle
+    getArticle,
+    starArticle,
+    unstarArticle
 } from "./article.service.js";
 import type { ArticleWithReadState } from "../repositories/article.repository.js";
 
@@ -63,6 +67,8 @@ function makeArticle(overrides: Partial<ArticleWithReadState> = {}): ArticleWith
         identityHash: "abc123",
         publishedAt: new Date().toISOString(),
         createdAt: new Date().toISOString(),
+        isStarred: false,
+        starredAt: null,
         isRead: false,
         readAt: null,
         content: "Test content",
@@ -150,7 +156,7 @@ describe("listArticlesGlobal", () => {
         vi.mocked(articleRepo.listArticlesGlobal).mockResolvedValueOnce([makeArticle()]);
         vi.mocked(articleRepo.countArticlesGlobal).mockResolvedValueOnce(1);
 
-        const result = await listArticlesGlobal("user-abc", { page: 1, limit: 20, unread: undefined });
+        const result = await listArticlesGlobal("user-abc", { page: 1, limit: 20, unread: undefined, starred: false, feedId: "feed-123" });
 
         expect(result.articles).toHaveLength(1);
         expect(result.pagination.total).toBe(1);
@@ -160,8 +166,7 @@ describe("listArticlesGlobal", () => {
         vi.mocked(articleRepo.listArticlesGlobal).mockResolvedValueOnce([]);
         vi.mocked(articleRepo.countArticlesGlobal).mockResolvedValueOnce(0);
 
-        await listArticlesGlobal("user-abc", { page: 1, limit: 20, unread: undefined, feedId: "feed-123" });
-
+        await listArticlesGlobal("user-abc", { page: 1, limit: 20, unread: undefined, feedId: "feed-123", starred: undefined });
         expect(articleRepo.listArticlesGlobal).toHaveBeenCalledWith(
             "user-abc",
             expect.objectContaining({ feedId: "feed-123" }),
@@ -317,5 +322,39 @@ describe("markArticleUnread", () => {
         vi.mocked(articleRepo.markArticleAsUnread).mockResolvedValueOnce(null);
 
         await expect(markArticleUnread("missing", "user-abc")).rejects.toBeInstanceOf(NotFoundError);
+    });
+});
+
+describe("starArticle", () => {
+    it("returns updated article with isStarred=true", async () => {
+        const article = makeArticle({ isStarred: true, starredAt: new Date().toISOString() });
+        vi.mocked(articleRepo.starArticle).mockResolvedValueOnce(article);
+
+        const result = await starArticle("article-123", "user-abc");
+        expect(result.isStarred).toBe(true);
+        expect(result.starredAt).not.toBeNull();
+    });
+
+    it("throws NotFoundError when repo returns null", async () => {
+        vi.mocked(articleRepo.starArticle).mockResolvedValueOnce(null);
+
+        await expect(starArticle("missing", "user-abc")).rejects.toBeInstanceOf(NotFoundError);
+    });
+});
+
+describe("unstarArticle", () => {
+    it("returns updated article with isStarred=false", async () => {
+        const article = makeArticle({ isStarred: false, starredAt: null });
+        vi.mocked(articleRepo.unstarArticle).mockResolvedValueOnce(article);
+
+        const result = await unstarArticle("article-123", "user-abc");
+        expect(result.isStarred).toBe(false);
+        expect(result.starredAt).toBeNull();
+    });
+
+    it("throws NotFoundError when repo returns null", async () => {
+        vi.mocked(articleRepo.unstarArticle).mockResolvedValueOnce(null);
+
+        await expect(unstarArticle("missing", "user-abc")).rejects.toBeInstanceOf(NotFoundError);
     });
 });

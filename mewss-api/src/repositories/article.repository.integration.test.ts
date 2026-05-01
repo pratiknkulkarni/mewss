@@ -1,10 +1,10 @@
-import {randomUUID} from "crypto";
-import {afterEach, beforeEach, describe, expect, it} from "vitest";
-import {Pool, type PoolClient} from "pg";
-import {drizzle} from "drizzle-orm/node-postgres";
-import type {NodePgDatabase} from "drizzle-orm/node-postgres";
-import {user} from "../db/generated/schema.js";
-import {createFeed, insertArticle} from "./feed.repository.js";
+import { randomUUID } from "crypto";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { Pool, type PoolClient } from "pg";
+import { drizzle } from "drizzle-orm/node-postgres";
+import type { NodePgDatabase } from "drizzle-orm/node-postgres";
+import { user } from "../db/generated/schema.js";
+import { createFeed, insertArticle } from "./feed.repository.js";
 import {
     countArticlesByFeedAndUser,
     countArticlesGlobal,
@@ -18,6 +18,8 @@ import {
     markAllArticlesAsUnreadForFeeds,
     markAllArticlesAsUnreadGlobal,
     markArticleAsRead,
+    starArticle,
+    unstarArticle,
     markArticleAsUnread,
 } from "./article.repository.js";
 
@@ -29,7 +31,7 @@ const USER_A = "article-test-user-a-" + randomUUID();
 const USER_B = "article-test-user-b-" + randomUUID();
 
 beforeEach(async () => {
-    pool = new Pool({connectionString: process.env.DATABASE_URL});
+    pool = new Pool({ connectionString: process.env.DATABASE_URL });
     client = await pool.connect();
     await client.query("BEGIN");
     txDb = drizzle(client) as unknown as NodePgDatabase;
@@ -94,7 +96,7 @@ describe("listArticlesByFeed", () => {
         await insertArticle(makeArticle(f.id, USER_A), txDb);
         await insertArticle(makeArticle(f.id, USER_A), txDb);
 
-        const results = await listArticlesByFeed(f.id, USER_A, {page: 1, limit: 20, unread: false}, txDb);
+        const results = await listArticlesByFeed(f.id, USER_A, { page: 1, limit: 20, unread: false, starred: false }, txDb);
         expect(results).toHaveLength(2);
     });
 
@@ -103,7 +105,7 @@ describe("listArticlesByFeed", () => {
         await createFeed(f, txDb);
         await insertArticle(makeArticle(f.id, USER_A), txDb);
 
-        const results = await listArticlesByFeed(f.id, USER_A, {page: 1, limit: 20, unread: false}, txDb);
+        const results = await listArticlesByFeed(f.id, USER_A, { page: 1, limit: 20, unread: false, starred: false }, txDb);
         expect(results[0].isRead).toBe(false);
         expect(results[0].readAt).toBeNull();
     });
@@ -115,7 +117,7 @@ describe("listArticlesByFeed", () => {
         await createFeed(f, txDb);
         await insertArticle(makeArticle(f.id, USER_B), txDb);
 
-        const results = await listArticlesByFeed(f.id, USER_A, {page: 1, limit: 20, unread: false}, txDb);
+        const results = await listArticlesByFeed(f.id, USER_A, { page: 1, limit: 20, unread: false, starred: false }, txDb);
         expect(results).toHaveLength(0);
     });
 
@@ -128,7 +130,7 @@ describe("listArticlesByFeed", () => {
         // Mark first article as read
         await markArticleAsRead(a1!.id, USER_A, txDb);
 
-        const unread = await listArticlesByFeed(f.id, USER_A, {page: 1, limit: 20, unread: true}, txDb);
+        const unread = await listArticlesByFeed(f.id, USER_A, { page: 1, limit: 20, unread: true, starred: false }, txDb);
         expect(unread).toHaveLength(1);
         expect(unread[0].isRead).toBe(false);
     });
@@ -140,8 +142,8 @@ describe("listArticlesByFeed", () => {
             await insertArticle(makeArticle(f.id, USER_A), txDb);
         }
 
-        const page1 = await listArticlesByFeed(f.id, USER_A, {page: 1, limit: 3, unread: false}, txDb);
-        const page2 = await listArticlesByFeed(f.id, USER_A, {page: 2, limit: 3, unread: false}, txDb);
+        const page1 = await listArticlesByFeed(f.id, USER_A, { page: 1, limit: 3, unread: false, starred: false }, txDb);
+        const page2 = await listArticlesByFeed(f.id, USER_A, { page: 2, limit: 3, unread: false, starred: false }, txDb);
 
         expect(page1).toHaveLength(3);
         expect(page2).toHaveLength(2);
@@ -169,7 +171,7 @@ describe("countArticlesByFeedAndUser", () => {
 
         await markArticleAsRead(a1!.id, USER_A, txDb);
 
-        expect(await countArticlesByFeedAndUser(f.id, USER_A, {unread: true}, txDb)).toBe(1);
+        expect(await countArticlesByFeedAndUser(f.id, USER_A, { unread: true }, txDb)).toBe(1);
     });
 });
 
@@ -183,7 +185,7 @@ describe("listArticlesGlobal", () => {
         await insertArticle(makeArticle(f1.id, USER_A), txDb);
         await insertArticle(makeArticle(f2.id, USER_A), txDb);
 
-        const results = await listArticlesGlobal(USER_A, {page: 1, limit: 20}, txDb);
+        const results = await listArticlesGlobal(USER_A, { page: 1, limit: 20 }, txDb);
         expect(results).toHaveLength(2);
     });
 
@@ -192,7 +194,7 @@ describe("listArticlesGlobal", () => {
         await createFeed(f, txDb);
         await insertArticle(makeArticle(f.id, USER_B), txDb);
 
-        const results = await listArticlesGlobal(USER_A, {page: 1, limit: 20}, txDb);
+        const results = await listArticlesGlobal(USER_A, { page: 1, limit: 20 }, txDb);
         expect(results).toHaveLength(0);
     });
 
@@ -204,7 +206,7 @@ describe("listArticlesGlobal", () => {
         await insertArticle(makeArticle(f1.id, USER_A), txDb);
         await insertArticle(makeArticle(f2.id, USER_A), txDb);
 
-        const results = await listArticlesGlobal(USER_A, {page: 1, limit: 20, feedId: f1.id}, txDb);
+        const results = await listArticlesGlobal(USER_A, { page: 1, limit: 20, feedId: f1.id }, txDb);
         expect(results).toHaveLength(1);
         expect(results[0].feedId).toBe(f1.id);
     });
@@ -217,7 +219,7 @@ describe("listArticlesGlobal", () => {
 
         await markArticleAsRead(a1!.id, USER_A, txDb);
 
-        const unread = await listArticlesGlobal(USER_A, {page: 1, limit: 20, unread: true}, txDb);
+        const unread = await listArticlesGlobal(USER_A, { page: 1, limit: 20, unread: true }, txDb);
         expect(unread).toHaveLength(1);
     });
 });
@@ -271,7 +273,7 @@ describe("markAllArticlesAsRead", () => {
         const count = await markAllArticlesAsRead(f.id, USER_A, txDb);
         expect(count).toBe(3);
 
-        const unread = await countArticlesByFeedAndUser(f.id, USER_A, {unread: true}, txDb);
+        const unread = await countArticlesByFeedAndUser(f.id, USER_A, { unread: true }, txDb);
         expect(unread).toBe(0);
     });
 
@@ -293,7 +295,7 @@ describe("markAllArticlesAsRead", () => {
         await markAllArticlesAsRead(fA.id, USER_A, txDb);
 
         // USER_B's article in their own feed remains unread
-        const bUnread = await countArticlesByFeedAndUser(fB.id, USER_B, {unread: true}, txDb);
+        const bUnread = await countArticlesByFeedAndUser(fB.id, USER_B, { unread: true }, txDb);
         expect(bUnread).toBe(1);
     });
 });
@@ -310,7 +312,7 @@ describe("markAllArticlesAsReadGlobal", () => {
         const count = await markAllArticlesAsReadGlobal(USER_A, txDb);
         expect(count).toBe(2);
 
-        const unread = await countArticlesGlobal(USER_A, {unread: true}, txDb);
+        const unread = await countArticlesGlobal(USER_A, { unread: true }, txDb);
         expect(unread).toBe(0);
     });
 
@@ -324,7 +326,7 @@ describe("markAllArticlesAsReadGlobal", () => {
 
         await markAllArticlesAsReadGlobal(USER_A, txDb);
 
-        const bUnread = await countArticlesGlobal(USER_B, {unread: true}, txDb);
+        const bUnread = await countArticlesGlobal(USER_B, { unread: true }, txDb);
         expect(bUnread).toBe(1);
     });
 
@@ -397,11 +399,11 @@ describe("markAllArticlesAsUnread", () => {
         await insertArticle(makeArticle(f.id, USER_A), txDb);
 
         await markAllArticlesAsRead(f.id, USER_A, txDb);
-        expect(await countArticlesByFeedAndUser(f.id, USER_A, {unread: true}, txDb)).toBe(0);
+        expect(await countArticlesByFeedAndUser(f.id, USER_A, { unread: true }, txDb)).toBe(0);
 
         const count = await markAllArticlesAsUnread(f.id, USER_A, txDb);
         expect(count).toBe(2);
-        expect(await countArticlesByFeedAndUser(f.id, USER_A, {unread: true}, txDb)).toBe(2);
+        expect(await countArticlesByFeedAndUser(f.id, USER_A, { unread: true }, txDb)).toBe(2);
     });
 
     it("returns 0 when feed has no articles", async () => {
@@ -424,7 +426,7 @@ describe("markAllArticlesAsUnreadGlobal", () => {
         const count = await markAllArticlesAsUnreadGlobal(USER_A, txDb);
         expect(count).toBe(2);
 
-        const unread = await countArticlesGlobal(USER_A, {unread: true}, txDb);
+        const unread = await countArticlesGlobal(USER_A, { unread: true }, txDb);
         expect(unread).toBe(2);
     });
 
@@ -442,7 +444,7 @@ describe("markAllArticlesAsUnreadGlobal", () => {
         await markAllArticlesAsUnreadGlobal(USER_A, txDb);
 
         // USER_B's article should still be read
-        expect(await countArticlesGlobal(USER_B, {unread: true}, txDb)).toBe(0);
+        expect(await countArticlesGlobal(USER_B, { unread: true }, txDb)).toBe(0);
     });
 });
 
@@ -457,7 +459,7 @@ describe("markAllArticlesAsReadForFeeds", () => {
 
         const count = await markAllArticlesAsReadForFeeds([f1.id, f2.id], USER_A, txDb);
         expect(count).toBe(2);
-        expect(await countArticlesGlobal(USER_A, {unread: true}, txDb)).toBe(0);
+        expect(await countArticlesGlobal(USER_A, { unread: true }, txDb)).toBe(0);
     });
 
     it("ignores feeds belonging to another user", async () => {
@@ -472,7 +474,7 @@ describe("markAllArticlesAsReadForFeeds", () => {
         await markAllArticlesAsReadForFeeds([fA.id, fB.id], USER_A, txDb);
 
         // USER_B's article remains unread
-        expect(await countArticlesGlobal(USER_B, {unread: true}, txDb)).toBe(1);
+        expect(await countArticlesGlobal(USER_B, { unread: true }, txDb)).toBe(1);
     });
 
     it("returns 0 for empty feeds", async () => {
@@ -494,6 +496,79 @@ describe("markAllArticlesAsUnreadForFeeds", () => {
         await markAllArticlesAsReadForFeeds([f1.id, f2.id], USER_A, txDb);
         const count = await markAllArticlesAsUnreadForFeeds([f1.id, f2.id], USER_A, txDb);
         expect(count).toBe(2);
-        expect(await countArticlesGlobal(USER_A, {unread: true}, txDb)).toBe(2);
+        expect(await countArticlesGlobal(USER_A, { unread: true }, txDb)).toBe(2);
+    });
+});
+
+describe("starArticle", () => {
+    it("creates a state row and returns article with isStarred=true", async () => {
+        const f = makeFeed(USER_A);
+        await createFeed(f, txDb);
+        const a = await insertArticle(makeArticle(f.id, USER_A), txDb);
+
+        const result = await starArticle(a!.id, USER_A, txDb);
+        expect(result).not.toBeNull();
+        expect(result!.isStarred).toBe(true);
+        expect(result!.starredAt).not.toBeNull();
+    });
+
+    it("is idempotent — starring already-starred article does not error", async () => {
+        const f = makeFeed(USER_A);
+        await createFeed(f, txDb);
+        const a = await insertArticle(makeArticle(f.id, USER_A), txDb);
+
+        await starArticle(a!.id, USER_A, txDb);
+        const result = await starArticle(a!.id, USER_A, txDb);
+        expect(result!.isStarred).toBe(true);
+    });
+
+    it("returns null for non-existent article", async () => {
+        const result = await starArticle(randomUUID(), USER_A, txDb);
+        expect(result).toBeNull();
+    });
+
+    it("returns null for another user's article (opaque 404)", async () => {
+        const f = makeFeed(USER_B);
+        await createFeed(f, txDb);
+        const a = await insertArticle(makeArticle(f.id, USER_B), txDb);
+
+        const result = await starArticle(a!.id, USER_A, txDb);
+        expect(result).toBeNull();
+    });
+});
+
+describe("unstarArticle", () => {
+    it("reverts a starred article to unstarred", async () => {
+        const f = makeFeed(USER_A);
+        await createFeed(f, txDb);
+        const a = await insertArticle(makeArticle(f.id, USER_A), txDb);
+
+        await starArticle(a!.id, USER_A, txDb);
+        const reverted = await unstarArticle(a!.id, USER_A, txDb);
+
+        expect(reverted!.isStarred).toBe(false);
+        expect(reverted!.starredAt).toBeNull();
+    });
+
+    it("is a no-op when article is already unstarred (no state row)", async () => {
+        const f = makeFeed(USER_A);
+        await createFeed(f, txDb);
+        const a = await insertArticle(makeArticle(f.id, USER_A), txDb);
+
+        // Never marked as starred — calling unstar is safe
+        const result = await unstarArticle(a!.id, USER_A, txDb);
+        expect(result!.isStarred).toBe(false);
+    });
+
+    it("returns null for another user's article", async () => {
+        const f = makeFeed(USER_B);
+        await createFeed(f, txDb);
+        const a = await insertArticle(makeArticle(f.id, USER_B), txDb);
+
+        expect(await unstarArticle(a!.id, USER_A, txDb)).toBeNull();
+    });
+
+    it("returns null for non-existent article", async () => {
+        expect(await unstarArticle(randomUUID(), USER_A, txDb)).toBeNull();
     });
 });
