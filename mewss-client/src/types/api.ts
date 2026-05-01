@@ -41,6 +41,8 @@ export interface Article {
     createdAt: string | null;
     isRead: boolean;
     readAt: string | null;
+    isStarred: boolean;
+    starredAt: string | null;
 }
 
 /**
@@ -79,6 +81,7 @@ export interface ArticleFilters {
     unread?: boolean;
     /** Filter articles by a specific feed ID. */
     feedId?: string;
+    starred?: boolean;
 }
 
 /**

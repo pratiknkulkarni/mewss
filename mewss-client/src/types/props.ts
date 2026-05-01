@@ -1,4 +1,4 @@
-import type {Article, Feed, Pagination} from "./api.ts";
+import type { Article, Feed, Pagination } from "./api.ts";
 
 export interface PaginationControlsProps {
     handlePageChange: (newPage: number) => void,
@@ -10,11 +10,13 @@ export interface ArticleCardProps {
     article: Article
     isActive: boolean
     onClick: () => void
+    onStar: (articleId: string, currentlyStarred: boolean) => void
 }
 
 export interface ReadingPaneProps {
     article: Article | null
     onBack?: () => void;
+    onStar?: (articleId: string, currentlyStarred: boolean) => void;
 }
 
 export type ArticleListPanelProps = React.HTMLAttributes<HTMLDivElement> & {
@@ -35,6 +37,7 @@ export type ArticleListPanelProps = React.HTMLAttributes<HTMLDivElement> & {
     isRefreshing: boolean;
     feedId?: string;
     onMarkAllRead: () => void;
+    onStar: (articleId: string, currentlyStarred: boolean) => void;
 }
 
 export interface AppSidebarProps {
