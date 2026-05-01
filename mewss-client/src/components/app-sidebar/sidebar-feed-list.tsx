@@ -27,7 +27,7 @@ import { useConfirm } from "@/hooks/use-confirm.ts";
 import type { Feed } from "@/types/api.ts";
 import { FeedModal } from "@/components/feed/feed-modal.tsx";
 
-function FeedItem({ id, url, title, status, isActive, onSelect, onEdit }: FeedItemProps) {
+function FeedItem({ id, url, title, status, isActive, onSelect, onEdit, unreadCount }: FeedItemProps) {
     const [hovered, setHovered] = useState(false)
     const [menuOpen, setMenuOpen] = useState(false)
 
@@ -102,6 +102,20 @@ function FeedItem({ id, url, title, status, isActive, onSelect, onEdit }: FeedIt
                 />
 
                 <span className="truncate flex-1 min-w-0">{label}</span>
+
+                {!showEllipsis && unreadCount !== undefined && unreadCount > 0 && (
+                    <span className={`
+                            shrink-0 inline-flex items-center justify-center 
+                            px-1.5 py-0.5 rounded-full 
+                            text-[10px] font-semibold tabular-nums
+                            ${isActive
+                            ? "bg-foreground/10 text-foreground"
+                            : "bg-black/5 text-muted-foreground dark:bg-white/10 dark:text-muted-foreground group-hover:text-foreground"
+                        }
+                                    `}>
+                        {unreadCount > 999 ? '999+' : unreadCount}
+                    </span>
+                )}
 
                 {status === "error" && (
                     <span
@@ -210,6 +224,7 @@ export function SidebarFeedList({ selectedFeedId, onFeedSelect }: SidebarFeedLis
                                     isActive={selectedFeedId === feed.id}
                                     onSelect={() => onFeedSelect(feed.id)}
                                     onEdit={() => setEditingFeed(feed)}
+                                    unreadCount={feed.unreadCount}
                                 />
                             ))}
 

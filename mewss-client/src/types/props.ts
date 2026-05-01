@@ -80,6 +80,7 @@ export interface FeedItemProps {
     isActive: boolean
     onSelect: () => void
     onEdit: () => void
+    unreadCount?: number
 }
 
 export interface FeedModalHeaderProps {

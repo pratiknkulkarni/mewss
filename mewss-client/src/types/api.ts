@@ -21,6 +21,7 @@ export interface Feed {
     lastModifiedHeader: string | null;
     title: string | null;
     description: string | null;
+    unreadCount: number;
 }
 
 /**

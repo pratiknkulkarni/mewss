@@ -1,7 +1,7 @@
-import {db} from "../db/db.js";
-import {article, feed} from "../db/generated/schema.js";
-import {and, eq, desc, inArray} from "drizzle-orm";
-import type {NodePgDatabase} from "drizzle-orm/node-postgres";
+import { db } from "../db/db.js";
+import { article, feed } from "../db/generated/schema.js";
+import { and, eq, desc, inArray, getTableColumns, sql } from "drizzle-orm";
+import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 
 
 type NewFeed = typeof feed.$inferInsert;
@@ -27,8 +27,22 @@ export async function listFeedsByUser(userId: string, status?: string, dbClient:
     const conditions = [eq(feed.userId, userId)];
     if (status) conditions.push(eq(feed.status, status));
 
+    const unreadCount = sql<number>`(
+    SELECT COUNT(*)::int
+    FROM article a
+    LEFT JOIN user_article_states uas
+        ON uas.article_id = a.id
+       AND uas.user_id    = ${userId}
+    WHERE a.feed_id  = "feed"."id"
+      AND a.user_id  = ${userId}
+      AND (uas.is_read IS NULL OR uas.is_read = false)
+    )`;
+
     return dbClient
-        .select()
+        .select({
+            ...getTableColumns(feed),
+            unreadCount,
+        })
         .from(feed)
         .where(and(...conditions))
         .orderBy(desc(feed.createdAt));
@@ -38,16 +52,16 @@ export async function deleteFeedByIdAndUser(id: string, userId: string, dbClient
     const rows = await dbClient
         .delete(feed)
         .where(and(eq(feed.id, id), eq(feed.userId, userId)))
-        .returning({id: feed.id});
+        .returning({ id: feed.id });
     return rows.length > 0;
 }
 
 export async function triggerFeedRefresh(id: string, userId: string, dbClient: DbClient = db): Promise<boolean> {
     const rows = await dbClient
         .update(feed)
-        .set({forceRefresh: true, nextFetchAfter: new Date().toISOString(), updatedAt: new Date().toISOString()})
+        .set({ forceRefresh: true, nextFetchAfter: new Date().toISOString(), updatedAt: new Date().toISOString() })
         .where(and(eq(feed.id, id), eq(feed.userId, userId)))
-        .returning({id: feed.id});
+        .returning({ id: feed.id });
     return rows.length > 0;
 }
 
@@ -78,7 +92,7 @@ export async function updateFeed(
 ): Promise<FeedRow | null> {
     const rows = await dbClient
         .update(feed)
-        .set({...updates, updatedAt: new Date().toISOString()})
+        .set({ ...updates, updatedAt: new Date().toISOString() })
         .where(and(eq(feed.id, id), eq(feed.userId, userId)))
         .returning();
     return rows[0] ?? null;
