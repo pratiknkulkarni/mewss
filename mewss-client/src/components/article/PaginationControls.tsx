@@ -1,4 +1,3 @@
-import { Field, FieldLabel } from "@/components/ui/field";
 import { Pagination, PaginationContent, PaginationItem, PaginationNext, PaginationPrevious } from "@/components/ui/pagination.tsx";
 import type { PaginationControlsProps } from "@/types/props.ts";
 
