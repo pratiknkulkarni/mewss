@@ -68,7 +68,7 @@ export async function listArticlesGlobal(
     const { page, limit, unread, feedId, starred } = query;
     const [articles, total] = await Promise.all([
         articleRepo.listArticlesGlobal(userId, { page, limit, unread, feedId, starred }),
-        articleRepo.countArticlesGlobal(userId, { unread, feedId }),
+        articleRepo.countArticlesGlobal(userId, { unread, feedId, starred }),
     ]);
 
     logger.info({ userId, page, limit, total, starred }, "global article inbox listed");

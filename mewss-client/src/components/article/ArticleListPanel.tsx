@@ -1,31 +1,33 @@
 import ArticleCard from "./ArticleCard.tsx";
-import {SidebarTrigger} from "@/components/ui/sidebar.tsx";
-import {ScrollArea} from "@/components/ui/scroll-area.tsx";
-import {PaginationControls} from "./PaginationControls.tsx";
-import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs.tsx";
-import type {ArticleListPanelProps} from "@/types/props.ts";
-import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "../ui/tooltip.tsx";
-import {cn} from "@/lib/utils.ts";
-import {CheckCheck, RefreshCw} from "lucide-react";
-import {Button} from "../ui/button.tsx";
+import { SidebarTrigger } from "@/components/ui/sidebar.tsx";
+import { ScrollArea } from "@/components/ui/scroll-area.tsx";
+import { PaginationControls } from "./PaginationControls.tsx";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.tsx";
+import type { ArticleListPanelProps } from "@/types/props.ts";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip.tsx";
+import { cn } from "@/lib/utils.ts";
+import { CheckCheck, RefreshCw } from "lucide-react";
+import { Button } from "../ui/button.tsx";
 
 export default function ArticleListPanel({
-                                             articles,
-                                             isLoading,
-                                             error,
-                                             selectedArticleId,
-                                             onArticleSelect,
-                                             handlePageChange,
-                                             currentPage,
-                                             pagination,
-                                             className,
-                                             activeTab,
-                                             onTabChange,
-                                             isRefreshing,
-                                             onRefresh,
-                                             feedId,
-                                             onMarkAllRead: markAllRead,
-                                         }: ArticleListPanelProps) {
+    articles,
+    isLoading,
+    error,
+    selectedArticleId,
+    onArticleSelect,
+    handlePageChange,
+    currentPage,
+    pagination,
+    className,
+    activeTab,
+    onTabChange,
+    isRefreshing,
+    onRefresh,
+    feedId,
+    onStar,
+    isStarredInbox,
+    onMarkAllRead: markAllRead,
+}: ArticleListPanelProps) {
 
     if (error) {
         return (
@@ -60,6 +62,7 @@ export default function ArticleListPanel({
                         article={article}
                         isActive={selectedArticleId === article.id}
                         onClick={() => onArticleSelect(article)}
+                        onStar={onStar}
                     />
                 ))}
         </ScrollArea>
@@ -73,17 +76,17 @@ export default function ArticleListPanel({
                 <header
                     className="relative flex-none h-14 border-b border-border flex items-center px-4 justify-between sticky top-0 z-10 bg-card">
                     <div className="flex items-center">
-                        <SidebarTrigger/>
+                        <SidebarTrigger />
                     </div>
 
-                    <TabsList className="h-9">
+                    {!isStarredInbox && (<TabsList className="h-9">
                         <TabsTrigger value="all">All</TabsTrigger>
                         <TabsTrigger value="unread">Unread</TabsTrigger>
-                    </TabsList>
+                    </TabsList>)}
 
                     <TooltipProvider delay={400}>
                         <div className="flex items-center gap-0.5">
-                            <Tooltip>
+                            {!isStarredInbox && (<Tooltip>
                                 <TooltipTrigger>
                                     <Button
                                         variant="ghost"
@@ -103,8 +106,8 @@ export default function ArticleListPanel({
                                 <TooltipContent>
                                     {feedId ? 'Refresh this feed' : 'Refresh all feeds'}
                                 </TooltipContent>
-                            </Tooltip>
-                            <Tooltip>
+                            </Tooltip>)}
+                            {!isStarredInbox && (<Tooltip>
                                 <TooltipTrigger>
                                     <Button
                                         variant="ghost"
@@ -122,26 +125,26 @@ export default function ArticleListPanel({
                                 <TooltipContent>
                                     {feedId ? 'Mark this feed as read' : 'Mark ALL feeds as read'}
                                 </TooltipContent>
-                            </Tooltip>
+                            </Tooltip>)}
                         </div>
                     </TooltipProvider>
 
                 </header>
 
                 <TabsContent value="unread"
-                             className="m-0 border-none outline-none flex-1 min-h-0 flex-col data-[state=active]:flex">
+                    className="m-0 border-none outline-none flex-1 min-h-0 flex-col data-[state=active]:flex">
                     {listContent}
                 </TabsContent>
 
                 <TabsContent value="all"
-                             className="m-0 border-none outline-none flex-1 min-h-0 flex-col data-[state=active]:flex">
+                    className="m-0 border-none outline-none flex-1 min-h-0 flex-col data-[state=active]:flex">
                     {listContent}
                 </TabsContent>
             </Tabs>
 
             <div className="flex-none relative z-10 bg-card border-t border-border px-4 py-3">
                 <PaginationControls pagination={pagination} handlePageChange={handlePageChange}
-                                    currentPage={currentPage}/>
+                    currentPage={currentPage} />
             </div>
         </div>
     )

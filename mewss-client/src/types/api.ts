@@ -81,6 +81,7 @@ export interface ArticleFilters {
     unread?: boolean;
     /** Filter articles by a specific feed ID. */
     feedId?: string;
+    /** Filter to return only starred articles. */
     starred?: boolean;
 }
 

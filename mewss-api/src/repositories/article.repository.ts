@@ -126,13 +126,16 @@ export async function listArticlesGlobal(
 
 export async function countArticlesGlobal(
     userId: string,
-    options: { unread?: boolean; feedId?: string },
+    options: { unread?: boolean; feedId?: string, starred?: boolean },
     dbClient: DbClient = db,
 ): Promise<number> {
     const conditions = [eq(article.userId, userId)];
     if (options.feedId) conditions.push(eq(article.feedId, options.feedId));
 
-    if (options.unread) {
+    if (options.unread || options.starred) {
+        if (options.unread) conditions.push(isNull(userArticleStates.readAt));
+        if (options.starred) conditions.push(eq(userArticleStates.isStarred, true));
+
         const result = await dbClient
             .select({ count: sql<number>`count(*)::int` })
             .from(article)
@@ -143,7 +146,7 @@ export async function countArticlesGlobal(
                     eq(userArticleStates.userId, userId),
                 ),
             )
-            .where(and(...conditions, isNull(userArticleStates.readAt)));
+            .where(and(...conditions));
         return result[0]?.count ?? 0;
     }
 

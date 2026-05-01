@@ -1,15 +1,16 @@
-import {createFileRoute} from '@tanstack/react-router'
-import {SidebarProvider} from '@/components/ui/sidebar'
-import {AppSidebar} from '@/components/app-sidebar/app-sidebar'
-import {useArticles} from '@/features/articles/hooks/useArticles'
+import { createFileRoute } from '@tanstack/react-router'
+import { SidebarProvider } from '@/components/ui/sidebar'
+import { AppSidebar } from '@/components/app-sidebar/app-sidebar'
+import { useArticles } from '@/features/articles/hooks/useArticles'
 import ArticleListPanel from "@/components/article/ArticleListPanel.tsx";
-import {ReadingPane} from "@/components/article/ReadingPane.tsx";
-import type {Article} from "@/types/api.ts";
-import {useMarkArticleRead} from "@/features/articles/hooks/useMarkArticleRead.ts";
-import {useRefreshFeed} from '@/features/feeds/hooks/useRefreshFeed';
-import {useFeeds} from '@/features/feeds/hooks/useFeeds';
-import {toast} from 'sonner';
-import {useMarkAllRead} from '@/features/feeds/hooks/useMarkAllRead';
+import { ReadingPane } from "@/components/article/ReadingPane.tsx";
+import type { Article } from "@/types/api.ts";
+import { useMarkArticleRead } from "@/features/articles/hooks/useMarkArticleRead.ts";
+import { useRefreshFeed } from '@/features/feeds/hooks/useRefreshFeed';
+import { useFeeds } from '@/features/feeds/hooks/useFeeds';
+import { toast } from 'sonner';
+import { useMarkAllRead } from '@/features/feeds/hooks/useMarkAllRead';
+import { useStarArticle } from '@/features/articles/hooks/useStarArticle';
 
 export const Route = createFileRoute('/_app/home/')({
     validateSearch: (search: Record<string, unknown>) => {
@@ -33,32 +34,37 @@ type SearchParams = {
 }
 
 function HomeComponent() {
-    //TODO: update limit to set to the dropdown instead of hardcoding
-    const {articleId, feedId, tab = "unread", page = 1, limit = 20} = Route.useSearch();
+    //TODO: I am hardcoding the limit to 20 for now
+    const { articleId, feedId, tab = "unread", page = 1, limit = 20 } = Route.useSearch();
 
     const navigate = Route.useNavigate()
 
-    const {data, isLoading, error} = useArticles({
+    const isStarredInbox = feedId === '__starred__'
+    const realFeedId = isStarredInbox ? undefined : feedId
+
+    const { data, isLoading, error } = useArticles({
         page,
         limit,
-        unread: tab === "unread",
-        feedId: feedId
+        unread: isStarredInbox ? undefined : tab === "unread",
+        feedId: realFeedId,
+        starred: isStarredInbox ? true : undefined,
     });
 
     const {
         mutate: markArticleReadMutate,
     } = useMarkArticleRead();
 
-    const {mutate: refreshMutate, isPending: isRefreshing} = useRefreshFeed();
-    const {mutate: markAllReadMutate} = useMarkAllRead();
-    const {data: feeds} = useFeeds(); // required for refreshing...
+    const { mutate: refreshMutate, isPending: isRefreshing } = useRefreshFeed();
+    const { mutate: markAllReadMutate } = useMarkAllRead();
+    const { data: feeds } = useFeeds(); // required for refreshing...
+    const { mutate: starMutate } = useStarArticle();
 
     const articles = data?.articles;
     const selectedArticle = articles?.find((a) => a.id === articleId) ?? null // user "clicked" article
 
     // when usere clicks on a Next/Previous
     const handlePageChange = (newPage: number) => {
-        navigate({search: (prev: SearchParams) => ({...prev, page: newPage})})
+        navigate({ search: (prev: SearchParams) => ({ ...prev, page: newPage }) })
     }
 
     // when user "clicks" on an article, it marks as read by default
@@ -66,7 +72,7 @@ function HomeComponent() {
         markArticleReadMutate(article.id)
 
         navigate({
-            search: (prev: SearchParams) => ({...prev, articleId: article.id}),
+            search: (prev: SearchParams) => ({ ...prev, articleId: article.id }),
             resetScroll: false,
         })
     }
@@ -101,22 +107,26 @@ function HomeComponent() {
     const handleRefresh = () => {
         if (feedId) {
             refreshMutate([feedId])
-            toast.success("Refresh Feed Queued", {position: 'bottom-right'})
+            toast.success("Refresh Feed Queued", { position: 'bottom-right' })
         } else {
             const allIds = feeds?.map((f) => f.id) ?? []
             if (allIds.length > 0) refreshMutate(allIds)
-            toast.success("Refresh Feed Queued", {position: 'bottom-right'})
+            toast.success("Refresh Feed Queued", { position: 'bottom-right' })
         }
     }
 
     const handleMarkAllRead = () => {
         if (feedId) {
             markAllReadMutate(feedId)
-            toast.success("Mark All Read Queued", {position: 'bottom-right'})
+            toast.success("Mark All Read Queued", { position: 'bottom-right' })
         } else {
             markAllReadMutate(null)
-            toast.success("Mark All Read Queued", {position: 'bottom-right'})
+            toast.success("Mark All Read Queued", { position: 'bottom-right' })
         }
+    }
+
+    const handleStar = (articleId: string, currentlyStarred: boolean) => {
+        starMutate({ articleId, currentlyStarred })
     }
 
     // I have yet to test this out
@@ -133,8 +143,8 @@ function HomeComponent() {
             {/* <SidebarInset className="flex flex-row overflow-hidden" /> */}
             <div className="flex h-screen w-full overflow-hidden bg-card text-foreground font-sans">
                 <AppSidebar selectedFeedId={feedId ?? null}
-                            onFeedSelect={handleFeedSelect}
-                            unreadCount={data?.pagination?.total}
+                    onFeedSelect={handleFeedSelect}
+                    unreadCount={data?.pagination?.total}
                 />
                 <ArticleListPanel
                     articles={articles}
@@ -155,12 +165,14 @@ function HomeComponent() {
                     isRefreshing={isRefreshing}
                     feedId={feedId ?? undefined}
                     onMarkAllRead={handleMarkAllRead}
+                    onStar={handleStar}
+                    isStarredInbox={isStarredInbox}
                 />
 
                 <div className={`flex-1 overflow-hidden ${articleId ? 'flex' : 'hidden md:flex'}`}>
                     <ReadingPane
                         article={selectedArticle}
-                        onBack={() => navigate({search: (prev: SearchParams) => ({...prev, articleId: undefined})})}
+                        onBack={() => navigate({ search: (prev: SearchParams) => ({ ...prev, articleId: undefined }) })}
                     />
                 </div>
             </div>

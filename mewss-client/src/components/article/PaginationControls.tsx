@@ -1,14 +1,13 @@
-import {Field, FieldLabel} from "@/components/ui/field";
-import {Pagination, PaginationContent, PaginationItem, PaginationNext, PaginationPrevious} from "@/components/ui/pagination.tsx";
-import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select.tsx";
-import type {PaginationControlsProps} from "@/types/props.ts";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { Pagination, PaginationContent, PaginationItem, PaginationNext, PaginationPrevious } from "@/components/ui/pagination.tsx";
+import type { PaginationControlsProps } from "@/types/props.ts";
 
-export function PaginationControls({handlePageChange, currentPage, pagination}: PaginationControlsProps) {
+export function PaginationControls({ handlePageChange, currentPage, pagination }: PaginationControlsProps) {
     return (
-        <div className="flex items-center justify-between gap-4">
-            <Field orientation="horizontal" className="w-fit">
-                <FieldLabel htmlFor="select-rows-per-page">Rows per page</FieldLabel>
-                <Select defaultValue="25">
+        <div className="flex items-center justify-around">
+            {/* <Field orientation="horizontal" className="w-fit">
+                <FieldLabel htmlFor="select-rows-per-page">Rows per page</FieldLabel> */}
+            {/* <Select defaultValue="25">
                     <SelectTrigger className="w-20" id="select-rows-per-page">
                         <SelectValue/>
                     </SelectTrigger>
@@ -20,18 +19,18 @@ export function PaginationControls({handlePageChange, currentPage, pagination}: 
                             <SelectItem value="100">100</SelectItem>
                         </SelectGroup>
                     </SelectContent>
-                </Select>
-            </Field>
+                </Select> */}
+            {/* </Field> */}
             <Pagination className="mx-0 w-auto">
                 <PaginationContent>
                     <PaginationItem>
                         <PaginationPrevious disabled={pagination?.page === 1}
-                                            onClick={() => handlePageChange(currentPage - 1)} size={"sm"}/>
+                            onClick={() => handlePageChange(currentPage - 1)} size={"sm"} />
                     </PaginationItem>
                     <PaginationItem>
                         <PaginationNext
                             disabled={!pagination?.hasMore}
-                            onClick={() => handlePageChange(currentPage + 1)} size={"sm"}/>
+                            onClick={() => handlePageChange(currentPage + 1)} size={"sm"} />
                     </PaginationItem>
                 </PaginationContent>
             </Pagination>

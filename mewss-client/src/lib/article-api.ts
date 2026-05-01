@@ -4,7 +4,6 @@ import { apiClient } from "./api-client.ts";
 export const articleApi = {
     list: (params?: ArticleFilters): Promise<ArticlesResponse> => {
         const { feedId, ...rest } = params ?? {};
-
         if (feedId) {
             return apiClient.get<ArticlesResponse>(
                 `/api/feeds/${feedId}/articles`,

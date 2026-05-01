@@ -38,6 +38,7 @@ export type ArticleListPanelProps = React.HTMLAttributes<HTMLDivElement> & {
     feedId?: string;
     onMarkAllRead: () => void;
     onStar: (articleId: string, currentlyStarred: boolean) => void;
+    isStarredInbox: boolean;
 }
 
 export interface AppSidebarProps {
