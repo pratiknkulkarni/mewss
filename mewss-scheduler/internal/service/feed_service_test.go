@@ -33,6 +33,7 @@ type mockRepo struct {
 	markedFailed   bool
 	lastErrorCount int
 	lastNextFetch  time.Time
+	disabled       bool
 }
 
 //func (m *mockRepo) CleanStaleLocks(_ context.Context, _ time.Time) (int64, error) {
@@ -47,10 +48,11 @@ func (m *mockRepo) ReleaseFeed(_ context.Context, _ string, _ time.Time, _ int, 
 	return nil
 }
 
-func (m *mockRepo) MarkFeedAsFailed(_ context.Context, _ string, errCount int, nextFetch time.Time) error {
+func (m *mockRepo) MarkFeedAsFailed(_ context.Context, _ string, errCount int, nextFetch time.Time, disabled bool) error {
 	m.markedFailed = true
 	m.lastErrorCount = errCount
 	m.lastNextFetch = nextFetch
+	m.disabled = disabled
 	return nil
 }
 
@@ -111,5 +113,31 @@ func TestFeedService_ProcessFeed_ExponentialBackoff(t *testing.T) {
 
 	if actualDuration < minExpected || actualDuration > maxExpected {
 		t.Errorf("expected duration between %v and %v, got %v", minExpected, maxExpected, actualDuration)
+	}
+}
+
+func TestFeedService_ProcessFeed_MaxErrorsDisablesFeed(t *testing.T) {
+	repo := &mockRepo{}
+	fetchMocker := &mockFetcher{err: errors.New("persistent network failure")}
+	svc := NewFeedService(repo, fetchMocker)
+
+	feed := model.Feed{
+		ID:              "feed-dead",
+		RefreshInterval: 60 * time.Minute,
+		ErrorCount:      9,
+	}
+
+	svc.ProcessFeed(context.Background(), feed)
+
+	if !repo.markedFailed {
+		t.Fatalf("expected feed to be marked as failed")
+	}
+
+	if repo.lastErrorCount != 10 {
+		t.Errorf("expected error count to increment to 10, got %d", repo.lastErrorCount)
+	}
+
+	if !repo.disabled {
+		t.Errorf("expected feed to be marked as disabled after hitting max errors")
 	}
 }

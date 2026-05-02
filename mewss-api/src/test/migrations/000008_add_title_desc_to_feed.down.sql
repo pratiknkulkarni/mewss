@@ -1,0 +1,3 @@
+ALTER TABLE feed 
+DROP COLUMN IF EXISTS title,
+DROP COLUMN IF EXISTS description;

@@ -1,7 +1,7 @@
 # mewss-scheduler/Dockerfile
 
 # ── Stage 1: Build ────────────────────────────────────────────────────────────
-FROM golang:1.25-alpine AS builder
+FROM golang:1.26.2-alpine AS builder
 
 WORKDIR /app
 

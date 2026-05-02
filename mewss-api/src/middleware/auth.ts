@@ -23,6 +23,7 @@ export const requireAuth = createMiddleware<HonoEnv>(async (c, next) => {
         throw new UnauthorizedError();
     }
 
+    
     c.set("user", sessionData.user);
     c.set("session", sessionData.session);
     await next();

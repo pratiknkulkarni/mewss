@@ -53,7 +53,9 @@ func (s *Server) handleValidateFeed(w http.ResponseWriter, r *http.Request) {
 
 	parsedFeed, err := s.fetcher.Fetch(fetchCtx, req.URL, nil, nil)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid rss feed: "+err.Error())
+		// removing the error from here as it MIGHT contain sensitive info like internal IPs or something.
+		// The fact that it failed is enough for the client to know that the feed is invalid.
+		writeError(w, http.StatusBadRequest, "invalid rss feed: ")
 		return
 	}
 

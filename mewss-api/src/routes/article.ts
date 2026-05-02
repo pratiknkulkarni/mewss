@@ -1,6 +1,6 @@
-import {auth} from "../lib/auth.js";
-import {requireAuth} from "../middleware/auth.js";
-import {Hono} from "hono";
+import { auth } from "../lib/auth.js";
+import { requireAuth } from "../middleware/auth.js";
+import { Hono } from "hono";
 import {
     bulkFeedActionSchema, getArticle,
     listArticlesForFeed,
@@ -8,9 +8,11 @@ import {
     listArticlesGlobalSchema,
     listArticlesSchema, markAllArticlesRead, markArticleRead, markArticleUnread, markFeedArticlesRead,
     markFeedArticlesUnread, markFeedsBulkRead,
-    markFeedsBulkUnread
+    markFeedsBulkUnread,
+    starArticle,
+    unstarArticle
 } from "../services/article.service.js";
-import {zValidator} from "@hono/zod-validator";
+import { zValidator } from "@hono/zod-validator";
 
 type HonoEnv = {
     Variables: {
@@ -46,7 +48,7 @@ router.get("/articles", zValidator("query", listArticlesGlobalSchema), async (c)
 router.patch("/articles/:id/read", async (c) => {
     const user = c.get("user");
     const article = await markArticleRead(c.req.param("id"), user.id);
-    return c.json({article});
+    return c.json({ article });
 });
 
 // POST /api/feeds/:feedId/articles/read-all — mark ALL articles IN A FEED as read
@@ -73,7 +75,7 @@ router.post("/feeds/:feedId/articles/unread-all", async (c) => {
 // POST /api/feeds/bulk-read — mark all articles in selected feeds as read
 router.post("/feeds/bulk-read", zValidator("json", bulkFeedActionSchema), async (c) => {
     const user = c.get("user");
-    const {feedIds} = c.req.valid("json");
+    const { feedIds } = c.req.valid("json");
     const result = await markFeedsBulkRead(feedIds, user.id);
     return c.json(result);
 });
@@ -81,7 +83,7 @@ router.post("/feeds/bulk-read", zValidator("json", bulkFeedActionSchema), async 
 // POST /api/feeds/bulk-unread — revert all articles in selected feeds to unread
 router.post("/feeds/bulk-unread", zValidator("json", bulkFeedActionSchema), async (c) => {
     const user = c.get("user");
-    const {feedIds} = c.req.valid("json");
+    const { feedIds } = c.req.valid("json");
     const result = await markFeedsBulkUnread(feedIds, user.id);
     return c.json(result);
 });
@@ -90,14 +92,28 @@ router.post("/feeds/bulk-unread", zValidator("json", bulkFeedActionSchema), asyn
 router.patch("/articles/:id/unread", async (c) => {
     const user = c.get("user");
     const article = await markArticleUnread(c.req.param("id"), user.id);
-    return c.json({article});
+    return c.json({ article });
 });
 
 // GET /api/articles/:id — single article by ID
 router.get("/articles/:id", async (c) => {
     const user = c.get("user");
     const article = await getArticle(c.req.param("id"), user.id);
-    return c.json({article});
+    return c.json({ article });
+});
+
+// PATCH /api/articles/:id/star — star an article
+router.patch("/articles/:id/star", async (c) => {
+    const user = c.get("user");
+    const article = await starArticle(c.req.param("id"), user.id);
+    return c.json({ article });
+});
+
+// PATCH /api/articles/:id/unstar — unstar an article
+router.patch("/articles/:id/unstar", async (c) => {
+    const user = c.get("user");
+    const article = await unstarArticle(c.req.param("id"), user.id);
+    return c.json({ article });
 });
 
 export default router;

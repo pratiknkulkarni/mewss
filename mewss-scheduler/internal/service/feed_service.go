@@ -21,7 +21,7 @@ import (
 type FeedRepository interface {
 	SaveArticles(ctx context.Context, articles []model.Article) error
 	ReleaseFeed(ctx context.Context, feedID string, nextFetchAfter time.Time, errorCount int, etag *string, lastModified *string) error
-	MarkFeedAsFailed(ctx context.Context, feedID string, errorCount int, nextFetchAfter time.Time) error
+	MarkFeedAsFailed(ctx context.Context, feedID string, errorCount int, nextFetchAfter time.Time, disabled bool) error
 }
 
 // FeedService orchestrates the business logic of fetching and saving feeds.
@@ -40,6 +40,17 @@ func NewFeedService(repo FeedRepository, fetcher fetcher.Fetcher) *FeedService {
 // ProcessFeed handles the processing of one feed at a time. Entire lifecycle.
 func (s *FeedService) ProcessFeed(ctx context.Context, feed model.Feed) {
 	logger := slog.With("feed_id", feed.ID, "url", feed.URL)
+
+	const maxErrors = 10
+
+	// early return, there could be some Race condition where a disabled feed slips through
+	if feed.ErrorCount >= maxErrors {
+		logger.Warn("skipping feed that exceeds max error threshold, disabling",
+			"error_count", feed.ErrorCount,
+		)
+		_ = s.repo.MarkFeedAsFailed(context.Background(), feed.ID, feed.ErrorCount, time.Now(), true)
+		return
+	}
 
 	fetchCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
@@ -67,8 +78,16 @@ func (s *FeedService) ProcessFeed(ctx context.Context, feed model.Feed) {
 
 		logger.Info("scheduling feed with backoff", "next_fetch", nextFetch, "error_count", newErrorCount)
 
+		// Keeping to 10, but maybe I can reduce it further
+		const maxErrors = 10
+		disabled := newErrorCount >= maxErrors
+
+		if disabled {
+			logger.Warn("auto-disabling feed after too many errors", "feed_id", feed.ID, "error_count", newErrorCount)
+		}
+
 		// changing the context here for a fresh one since the queries fail if parent dies
-		if err := s.repo.MarkFeedAsFailed(context.Background(), feed.ID, newErrorCount, nextFetch); err != nil {
+		if err := s.repo.MarkFeedAsFailed(context.Background(), feed.ID, newErrorCount, nextFetch, disabled); err != nil {
 			logger.Error("failed to mark feed as failed in db", "error", err)
 		}
 
@@ -100,13 +119,6 @@ func (s *FeedService) ProcessFeed(ctx context.Context, feed model.Feed) {
 		}
 	}
 
-	//for _, item := range parsedFeed.Feed.Items {
-	//	article := s.mapToArticle(feed, item)
-	//	if err := s.repo.SaveArticle(context.Background(), &article); err != nil {
-	//		logger.Error("failed to save article", "article_title", article.Title, "error", err)
-	//		continue
-	//	}
-	//}
 	nextFetch := time.Now().Add(feed.RefreshInterval)
 	if err := s.repo.ReleaseFeed(context.Background(), feed.ID, nextFetch, 0, parsedFeed.Etag, parsedFeed.LastModified); err != nil {
 		logger.Error("failed to release feed lock after success", "error", err)

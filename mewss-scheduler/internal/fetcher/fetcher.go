@@ -2,7 +2,9 @@ package fetcher
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"strings"
 	"time"
@@ -32,6 +34,39 @@ func NewGoFeedFetcher(timeout time.Duration, userAgent string) *GoFeedFetcher {
 	return &GoFeedFetcher{
 		client: &http.Client{
 			Timeout: timeout,
+			Transport: &http.Transport{
+				Proxy: http.ProxyFromEnvironment,
+				DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+					host, port, err := net.SplitHostPort(addr)
+					if err != nil {
+						return nil, err
+					}
+
+					ips, err := net.DefaultResolver.LookupIPAddr(ctx, host)
+					if err != nil {
+						return nil, err
+					}
+
+					for _, ip := range ips {
+						if ip.IP.IsPrivate() || ip.IP.IsLoopback() ||
+							ip.IP.IsLinkLocalUnicast() || ip.IP.IsLinkLocalMulticast() ||
+							ip.IP.IsUnspecified() {
+							return nil, errors.New("unable to dial to private or loopback IPs")
+						}
+					}
+
+					dialer := &net.Dialer{
+						Timeout:   10 * time.Second,
+						KeepAlive: 30 * time.Second,
+					}
+					return dialer.DialContext(ctx, network, net.JoinHostPort(ips[0].String(), port))
+				},
+				ForceAttemptHTTP2:     true,
+				MaxIdleConns:          100,
+				IdleConnTimeout:       90 * time.Second,
+				TLSHandshakeTimeout:   10 * time.Second,
+				ExpectContinueTimeout: 1 * time.Second,
+			},
 		},
 		userAgent: userAgent,
 		parser:    gofeed.NewParser(),
@@ -39,7 +74,6 @@ func NewGoFeedFetcher(timeout time.Duration, userAgent string) *GoFeedFetcher {
 }
 
 func (f *GoFeedFetcher) Fetch(ctx context.Context, url string, etag *string, lastModified *string) (*FetchResult, error) {
-	//fmt.Println("inside the fetcher")
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
@@ -68,14 +102,17 @@ func (f *GoFeedFetcher) Fetch(ctx context.Context, url string, etag *string, las
 		return nil, fmt.Errorf("http error: %d %s", resp.StatusCode, resp.Status)
 	}
 
-	feed, err := f.parser.Parse(resp.Body)
+	// adding a limit to 10 MB to prevent memory exhaustion from huge feeds as a safety net.
+	resp.Body = http.MaxBytesReader(nil, resp.Body, 10*1024*1024)
 
-	for _, item := range feed.Items {
-		item.Content = extractFeedContent(item)
-	}
+	feed, err := f.parser.Parse(resp.Body)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse xml: %w", err)
+	}
+
+	for _, item := range feed.Items {
+		item.Content = extractFeedContent(item)
 	}
 
 	var newEtag, newLM *string

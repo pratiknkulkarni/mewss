@@ -81,3 +81,8 @@ dist-ssr
 *.sln
 *.sw?
 
+ignore_this_file.http
+*.zip
+
+bundle-stats.html
+.tanstack/

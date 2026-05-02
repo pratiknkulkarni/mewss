@@ -1,21 +1,24 @@
-import type {NodePgDatabase} from "drizzle-orm/node-postgres";
-import {article, userArticleStates} from "../db/generated/schema.js";
-import {and, eq, getTableColumns, inArray, isNull, sql} from "drizzle-orm";
-import {db} from "../db/db.js";
-import type {listArticlesSchema} from "../services/article.service.js";
-import {z} from "zod";
+import type { NodePgDatabase } from "drizzle-orm/node-postgres";
+import { article, userArticleStates } from "../db/generated/schema.js";
+import { and, eq, getTableColumns, inArray, isNull, sql } from "drizzle-orm";
+import { db } from "../db/db.js";
+import type { listArticlesSchema } from "../services/article.service.js";
+import { z } from "zod";
 
 type DbClient = NodePgDatabase;
 
 export type ArticleWithReadState = typeof article.$inferSelect & {
     isRead: boolean;
     readAt: string | null;
+    isStarred: boolean;
+    starredAt: string | null;
 };
 
 export interface ListOptions {
     page: number;
     limit: number;
     unread?: boolean;
+    starred?: boolean;
 }
 
 export interface GlobalListOptions extends ListOptions {
@@ -33,6 +36,8 @@ function buildArticleSelect(userId: string, dbClient: DbClient) {
             false
             )`,
             readAt: userArticleStates.readAt,
+            isStarred: sql<boolean>`COALESCE(${userArticleStates.isStarred}, false)`,
+            starredAt: userArticleStates.starredAt,
         })
         .from(article)
         .leftJoin(
@@ -46,9 +51,9 @@ function buildArticleSelect(userId: string, dbClient: DbClient) {
 
 
 export async function listArticlesByFeed(feedId: string, userId: string,
-                                         query: z.infer<typeof listArticlesSchema>,
-                                         dbClient: DbClient = db): Promise<ArticleWithReadState[]> {
-    const {page, limit, unread} = query;
+    query: z.infer<typeof listArticlesSchema>,
+    dbClient: DbClient = db): Promise<ArticleWithReadState[]> {
+    const { page, limit, unread } = query;
     const offset = (page - 1) * limit;
 
     const conditions = [
@@ -78,7 +83,7 @@ export async function countArticlesByFeedAndUser(
 
     if (options.unread) {
         const result = await dbClient
-            .select({count: sql<number>`count(*)::int`})
+            .select({ count: sql<number>`count(*)::int` })
             .from(article)
             .leftJoin(
                 userArticleStates,
@@ -92,7 +97,7 @@ export async function countArticlesByFeedAndUser(
     }
 
     const result = await dbClient
-        .select({count: sql<number>`count(*)::int`})
+        .select({ count: sql<number>`count(*)::int` })
         .from(article)
         .where(and(...conditions));
     return result[0]?.count ?? 0;
@@ -103,12 +108,13 @@ export async function listArticlesGlobal(
     options: GlobalListOptions,
     dbClient: DbClient = db,
 ): Promise<ArticleWithReadState[]> {
-    const {page, limit, unread, feedId} = options;
+    const { page, limit, unread, feedId, starred } = options;
     const offset = (page - 1) * limit;
 
     const conditions = [eq(article.userId, userId)];
     if (feedId) conditions.push(eq(article.feedId, feedId));
     if (unread) conditions.push(isNull(userArticleStates.readAt));
+    if (starred) conditions.push(eq(userArticleStates.isStarred, true));
 
     return buildArticleSelect(userId, dbClient)
         .where(and(...conditions))
@@ -120,15 +126,18 @@ export async function listArticlesGlobal(
 
 export async function countArticlesGlobal(
     userId: string,
-    options: { unread?: boolean; feedId?: string },
+    options: { unread?: boolean; feedId?: string, starred?: boolean },
     dbClient: DbClient = db,
 ): Promise<number> {
     const conditions = [eq(article.userId, userId)];
     if (options.feedId) conditions.push(eq(article.feedId, options.feedId));
 
-    if (options.unread) {
+    if (options.unread || options.starred) {
+        if (options.unread) conditions.push(isNull(userArticleStates.readAt));
+        if (options.starred) conditions.push(eq(userArticleStates.isStarred, true));
+
         const result = await dbClient
-            .select({count: sql<number>`count(*)::int`})
+            .select({ count: sql<number>`count(*)::int` })
             .from(article)
             .leftJoin(
                 userArticleStates,
@@ -137,12 +146,12 @@ export async function countArticlesGlobal(
                     eq(userArticleStates.userId, userId),
                 ),
             )
-            .where(and(...conditions, isNull(userArticleStates.readAt)));
+            .where(and(...conditions));
         return result[0]?.count ?? 0;
     }
 
     const result = await dbClient
-        .select({count: sql<number>`count(*)::int`})
+        .select({ count: sql<number>`count(*)::int` })
         .from(article)
         .where(and(...conditions));
     return result[0]?.count ?? 0;
@@ -170,7 +179,7 @@ export async function markArticleAsRead(
         })
         .onConflictDoUpdate({
             target: [userArticleStates.userId, userArticleStates.articleId],
-            set: {isRead: true, readAt: new Date().toISOString()},
+            set: { isRead: true, readAt: new Date().toISOString() },
         });
 
     const result = await buildArticleSelect(userId, dbClient)
@@ -185,14 +194,14 @@ export async function markAllArticlesAsRead(
     dbClient: DbClient = db,
 ): Promise<number> {
     const articleRows = await dbClient
-        .select({id: article.id})
+        .select({ id: article.id })
         .from(article)
         .where(and(eq(article.feedId, feedId), eq(article.userId, userId)));
 
     if (articleRows.length === 0) return 0;
 
     const now = new Date().toISOString();
-    const values = articleRows.map(({id}) => ({
+    const values = articleRows.map(({ id }) => ({
         userId,
         articleId: id,
         isRead: true as const,
@@ -204,7 +213,7 @@ export async function markAllArticlesAsRead(
         .values(values)
         .onConflictDoUpdate({
             target: [userArticleStates.userId, userArticleStates.articleId],
-            set: {isRead: true, readAt: now},
+            set: { isRead: true, readAt: now },
         });
 
     return articleRows.length;
@@ -214,30 +223,19 @@ export async function markAllArticlesAsReadGlobal(
     userId: string,
     dbClient: DbClient = db,
 ): Promise<number> {
-    const articleRows = await dbClient
-        .select({id: article.id})
-        .from(article)
-        .where(eq(article.userId, userId));
+    const result = await dbClient.execute(sql`
+        INSERT INTO user_article_states (user_id, article_id, is_read, read_at)
+        SELECT user_id, id, true, NOW()
+        FROM article
+        WHERE user_id = ${userId}
+        ON CONFLICT (user_id, article_id)
+        DO UPDATE SET 
+            is_read = true, 
+            read_at = NOW();
+    `);
 
-    if (articleRows.length === 0) return 0;
+    return result.rowCount ?? 0;
 
-    const now = new Date().toISOString();
-    const values = articleRows.map(({id}) => ({
-        userId,
-        articleId: id,
-        isRead: true as const,
-        readAt: now,
-    }));
-
-    await dbClient
-        .insert(userArticleStates)
-        .values(values)
-        .onConflictDoUpdate({
-            target: [userArticleStates.userId, userArticleStates.articleId],
-            set: {isRead: true, readAt: now},
-        });
-
-    return articleRows.length;
 }
 
 // I'm adding these below ones as a reversal for the previous ones.
@@ -248,29 +246,24 @@ export async function markAllArticlesAsUnreadForFeeds(
     userId: string,
     dbClient: DbClient = db,
 ): Promise<number> {
-    const articleRows = await dbClient
-        .select({id: article.id})
-        .from(article)
-        .where(and(inArray(article.feedId, feedIds), eq(article.userId, userId)));
+    if (feedIds.length === 0) return 0;
 
-    if (articleRows.length === 0) return 0;
+    const feedIdsList = sql.join(feedIds.map(id => sql`${id}`), sql`, `);
 
-    const values = articleRows.map(({id}) => ({
-        userId,
-        articleId: id,
-        isRead: false as const,
-        readAt: null as null,
-    }));
+    const result = await dbClient.execute(sql`
+        INSERT INTO user_article_states (user_id, article_id, is_read, read_at)
+        SELECT user_id, id, false, NULL
+        FROM article
+        WHERE user_id = ${userId} 
+          AND feed_id IN (${feedIdsList})
+        ON CONFLICT (user_id, article_id)
+        DO UPDATE SET 
+            is_read = false, 
+            read_at = NULL;
+    `);
 
-    await dbClient
-        .insert(userArticleStates)
-        .values(values)
-        .onConflictDoUpdate({
-            target: [userArticleStates.userId, userArticleStates.articleId],
-            set: {isRead: false, readAt: null},
-        });
+    return result.rowCount ?? 0;
 
-    return articleRows.length;
 }
 
 
@@ -290,10 +283,10 @@ export async function markArticleAsUnread(
     // Upsert with is_read=false, read_at=null — returns article to unread state
     await dbClient
         .insert(userArticleStates)
-        .values({userId, articleId, isRead: false, readAt: null})
+        .values({ userId, articleId, isRead: false, readAt: null })
         .onConflictDoUpdate({
             target: [userArticleStates.userId, userArticleStates.articleId],
-            set: {isRead: false, readAt: null},
+            set: { isRead: false, readAt: null },
         });
 
     const result = await buildArticleSelect(userId, dbClient)
@@ -308,13 +301,13 @@ export async function markAllArticlesAsUnread(
     dbClient: DbClient = db,
 ): Promise<number> {
     const articleRows = await dbClient
-        .select({id: article.id})
+        .select({ id: article.id })
         .from(article)
         .where(and(eq(article.feedId, feedId), eq(article.userId, userId)));
 
     if (articleRows.length === 0) return 0;
 
-    const values = articleRows.map(({id}) => ({
+    const values = articleRows.map(({ id }) => ({
         userId,
         articleId: id,
         isRead: false as const,
@@ -326,7 +319,7 @@ export async function markAllArticlesAsUnread(
         .values(values)
         .onConflictDoUpdate({
             target: [userArticleStates.userId, userArticleStates.articleId],
-            set: {isRead: false, readAt: null},
+            set: { isRead: false, readAt: null },
         });
 
     return articleRows.length;
@@ -337,13 +330,13 @@ export async function markAllArticlesAsUnreadGlobal(
     dbClient: DbClient = db,
 ): Promise<number> {
     const articleRows = await dbClient
-        .select({id: article.id})
+        .select({ id: article.id })
         .from(article)
         .where(eq(article.userId, userId));
 
     if (articleRows.length === 0) return 0;
 
-    const values = articleRows.map(({id}) => ({
+    const values = articleRows.map(({ id }) => ({
         userId,
         articleId: id,
         isRead: false as const,
@@ -355,7 +348,7 @@ export async function markAllArticlesAsUnreadGlobal(
         .values(values)
         .onConflictDoUpdate({
             target: [userArticleStates.userId, userArticleStates.articleId],
-            set: {isRead: false, readAt: null},
+            set: { isRead: false, readAt: null },
         });
 
     return articleRows.length;
@@ -367,14 +360,14 @@ export async function markAllArticlesAsReadForFeeds(
     dbClient: DbClient = db,
 ): Promise<number> {
     const articleRows = await dbClient
-        .select({id: article.id})
+        .select({ id: article.id })
         .from(article)
         .where(and(inArray(article.feedId, feedIds), eq(article.userId, userId)));
 
     if (articleRows.length === 0) return 0;
 
     const now = new Date().toISOString();
-    const values = articleRows.map(({id}) => ({
+    const values = articleRows.map(({ id }) => ({
         userId,
         articleId: id,
         isRead: true as const,
@@ -386,7 +379,7 @@ export async function markAllArticlesAsReadForFeeds(
         .values(values)
         .onConflictDoUpdate({
             target: [userArticleStates.userId, userArticleStates.articleId],
-            set: {isRead: true, readAt: now},
+            set: { isRead: true, readAt: now },
         });
 
     return articleRows.length;
@@ -399,5 +392,62 @@ export async function findArticleByIdAndUser(
 ): Promise<ArticleWithReadState | null> {
     const result = await buildArticleSelect(userId, dbClient)
         .where(and(eq(article.id, articleId), eq(article.userId, userId)));
+    return (result[0] as ArticleWithReadState) ?? null;
+}
+
+export async function starArticle(
+    articleId: string,
+    userId: string,
+    dbClient: DbClient = db,
+): Promise<ArticleWithReadState | null> {
+    const rows = await dbClient
+        .select()
+        .from(article)
+        .where(and(eq(article.id, articleId), eq(article.userId, userId)));
+
+    if (rows.length === 0) return null;
+
+    await dbClient
+        .insert(userArticleStates)
+        .values({
+            userId,
+            articleId,
+            isStarred: true,
+            starredAt: new Date().toISOString(),
+        })
+        .onConflictDoUpdate({
+            target: [userArticleStates.userId, userArticleStates.articleId],
+            set: { isStarred: true, starredAt: new Date().toISOString() },
+        });
+
+    const result = await buildArticleSelect(userId, dbClient)
+        .where(and(eq(article.id, articleId), eq(article.userId, userId)));
+
+    return (result[0] as ArticleWithReadState) ?? null;
+}
+
+export async function unstarArticle(
+    articleId: string,
+    userId: string,
+    dbClient: DbClient = db,
+): Promise<ArticleWithReadState | null> {
+    const rows = await dbClient
+        .select()
+        .from(article)
+        .where(and(eq(article.id, articleId), eq(article.userId, userId)));
+
+    if (rows.length === 0) return null;
+
+    await dbClient
+        .insert(userArticleStates)
+        .values({ userId, articleId, isStarred: false, starredAt: null })
+        .onConflictDoUpdate({
+            target: [userArticleStates.userId, userArticleStates.articleId],
+            set: { isStarred: false, starredAt: null },
+        });
+
+    const result = await buildArticleSelect(userId, dbClient)
+        .where(and(eq(article.id, articleId), eq(article.userId, userId)));
+
     return (result[0] as ArticleWithReadState) ?? null;
 }

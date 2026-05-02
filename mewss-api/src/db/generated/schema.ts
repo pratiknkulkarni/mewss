@@ -1,4 +1,4 @@
-import { pgTable, unique, text, boolean, timestamp, foreignKey, uniqueIndex, index, varchar, bigint, integer, uuid, primaryKey } from "drizzle-orm/pg-core"
+import { pgTable, unique, text, boolean, timestamp, foreignKey, uuid, varchar, uniqueIndex, index, bigint, integer, primaryKey } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 
@@ -31,31 +31,6 @@ export const session = pgTable("session", {
 			name: "session_userId_fkey"
 		}).onDelete("cascade"),
 	unique("session_token_key").on(table.token),
-]);
-
-export const feed = pgTable("feed", {
-	id: varchar({ length: 255 }).primaryKey().notNull(),
-	userId: varchar("user_id", { length: 255 }).notNull(),
-	url: text().notNull(),
-	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
-	refreshInterval: bigint("refresh_interval", { mode: "number" }).notNull(),
-	errorCount: integer("error_count").default(0),
-	status: varchar({ length: 50 }).default('active'),
-	nextFetchAfter: timestamp("next_fetch_after", { withTimezone: true, mode: 'string' }).defaultNow(),
-	forceRefresh: boolean("force_refresh").default(false),
-	fetchingAt: timestamp("fetching_at", { withTimezone: true, mode: 'string' }),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
-	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow(),
-	etag: text(),
-	lastModifiedHeader: text("last_modified_header"),
-}, (table) => [
-	uniqueIndex("feed_user_id_url_key").using("btree", table.userId.asc().nullsLast().op("text_ops"), table.url.asc().nullsLast().op("text_ops")),
-	index("idx_feed_next_fetch").using("btree", table.nextFetchAfter.asc().nullsLast().op("timestamptz_ops"), table.status.asc().nullsLast().op("timestamptz_ops"), table.fetchingAt.asc().nullsLast().op("text_ops")),
-	foreignKey({
-			columns: [table.userId],
-			foreignColumns: [user.id],
-			name: "feed_user_id_fkey"
-		}).onDelete("cascade"),
 ]);
 
 export const account = pgTable("account", {
@@ -116,6 +91,33 @@ export const article = pgTable("article", {
 	unique("article_identity_hash_key").on(table.identityHash),
 ]);
 
+export const feed = pgTable("feed", {
+	id: varchar({ length: 255 }).primaryKey().notNull(),
+	userId: varchar("user_id", { length: 255 }).notNull(),
+	url: text().notNull(),
+	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+	refreshInterval: bigint("refresh_interval", { mode: "number" }).notNull(),
+	errorCount: integer("error_count").default(0),
+	status: varchar({ length: 50 }).default('active'),
+	nextFetchAfter: timestamp("next_fetch_after", { withTimezone: true, mode: 'string' }).defaultNow(),
+	forceRefresh: boolean("force_refresh").default(false),
+	fetchingAt: timestamp("fetching_at", { withTimezone: true, mode: 'string' }),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow(),
+	etag: text(),
+	lastModifiedHeader: text("last_modified_header"),
+	title: text(),
+	description: text(),
+}, (table) => [
+	uniqueIndex("feed_user_id_url_key").using("btree", table.userId.asc().nullsLast().op("text_ops"), table.url.asc().nullsLast().op("text_ops")),
+	index("idx_feed_next_fetch").using("btree", table.nextFetchAfter.asc().nullsLast().op("timestamptz_ops"), table.status.asc().nullsLast().op("timestamptz_ops"), table.fetchingAt.asc().nullsLast().op("text_ops")),
+	foreignKey({
+			columns: [table.userId],
+			foreignColumns: [user.id],
+			name: "feed_user_id_fkey"
+		}).onDelete("cascade"),
+]);
+
 export const schemaMigrations = pgTable("schema_migrations", {
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	version: bigint({ mode: "number" }).primaryKey().notNull(),
@@ -127,7 +129,10 @@ export const userArticleStates = pgTable("user_article_states", {
 	articleId: uuid("article_id").notNull(),
 	isRead: boolean("is_read").default(false).notNull(),
 	readAt: timestamp("read_at", { withTimezone: true, mode: 'string' }),
+	isStarred: boolean("is_starred").default(false).notNull(),
+	starredAt: timestamp("starred_at", { withTimezone: true, mode: 'string' }),
 }, (table) => [
+	index("idx_user_article_states_starred").using("btree", table.userId.asc().nullsLast().op("text_ops"), table.isStarred.asc().nullsLast().op("bool_ops")).where(sql`(is_starred = true)`),
 	foreignKey({
 			columns: [table.userId],
 			foreignColumns: [user.id],
