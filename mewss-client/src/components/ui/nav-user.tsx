@@ -25,19 +25,20 @@ import {
     SidebarMenuItem,
     useSidebar,
 } from "@/components/ui/sidebar"
-import { ModeToggle } from "../theme-toggle"
-import { useLogout } from "@/features/auth/hooks/useLogout"
+import {ModeToggle} from "../theme-toggle"
+import {useLogout} from "@/features/auth/hooks/useLogout"
+import generateAvatarIcon from "@/lib/generate-avatar-icon.ts";
 
 export function NavUser({
-    user,
-}: {
+                            user,
+                        }: {
     user: {
         name: string
         email: string
     }
 }) {
-    const { isMobile } = useSidebar();
-    const { mutate: logout, isPending } = useLogout();
+    const {isMobile} = useSidebar();
+    const {mutate: logout, isPending} = useLogout();
     return (
         <SidebarMenu>
             <SidebarMenuItem>
@@ -48,13 +49,13 @@ export function NavUser({
                             className="w-full data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground cursor-pointer"
                         >
                             <Avatar className="h-8 w-8 rounded-lg">
-                                <AvatarImage src="" alt={user.name} />
+                                <AvatarImage src={generateAvatarIcon(user?.email)} alt={user.name}/>
                                 <AvatarFallback className="rounded-lg">CN</AvatarFallback>
                             </Avatar>
                             <div className="grid flex-1 text-left text-sm leading-tight">
                                 <span className="truncate font-medium">{user.name}</span>
                             </div>
-                            <ChevronsUpDown className="ml-auto size-4" />
+                            <ChevronsUpDown className="ml-auto size-4"/>
                         </SidebarMenuButton>
                     </DropdownMenuTrigger>
 
@@ -66,7 +67,7 @@ export function NavUser({
                     >
                         <div className="flex items-center gap-2 px-2 py-1.5 text-left text-sm">
                             <Avatar className="h-8 w-8 rounded-lg">
-                                <AvatarImage src="" alt={user.name} />
+                                <AvatarImage src={generateAvatarIcon(user?.email)} alt={user.name}/>
                                 <AvatarFallback className="rounded-lg">CN</AvatarFallback>
                             </Avatar>
                             <div className="grid flex-1 text-left text-sm leading-tight">
@@ -74,25 +75,27 @@ export function NavUser({
                                 <span className="truncate text-xs text-muted-foreground">{user.email}</span>
                             </div>
                         </div>
-                        <DropdownMenuSeparator />
+                        <DropdownMenuSeparator/>
 
                         <DropdownMenuGroup>
                             <DropdownMenuItem className="cursor-pointer">
-                                <BadgeCheck />
+                                <BadgeCheck/>
                                 Account
                             </DropdownMenuItem>
                         </DropdownMenuGroup>
 
-                        <DropdownMenuSeparator />
+                        <DropdownMenuSeparator/>
                         <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="cursor-pointer">
-                            <Settings />
-                            <ModeToggle />
+                            <Settings/>
+                            <ModeToggle/>
                         </DropdownMenuItem>
 
-                        <DropdownMenuSeparator />
+                        <DropdownMenuSeparator/>
 
-                        <DropdownMenuItem className="cursor-pointer" onClick={() => { logout() }} disabled={isPending}>
-                            <LogOut />
+                        <DropdownMenuItem className="cursor-pointer" onClick={() => {
+                            logout()
+                        }} disabled={isPending}>
+                            <LogOut/>
                             Log out
                         </DropdownMenuItem>
                     </DropdownMenuContent>
