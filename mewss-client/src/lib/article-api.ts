@@ -20,7 +20,9 @@ export const articleApi = {
     markRead: (id: string): Promise<ArticleResponse> => {
         return apiClient.patch<ArticleResponse>(`/api/articles/${id}/read`)
     },
-
+    markUnread: (id: string): Promise<ArticleResponse> => {
+        return apiClient.patch<ArticleResponse>(`/api/articles/${id}/unread`)
+    },
     get: (id: string): Promise<ArticleResponse> =>
         apiClient.get<ArticleResponse>(`/api/articles/${id}`),
 

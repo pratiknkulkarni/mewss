@@ -26,7 +26,7 @@ export type ArticleListPanelProps = React.HTMLAttributes<HTMLDivElement> & {
     selectedArticleId: string | null | undefined;
     onArticleSelect: (article: Article) => void;
     unreadOnly: boolean;
-    onUnreadToggle: () => void;
+    // onUnreadToggle: () => void;
     handlePageChange: (newPage: number) => void;
     currentPage: number;
     currentLimit: number;

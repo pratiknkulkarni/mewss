@@ -3,7 +3,7 @@ import {articleApi} from "@/lib/article-api.ts";
 import type {ArticlesResponse} from "@/types/api.ts";
 import {articleKeys} from "@/lib/query-keys";
 
-export function useMarkArticleRead() {
+export function useMarkArticleUnread() {
     const queryClient = useQueryClient();
     return useMutation({
         onMutate: (articleId: string) => {
@@ -14,7 +14,7 @@ export function useMarkArticleRead() {
                     return {
                         ...old,
                         articles: old.articles.map((a) =>
-                            a.id === articleId ? {...a, isRead: true} : a // manually flip the value of isRead
+                            a.id === articleId ? {...a, isRead: false} : a // manually flip the value of isRead to false...
                         ),
                     }
                 }
@@ -23,6 +23,6 @@ export function useMarkArticleRead() {
         onError: async () => {
             await queryClient.invalidateQueries({queryKey: articleKeys.all})
         },
-        mutationFn: (articleId: string) => articleApi.markRead(articleId),
+        mutationFn: (articleId: string) => articleApi.markUnread(articleId),
     })
 }

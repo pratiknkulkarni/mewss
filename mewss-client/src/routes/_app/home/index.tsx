@@ -15,6 +15,7 @@ import {useCallback, useEffect, useRef, useState} from 'react';
 import {useQueryClient} from '@tanstack/react-query';
 import {articleKeys, feedKeys} from '@/lib/query-keys';
 import {useKeyboardShortcuts} from "@/hooks/use-keyboard-shortcuts.ts";
+import {useMarkArticleUnread} from "@/features/articles/hooks/useMarkArticleUnread.ts";
 
 export const Route = createFileRoute('/_app/home/')({
     validateSearch: (search: Record<string, unknown>) => {
@@ -99,6 +100,8 @@ function HomeComponent() {
         mutate: markArticleReadMutate,
     } = useMarkArticleRead();
 
+    const {mutate: markArticleUnreadMutate} = useMarkArticleUnread();
+
     const {mutate: refreshMutate, isPending: isRefreshing} = useRefreshFeed();
     const {mutate: markAllReadMutate} = useMarkAllRead();
     const {data: feeds} = useFeeds(undefined, {
@@ -145,6 +148,15 @@ function HomeComponent() {
         })
     }
 
+    // this one is added just for keyboard navigation; don't mark as read if I'm using keyboard unless I press M
+    // Press m for marking as read.
+    const handleArticleNavigate = (article: Article) => {
+        navigate({
+            search: (prev: SearchParams) => ({...prev, articleId: article.id}),
+            resetScroll: false,
+        })
+    }
+
     // when user toggles between "Unread"(default)/"All"
     const handleTabChange = (newTab: string) => {
         navigate({
@@ -156,10 +168,6 @@ function HomeComponent() {
                 articleId: undefined
             })
         })
-    }
-
-    // ugh, dead code
-    const handleUnreadToggle = () => {
     }
 
     const handleFeedSelect = (newFeedId: string | null) => {
@@ -246,17 +254,27 @@ function HomeComponent() {
         "j": () => {
             if (!articles?.length) return;
             const next = Math.min((selectedIndex === -1 ? 0 : selectedIndex + 1), articles.length - 1);
-            handleArticleSelect(articles[next]);
+            handleArticleNavigate(articles[next]); // <- do not read, only navigate
         },
         // move one article "up"
         "k": () => {
             if (!articles?.length || selectedIndex <= 0) return;
-            handleArticleSelect(articles[selectedIndex - 1]);
+            handleArticleNavigate(articles[selectedIndex - 1]); // ← do not read, only navigate
         },
-        // this happens by default, need to wire up "unread". Toggle.
+        // this DOES NOT happen by default anymore, I need to press m for marking as read/unread. Toggle.
         "m": () => {
-            if (!selectedArticle) return;
+            if (!selectedArticle) {
+                console.log("nothing selected")
+                return;
+            }
+            if (selectedArticle?.isRead) {
+                // console.log(`marking ${selectedArticle.id} | ${selectedArticle?.title} as unread}`)
+                markArticleUnreadMutate(selectedArticle.id);
+                return;
+            }
+            console.log(`marking ${selectedArticle.id} |  ${selectedArticle?.title} as read}`)
             markArticleReadMutate(selectedArticle.id);
+            return;
         },
         // "star" article
         "s": () => {
@@ -298,7 +316,7 @@ function HomeComponent() {
                     selectedArticleId={articleId}
                     onArticleSelect={handleArticleSelect}
                     unreadOnly={tab === "unread"}
-                    onUnreadToggle={handleUnreadToggle}
+                    // onUnreadToggle={handleUnreadToggle}
                     handlePageChange={handlePageChange}
                     currentPage={page}
                     currentLimit={limit}
