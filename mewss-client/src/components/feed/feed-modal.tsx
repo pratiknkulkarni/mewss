@@ -1,12 +1,12 @@
-import type {FeedModalProps} from "@/types/props";
-import {FeedModalHeader} from "./feed-modal-header";
-import {FeedModalForm} from "./feed-modal-form";
-import {useCreateFeed} from "@/features/feeds/hooks/useCreateFeed";
-import React, {useState} from "react";
-import {ApiError} from "@/lib/api-error";
-import {useUpdateFeed} from "@/features/feeds/hooks/useUpdateFeed.ts";
-import type {UpdateFeedInput} from "@/types/api.ts";
-import {Dialog, DialogContent} from "@/components/ui/dialog.tsx";
+import type { FeedModalProps } from "@/types/props";
+import { FeedModalHeader } from "./feed-modal-header";
+import { FeedModalForm } from "./feed-modal-form";
+import { useCreateFeed } from "@/features/feeds/hooks/useCreateFeed";
+import React, { useState } from "react";
+import { ApiError } from "@/lib/api-error";
+import { useUpdateFeed } from "@/features/feeds/hooks/useUpdateFeed.ts";
+import type { UpdateFeedInput } from "@/types/api.ts";
+import { Dialog, DialogContent } from "@/components/ui/dialog.tsx";
 
 function nsToSecondsStr(ns: number): string {
     return String(Math.round(ns / 1_000_000_000))
@@ -15,11 +15,11 @@ function nsToSecondsStr(ns: number): string {
 
 // FeedModal is intentionally generic (not Add/UpdateFeedModal) so it can be
 // reused for editing an existing feed later — just pass in initial values.
-export function FeedModal({isOpen, onClose, feed}: FeedModalProps) {
+export function FeedModal({ isOpen, onClose, feed, onFeedCreated }: FeedModalProps) {
     const isEditMode = Boolean(feed);
 
-    const {mutate: updateMutate, isPending: isUpdating} = useUpdateFeed();
-    const {mutate: createMutate, isPending: isCreating} = useCreateFeed();
+    const { mutate: updateMutate, isPending: isUpdating } = useUpdateFeed();
+    const { mutate: createMutate, isPending: isCreating } = useCreateFeed();
 
     // since I am showing "Loading" irrespective of "creation" and "updation" (not a word), add a common state
     const isPending = isEditMode ? isUpdating : isCreating;
@@ -77,11 +77,12 @@ export function FeedModal({isOpen, onClose, feed}: FeedModalProps) {
         } else {
             const intervalString = Number(refreshInterval);
             createMutate(
-                {url, refreshInterval: intervalString},
+                { url, refreshInterval: intervalString },
                 {
-                    onSuccess: () => {
+                    onSuccess: (data) => {
                         resetForm()
                         onClose()
+                        onFeedCreated?.(data.feed.id);
                     },
                     onError: (error) => {
                         if (error instanceof ApiError) {
@@ -98,7 +99,7 @@ export function FeedModal({isOpen, onClose, feed}: FeedModalProps) {
             if (!open) handleClose()
         }}>
             <DialogContent className="w-[calc(100vw-2rem)] max-w-md sm:w-full rounded-xl p-0 gap-0 overflow-hidden">
-                <FeedModalHeader isEditMode={isEditMode}/>
+                <FeedModalHeader isEditMode={isEditMode} />
                 <FeedModalForm
                     handleSubmit={handleSubmit}
                     handleClose={handleClose}

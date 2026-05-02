@@ -1,4 +1,4 @@
-import { ScrollArea } from "@/components/ui/scroll-area"
+import {ScrollArea} from "@/components/ui/scroll-area"
 import {
     SidebarContent,
     SidebarGroup,
@@ -14,43 +14,44 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { useFeeds } from "@/features/feeds/hooks/useFeeds"
-import { MoreHorizontal, Trash2, PencilIcon, RefreshCw, CheckCheckIcon } from "lucide-react"
-import { useState } from "react"
-import type { FeedItemProps, SidebarFeedListProps } from "@/types/props"
-import { useRefreshFeed } from "@/features/feeds/hooks/useRefreshFeed"
-import { useMarkAllRead } from "@/features/feeds/hooks/useMarkAllRead"
-import { toast } from "sonner"
-import { useDeleteFeed } from "@/features/feeds/hooks/useDeleteFeed"
-import { useNavigate } from "@tanstack/react-router"
-import { useConfirm } from "@/hooks/use-confirm.ts";
-import type { Feed } from "@/types/api.ts";
-import { FeedModal } from "@/components/feed/feed-modal.tsx";
+import {useFeeds} from "@/features/feeds/hooks/useFeeds"
+import {MoreHorizontal, Trash2, PencilIcon, RefreshCw, CheckCheckIcon} from "lucide-react"
+import {useState} from "react"
+import type {FeedItemProps, SidebarFeedListProps} from "@/types/props"
+import {useRefreshFeed} from "@/features/feeds/hooks/useRefreshFeed"
+import {useMarkAllRead} from "@/features/feeds/hooks/useMarkAllRead"
+import {toast} from "sonner"
+import {useDeleteFeed} from "@/features/feeds/hooks/useDeleteFeed"
+import {useNavigate} from "@tanstack/react-router"
+import {useConfirm} from "@/hooks/use-confirm.ts";
+import type {Feed} from "@/types/api.ts";
+import {FeedModal} from "@/components/feed/feed-modal.tsx";
+import {safeHostname} from "@/lib/utils.ts";
 
-function FeedItem({ id, url, title, status, isActive, onSelect, onEdit, unreadCount }: FeedItemProps) {
+function FeedItem({id, url, title, status, isActive, onSelect, onEdit, unreadCount}: FeedItemProps) {
     const [hovered, setHovered] = useState(false)
     const [menuOpen, setMenuOpen] = useState(false)
 
-    const hostname = new URL(url).hostname.replace(/^www\./, "")
+    const hostname = safeHostname(url);
     const faviconURL = `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${hostname}&size=16`
     const label = title || hostname
 
     const showEllipsis = hovered || menuOpen
 
-    const { mutate: refreshMutate } = useRefreshFeed();
-    const { mutate: markAllReadMutate } = useMarkAllRead();
-    const { mutate: deleteFeedMutate } = useDeleteFeed();
+    const {mutate: refreshMutate} = useRefreshFeed();
+    const {mutate: markAllReadMutate} = useMarkAllRead();
+    const {mutate: deleteFeedMutate} = useDeleteFeed();
 
     const navigate = useNavigate();
 
     function handleRefreshFeed() {
         refreshMutate([id])
-        toast.success("Feed refresh queued", { position: 'bottom-right' })
+        toast.success("Feed refresh queued", {position: 'bottom-right'})
     }
 
     function handleMarkFeedRead() {
         markAllReadMutate(id)
-        toast.success("Mark Feed Read Queued", { position: 'bottom-right' })
+        toast.success("Mark Feed Read Queued", {position: 'bottom-right'})
     }
 
     const confirm = useConfirm()
@@ -66,8 +67,8 @@ function FeedItem({ id, url, title, status, isActive, onSelect, onEdit, unreadCo
         if (!confirmed) return
 
         deleteFeedMutate(id)
-        toast.success("Feed deleted", { position: "bottom-right" })
-        navigate({ to: "/home", replace: true })
+        toast.success("Feed deleted", {position: "bottom-right"})
+        navigate({to: "/home", replace: true})
     }
 
     return (
@@ -86,9 +87,9 @@ function FeedItem({ id, url, title, status, isActive, onSelect, onEdit, unreadCo
                     focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring
                     hover:bg-accent/30 hover:text-foreground
                     ${isActive
-                        ? "bg-accent/60 text-foreground font-medium"
-                        : "text-muted-foreground hover:bg-accent/30 hover:text-foreground"
-                    }
+                    ? "bg-accent/60 text-foreground font-medium"
+                    : "text-muted-foreground hover:bg-accent/30 hover:text-foreground"
+                }
                 `}
             >
                 <img
@@ -97,7 +98,7 @@ function FeedItem({ id, url, title, status, isActive, onSelect, onEdit, unreadCo
                     aria-hidden="true"
                     className="w-3.5 h-3.5 shrink-0 rounded-[3px] opacity-80"
                     onError={(e) => {
-                        ; (e.target as HTMLImageElement).style.display = "none"
+                        ;(e.target as HTMLImageElement).style.display = "none"
                     }}
                 />
 
@@ -109,9 +110,9 @@ function FeedItem({ id, url, title, status, isActive, onSelect, onEdit, unreadCo
                             px-1.5 py-0.5 rounded-full 
                             text-[10px] font-semibold tabular-nums
                             ${isActive
-                            ? "bg-foreground/10 text-foreground"
-                            : "bg-black/5 text-muted-foreground dark:bg-white/10 dark:text-muted-foreground group-hover:text-foreground"
-                        }
+                        ? "bg-foreground/10 text-foreground"
+                        : "bg-black/5 text-muted-foreground dark:bg-white/10 dark:text-muted-foreground group-hover:text-foreground"
+                    }
                                     `}>
                         {unreadCount > 999 ? '999+' : unreadCount}
                     </span>
@@ -139,7 +140,7 @@ function FeedItem({ id, url, title, status, isActive, onSelect, onEdit, unreadCo
                                 ${showEllipsis ? "opacity-100" : "opacity-0 pointer-events-none"}
                             `}
                         >
-                            <MoreHorizontal className="h-3.5 w-3.5" />
+                            <MoreHorizontal className="h-3.5 w-3.5"/>
                         </span>
                     </DropdownMenuTrigger>
 
@@ -151,26 +152,26 @@ function FeedItem({ id, url, title, status, isActive, onSelect, onEdit, unreadCo
                         onClick={(e) => e.stopPropagation()}
                     >
                         <DropdownMenuItem className="gap-2 cursor-pointer text-[13px]" onClick={onEdit}>
-                            <PencilIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                            <PencilIcon className="h-3.5 w-3.5 text-muted-foreground"/>
                             Edit feed
                         </DropdownMenuItem>
 
                         <DropdownMenuItem className="gap-2 cursor-pointer text-[13px]" onClick={handleRefreshFeed}>
-                            <RefreshCw className="h-3.5 w-3.5" />
+                            <RefreshCw className="h-3.5 w-3.5"/>
                             Refresh feed
                         </DropdownMenuItem>
 
                         <DropdownMenuItem className="gap-2 cursor-pointer text-[13px]" onClick={handleMarkFeedRead}>
-                            <CheckCheckIcon className="h-3.5 w-3.5" />
+                            <CheckCheckIcon className="h-3.5 w-3.5"/>
                             Mark feed read
                         </DropdownMenuItem>
 
-                        <DropdownMenuSeparator />
+                        <DropdownMenuSeparator/>
 
                         <DropdownMenuItem
                             className="gap-2 cursor-pointer text-[13px] text-destructive focus:text-destructive"
                             onClick={handleDeleteFeedConfirmation}>
-                            <Trash2 className="h-3.5 w-3.5" />
+                            <Trash2 className="h-3.5 w-3.5"/>
                             Delete feed
                         </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -180,8 +181,8 @@ function FeedItem({ id, url, title, status, isActive, onSelect, onEdit, unreadCo
     )
 }
 
-export function SidebarFeedList({ selectedFeedId, onFeedSelect }: SidebarFeedListProps) {
-    const { data: feeds, isLoading } = useFeeds()
+export function SidebarFeedList({selectedFeedId, onFeedSelect}: SidebarFeedListProps) {
+    const {data: feeds, isLoading} = useFeeds()
     const [editingFeed, setEditingFeed] = useState<Feed | null>(null);
 
     return (
@@ -200,11 +201,11 @@ export function SidebarFeedList({ selectedFeedId, onFeedSelect }: SidebarFeedLis
                     <ScrollArea className="flex-1 min-h-0">
                         <SidebarMenu className="gap-0.5 px-2">
 
-                            {isLoading && Array.from({ length: 4 }).map((_, i) => (
+                            {isLoading && Array.from({length: 4}).map((_, i) => (
                                 <div
                                     key={i}
                                     className="h-8 mx-1 my-0.5 rounded-md bg-muted/40 animate-pulse"
-                                    style={{ opacity: 1 - i * 0.2 }}
+                                    style={{opacity: 1 - i * 0.2}}
                                 />
                             ))}
 
@@ -235,9 +236,9 @@ export function SidebarFeedList({ selectedFeedId, onFeedSelect }: SidebarFeedLis
             </SidebarGroup>
 
             <FeedModal isOpen={Boolean(editingFeed)}
-                onClose={() => setEditingFeed(null)}
-                feed={editingFeed ?? undefined}
-                key={editingFeed?.id || 'new'} />
+                       onClose={() => setEditingFeed(null)}
+                       feed={editingFeed ?? undefined}
+                       key={editingFeed?.id || 'new'}/>
 
         </SidebarContent>
     )

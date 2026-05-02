@@ -35,6 +35,7 @@ export type ArticleListPanelProps = React.HTMLAttributes<HTMLDivElement> & {
     onTabChange: (tab: string) => void;
     onRefresh: () => void;
     isRefreshing: boolean;
+    isWatchingRefresh: boolean;
     feedId?: string;
     onMarkAllRead: () => void;
     onStar: (articleId: string, currentlyStarred: boolean) => void;
@@ -45,6 +46,7 @@ export interface AppSidebarProps {
     selectedFeedId: string | null
     onFeedSelect: (feedId: string | null) => void
     unreadCount?: number
+    onFeedCreated?: (feedId: string) => void;
 }
 
 export interface FeedModalProps {
@@ -52,6 +54,7 @@ export interface FeedModalProps {
     onClose: () => void
 
     feed?: Feed // this is for the EDIT mode, optionally
+    onFeedCreated?: (feedId: string) => void;
 }
 
 export interface FeedModalFormProps {
