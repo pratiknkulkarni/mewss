@@ -1,7 +1,8 @@
-import type { ArticleCardProps } from "@/types/props";
-import { formatDistanceToNowStrict, differenceInDays, format } from 'date-fns';
-import { safeHostname } from "@/lib/utils.ts";
-import { Star } from "lucide-react";
+import type {ArticleCardProps} from "@/types/props";
+import {formatDistanceToNowStrict, differenceInDays, format} from 'date-fns';
+import {safeHostname} from "@/lib/utils.ts";
+import {Star} from "lucide-react";
+import {useEffect, useRef} from "react";
 
 function relativeTime(dateStr: string | null): string {
     if (!dateStr) return "";
@@ -10,15 +11,27 @@ function relativeTime(dateStr: string | null): string {
     if (isNaN(date.getTime())) return "";
 
     if (differenceInDays(Date.now(), date) < 7) {
-        return formatDistanceToNowStrict(date, { addSuffix: true });
+        return formatDistanceToNowStrict(date, {addSuffix: true});
     }
 
     return format(date, "MMM d");
 }
 
-export default function ArticleCard({ article, isActive, onClick, onStar }: ArticleCardProps) {
+export default function ArticleCard({article, isActive, onClick, onStar}: ArticleCardProps) {
+    const cardRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (isActive && cardRef.current) {
+            cardRef.current.scrollIntoView({
+                block: "nearest",
+                behavior: "auto"
+            });
+        }
+    }, [isActive]);
+
     return (
         <div
+            ref={cardRef}
             onClick={onClick}
             className={`
         relative px-5 py-6 border-b border-border transition-colors cursor-pointer
@@ -38,13 +51,13 @@ export default function ArticleCard({ article, isActive, onClick, onStar }: Arti
                     className={`w-3.5 h-3.5 transition-colors ${article.isStarred
                         ? 'text-yellow-500 fill-yellow-500'
                         : 'text-muted-foreground/30 hover:text-muted-foreground/60'
-                        }`}
+                    }`}
                 />
             </button>
 
             <div className="flex items-start gap-3">
                 {!article.isRead && (
-                    <div className="mt-1.5 w-2 h-2 rounded-full bg-primary shrink-0" />
+                    <div className="mt-1.5 w-2 h-2 rounded-full bg-primary shrink-0"/>
                 )}
                 <div className={`flex-1 ${article.isRead && !isActive ? 'pl-5' : ''}`}>
                     <div className="flex justify-between items-baseline mb-1">

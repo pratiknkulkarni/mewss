@@ -14,6 +14,7 @@ import {useStarArticle} from '@/features/articles/hooks/useStarArticle';
 import {useCallback, useEffect, useRef, useState} from 'react';
 import {useQueryClient} from '@tanstack/react-query';
 import {articleKeys, feedKeys} from '@/lib/query-keys';
+import {useKeyboardShortcuts} from "@/hooks/use-keyboard-shortcuts.ts";
 
 export const Route = createFileRoute('/_app/home/')({
     validateSearch: (search: Record<string, unknown>) => {
@@ -127,8 +128,9 @@ function HomeComponent() {
 
     const articles = data?.articles;
     const selectedArticle = articles?.find((a) => a.id === articleId) ?? null // user "clicked" article
+    const selectedIndex = articles?.findIndex((a) => a.id === articleId) ?? -1
 
-    // when usere clicks on a Next/Previous
+    // when user clicks on a Next/Previous
     const handlePageChange = (newPage: number) => {
         navigate({search: (prev: SearchParams) => ({...prev, page: newPage})})
     }
@@ -156,7 +158,7 @@ function HomeComponent() {
         })
     }
 
-    // when user marks the feed as "Unread", preferrably right click and select that from the dropdown, preferrably right click and select that from the dropdown
+    // ugh, dead code
     const handleUnreadToggle = () => {
     }
 
@@ -239,6 +241,39 @@ function HomeComponent() {
         starMutate({articleId, currentlyStarred})
     }
 
+    useKeyboardShortcuts({
+        // move one article "down"
+        "j": () => {
+            if (!articles?.length) return;
+            const next = Math.min((selectedIndex === -1 ? 0 : selectedIndex + 1), articles.length - 1);
+            handleArticleSelect(articles[next]);
+        },
+        // move one article "up"
+        "k": () => {
+            if (!articles?.length || selectedIndex <= 0) return;
+            handleArticleSelect(articles[selectedIndex - 1]);
+        },
+        // this happens by default, need to wire up "unread". Toggle.
+        "m": () => {
+            if (!selectedArticle) return;
+            markArticleReadMutate(selectedArticle.id);
+        },
+        // "star" article
+        "s": () => {
+            if (!selectedArticle) return;
+            starMutate({articleId: selectedArticle.id, currentlyStarred: selectedArticle.isStarred});
+        },
+        // refresh article
+        "Shift+R": () => {
+            handleRefresh();
+        },
+        // settings modal
+        // "Shift+?": () => {
+        // settings modal opens from here.
+        // },
+    });
+
+
     // I have yet to test this out
     if (error) {
         return (
@@ -250,7 +285,6 @@ function HomeComponent() {
 
     return (
         <SidebarProvider>
-            {/* <SidebarInset className="flex flex-row overflow-hidden" /> */}
             <div className="flex h-screen w-full overflow-hidden bg-card text-foreground font-sans">
                 <AppSidebar selectedFeedId={feedId ?? null}
                             onFeedSelect={handleFeedSelect}
