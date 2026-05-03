@@ -286,9 +286,13 @@ function HomeComponent() {
             handleRefresh();
         },
         // settings modal
-        // "Shift+?": () => {
-        // settings modal opens from here.
-        // },
+        "Shift+?": () => {
+            navigate({
+                to: '/settings',
+                replace: true,
+                resetScroll: true
+            });
+        },
     });
 
 
