@@ -1,5 +1,5 @@
 ### Variables
-@baseUrl = http://localhost:3333
+@baseUrl = http://localhost:3000
 @origin = http://localhost:3000
 @email = django@catmail.com
 @password = django@catmail.com
@@ -178,4 +178,81 @@ Origin: {{origin}}
 
 ### VALIDATION ERROR — page below minimum (1)
 GET {{baseUrl}}/api/feeds/<FEED_ID>/articles?page=0
+Origin: {{origin}}
+
+
+### Export all subscriptions as OPML
+# Downloads as mewss-subscriptions-YYYY-MM-DD.opml
+GET {{baseUrl}}/api/export/opml
+Origin: {{origin}}
+
+
+### Import subscriptions from an OPML file
+# Replace <path> with the absolute path to your .opml file on disk.
+# In IntelliJ/WebStorm: use the file picker via the paperclip icon next to the body.
+POST {{baseUrl}}/api/import/opml
+Origin: {{origin}}
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="subscriptions.opml"
+Content-Type: text/xml
+
+<?xml version="1.0" encoding="UTF-8"?>
+<opml version="2.0">
+  <head><title>my feeds</title></head>
+  <body>
+    <outline type="rss" text="Hacker News" title="Hacker News" xmlUrl="https://news.ycombinator.com/rss"/>
+    <outline type="rss" text="The Verge" title="The Verge" xmlUrl="https://www.theverge.com/rss/index.xml"/>
+  </body>
+</opml>
+--boundary--
+
+
+### Import OPML with folder groupings (folders are flattened, feeds are imported)
+POST {{baseUrl}}/api/import/opml
+Origin: {{origin}}
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="grouped.opml"
+Content-Type: text/xml
+
+<?xml version="1.0" encoding="UTF-8"?>
+<opml version="2.0">
+  <head><title>grouped feeds</title></head>
+  <body>
+    <outline text="Tech">
+      <outline type="rss" text="Ars Technica" xmlUrl="https://feeds.arstechnica.com/arstechnica/index"/>
+      <outline type="rss" text="Wired"        xmlUrl="https://www.wired.com/feed/rss"/>
+    </outline>
+    <outline text="News">
+      <outline type="rss" text="BBC" xmlUrl="https://feeds.bbci.co.uk/news/rss.xml"/>
+    </outline>
+  </body>
+</opml>
+--boundary--
+
+
+### Export starred articles as JSON (default)
+# Downloads as mewss-starred-YYYY-MM-DD.json
+# Response shape: { exported: number, articles: Article[] }
+GET {{baseUrl}}/api/export/starred
+Origin: {{origin}}
+
+
+### Export starred articles as JSON (explicit)
+GET {{baseUrl}}/api/export/starred?format=json
+Origin: {{origin}}
+
+
+### Export starred articles as CSV
+# Downloads as mewss-starred-YYYY-MM-DD.csv
+# Columns: id,title,url,author,publishedAt,feedId,starredAt
+GET {{baseUrl}}/api/export/starred?format=csv
+Origin: {{origin}}
+
+
+### Export starred — invalid format (expects 400)
+GET {{baseUrl}}/api/export/starred?format=xml
 Origin: {{origin}}

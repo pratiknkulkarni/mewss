@@ -1,15 +1,16 @@
-import { Hono } from 'hono'
-import { auth } from "./lib/auth.js";
+import {Hono} from 'hono'
+import {auth} from "./lib/auth.js";
 import feedRouter from "./routes/feed.js";
 import articleRouter from "./routes/article.js";
-import { createLogger } from "./lib/logger.js";
-import { AppError } from "./errors/errors.js";
-import { cors } from 'hono/cors';
+import dataRouter from "./routes/data.js";
+import {createLogger} from "./lib/logger.js";
+import {AppError} from "./errors/errors.js";
+import {cors} from 'hono/cors';
 
 export const app = new Hono()
 const logger = createLogger("app");
 
-app.get("/api/health", (c) => c.json({ status: "ok" }));
+app.get("/api/health", (c) => c.json({status: "ok"}));
 
 // this one is not required to run in docker, only for dev server.
 if (process.env.NODE_ENV === "development") {
@@ -31,12 +32,12 @@ if (process.env.NODE_ENV === "development") {
 app.onError((err, c) => {
     if (err instanceof AppError) {
         if (err.statusCode >= 500) {
-            logger.error({ err, path: c.req.path }, "application error");
+            logger.error({err, path: c.req.path}, "application error");
         }
-        return c.json({ error: { code: err.code, message: err.message } }, err.statusCode as any);
+        return c.json({error: {code: err.code, message: err.message}}, err.statusCode as any);
     }
-    logger.error({ err, path: c.req.path }, "unhandled error")
-    return c.json({ error: { code: "INTERNAL_ERROR", message: "Internal server error" } }, 500);
+    logger.error({err, path: c.req.path}, "unhandled error")
+    return c.json({error: {code: "INTERNAL_ERROR", message: "Internal server error"}}, 500);
 });
 
 
@@ -46,4 +47,5 @@ app.on(["POST", "GET"], "/api/auth/*", (c) => {
 
 app.route("/api/feeds", feedRouter);
 app.route("/api", articleRouter);
+app.route("/api", dataRouter);
 // app.route("/api/health", healthRouter);
