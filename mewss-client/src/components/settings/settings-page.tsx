@@ -20,14 +20,7 @@ export default function SettingsPage() {
 
     return (
         <div className="flex h-screen w-full overflow-hidden bg-card text-foreground font-sans">
-            <AppSidebar selectedFeedId={null}
-                        onFeedSelect={() => {
-                        }}
-                        unreadCount={0}
-                        onFeedCreated={() => {
-                        }}
-
-            />
+            <AppSidebar />
             <div className="min-h-screen w-full flex flex-col md:flex-row bg-background text-foreground">
 
                 <div>
