@@ -218,59 +218,6 @@ export function AccountTab() {
                                         </div>
                                     </div>
                                 }
-                                {/*{isLoadingSessions ? (*/}
-                                {/*    <div className="p-8 text-center text-sm text-muted-foreground">*/}
-                                {/*        Loading sessions...*/}
-                                {/*    </div>*/}
-                                {/*) : sessions?.length === 0 ? (*/}
-                                {/*    <div className="p-8 text-center text-sm text-muted-foreground">*/}
-                                {/*        No active sessions found.*/}
-                                {/*    </div>*/}
-                                {/*) : (*/}
-                                {/*    sessions.map((session) => {*/}
-                                {/*        const {name: deviceName, icon: DeviceIcon} = parseUA(session.userAgent);*/}
-                                {/*        const isCurrent = session.id === currentSessionId;*/}
-
-                                {/*        return (*/}
-                                {/*            <div key={session.id}*/}
-                                {/*                 className="flex items-center justify-between p-4 border-b border-border last:border-0 hover:bg-muted/30 transition-colors">*/}
-                                {/*                <div className="flex items-center gap-4">*/}
-                                {/*                    <div*/}
-                                {/*                        className="w-10 h-10 rounded bg-secondary flex items-center justify-center shrink-0">*/}
-                                {/*                        <DeviceIcon className="w-5 h-5 text-muted-foreground"/>*/}
-                                {/*                    </div>*/}
-                                {/*                    <div className="space-y-1">*/}
-                                {/*                        <div className="text-sm font-medium flex items-center gap-2">*/}
-                                {/*                            {deviceName}*/}
-                                {/*                            {isCurrent && (*/}
-                                {/*                                <span*/}
-                                {/*                                    className="text-[10px] uppercase tracking-wider bg-primary/20 text-primary px-2 py-0.5 rounded font-mono">*/}
-                                {/*                                    Current*/}
-                                {/*                                </span>*/}
-                                {/*                            )}*/}
-                                {/*                        </div>*/}
-                                {/*                        <div*/}
-                                {/*                            className="text-xs text-muted-foreground flex items-center gap-2">*/}
-                                {/*                            <span>{session.ipAddress || "Unknown IP"}</span>*/}
-                                {/*                            <span>•</span>*/}
-                                {/*                            <span>Signed in {new Date(session.createdAt).toLocaleDateString()}</span>*/}
-                                {/*                        </div>*/}
-                                {/*                    </div>*/}
-                                {/*                </div>*/}
-                                {/*                {!isCurrent && (*/}
-                                {/*                    <button*/}
-                                {/*                        onClick={() => handleRevokeSession(session.token)}*/}
-                                {/*                        className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded transition-colors cursor-pointer"*/}
-                                {/*                        title="Revoke session"*/}
-                                {/*                    >*/}
-                                {/*                        <X className="w-4 h-4"/>*/}
-                                {/*                    </button>*/}
-                                {/*                )}*/}
-                                {/*            </div>*/}
-                                {/*        );*/}
-                                {/*    })*/}
-                                {/*)}*/}
-
 
                                 {isLoadingSessions ? (
                                     <div className="p-8 text-center text-sm text-muted-foreground">
