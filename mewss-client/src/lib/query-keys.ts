@@ -1,8 +1,9 @@
-import type { ArticleFilters } from "@/types/api"
+import type {ArticleFilters} from "@/types/api"
 
 export const authKeys = {
     all: ['auth'] as const,
     session: () => [...authKeys.all, 'session'] as const,
+    sessionList: () => [...authKeys.all, 'sessions', 'list'] as const,
 }
 
 export const articleKeys = {
@@ -20,5 +21,5 @@ export const articleKeys = {
 export const feedKeys = {
     all: ['feeds'] as const,
     lists: () => [...feedKeys.all, 'list'] as const,
-    list: (status?: string) => [...feedKeys.lists(), { status }] as const,
+    list: (status?: string) => [...feedKeys.lists(), {status}] as const,
 };

@@ -1,27 +1,12 @@
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import {AlertTriangle, Key, MonitorSmartphone, Trash2, X, Check, Smartphone, Laptop} from "lucide-react";
 import {TabShell} from "@/components/settings/TabShell.tsx";
+import {authClient} from "@/features/auth/api/auth-client.ts";
+import {useListSessions} from "@/features/auth/hooks/useListSessions.ts";
+import {useRevokeSession} from "@/features/auth/hooks/useRevokeSession.ts";
+import {useRevokeOtherSessions} from "@/features/auth/hooks/useRevokeOtherSessions.ts";
 
-const MOCK_SESSIONS = [
-    {
-        id: "sess_1",
-        token: "mock_token_1",
-        ipAddress: "192.168.1.5",
-        userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/124.0.0.0",
-        createdAt: new Date().toISOString(),
-        isCurrent: true, // Compute this later by matching session.id with your current active session id
-    },
-    {
-        id: "sess_2",
-        token: "mock_token_2",
-        ipAddress: "172.16.0.42",
-        userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4_1 like Mac OS X)",
-        createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-        isCurrent: false,
-    }
-];
-
-const parseUA = (ua) => {
+const parseUA = (ua: string | null | undefined) => {
     if (!ua) return {name: "Unknown Device", icon: MonitorSmartphone};
     if (ua.includes("iPhone") || ua.includes("Android") || ua.includes("Mobile")) return {
         name: "Mobile Device",
@@ -32,20 +17,32 @@ const parseUA = (ua) => {
     return {name: "Unknown Device", icon: MonitorSmartphone};
 };
 
-
 export function AccountTab() {
     const [isResettingPassword, setIsResettingPassword] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [passwords, setPasswords] = useState({old: "", new: "", confirm: ""});
-    const [toast, setToast] = useState(null);
+    const [toast, setToast] = useState<{ message: string, type: string } | null>(null);
     const [deleteConfirmText, setDeleteConfirmText] = useState("");
+    const {data: sessions = [], error: listSessionsError, isLoading: isLoadingSessions} = useListSessions();
 
-    const showToast = (message: unknown, type = "default") => {
+    useEffect(() => {
+        console.log("sessions -> ")
+        console.log(sessions)
+    }, [sessions]);
+
+
+    const {data: activeSessionData} = authClient.useSession();
+    const {mutate: revokeSession} = useRevokeSession();
+    const {mutate: revokeOtherSessions} = useRevokeOtherSessions();
+
+    const currentSessionId = activeSessionData?.session?.id;
+
+    const showToast = (message: string, type = "default") => {
         setToast({message, type});
         setTimeout(() => setToast(null), 3000);
     };
 
-    const handlePasswordSubmit = (e) => {
+    const handlePasswordSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (passwords.new !== passwords.confirm) {
             return showToast("New passwords do not match.", "destructive");
@@ -58,11 +55,21 @@ export function AccountTab() {
         setPasswords({old: "", new: "", confirm: ""});
     };
 
-    const handleLogoutDevices = () => {
-        showToast("Logged out of all other devices.", "success");
+    const handleLogoutDevices = async () => {
+        revokeOtherSessions("", {
+            onSuccess: () => showToast("Logged out of all other devices.", "success"),
+            onError: (error) => showToast(error?.message, "destructive"),
+        });
     };
 
-    const handleDeleteAccount = (e) => {
+    const handleRevokeSession = async (token: string) => {
+        revokeSession(token, {
+            onSuccess: () => showToast("Session revoked.", "default"),
+            onError: (error) => showToast(error?.message, "destructive"),
+        });
+    };
+
+    const handleDeleteAccount = (e: React.SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
         showToast("Account deleted. You are being redirected.", "destructive");
         setIsDeleting(false);
@@ -186,53 +193,137 @@ export function AccountTab() {
                                 </div>
                                 <button
                                     onClick={handleLogoutDevices}
-                                    className="cursor-pointer text-sm px-4 py-2 rounded border border-[#eab308]/50 text-[#eab308] hover:bg-[#eab308]/10 transition-colors w-full sm:w-auto"
+                                    disabled={sessions && sessions?.length <= 1}
+                                    className="cursor-pointer text-sm px-4 py-2 rounded border border-[#eab308]/50 text-[#eab308] hover:bg-[#eab308]/10 transition-colors w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    Log out of all devices
+                                    Log out of all other devices
                                 </button>
                             </div>
 
                             <div className="border border-border rounded-lg overflow-hidden bg-background">
-                                {MOCK_SESSIONS.map((session) => {
-                                    const {name: deviceName, icon: DeviceIcon} = parseUA(session.userAgent);
-                                    return (
-                                        <div key={session.id}
-                                             className="flex items-center justify-between p-4 border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
-                                            <div className="flex items-center gap-4">
-                                                <div
-                                                    className="w-10 h-10 rounded bg-secondary flex items-center justify-center shrink-0">
-                                                    <DeviceIcon className="w-5 h-5 text-muted-foreground"/>
-                                                </div>
-                                                <div className="space-y-1">
-                                                    <div className="text-sm font-medium flex items-center gap-2">
-                                                        {deviceName}
-                                                        {session.isCurrent && (
-                                                            <span
-                                                                className="text-[10px] uppercase tracking-wider bg-primary/20 text-primary px-2 py-0.5 rounded font-mono">
-                    Current
-                  </span>
-                                                        )}
-                                                    </div>
-                                                    <div
-                                                        className="text-xs text-muted-foreground flex items-center gap-2">
-                                                        <span>{session.ipAddress}</span>
-                                                        <span>•</span>
-                                                        <span>Signed in {new Date(session.createdAt).toLocaleDateString()}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            {!session.isCurrent && (
-                                                <button
-                                                    onClick={() => showToast(`Revoking session: ${session.id}`, "default")}
-                                                    className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded transition-colors"
-                                                    title="Revoke session"
-                                                >
-                                                    <X className="w-4 h-4"/>
-                                                </button>
-                                            )}
+                                {!!listSessionsError &&
+                                    <div
+                                        className="flex flex-col items-center justify-center p-8 text-center border border-destructive/20 bg-destructive/5 rounded-lg animate-in fade-in space-y-3">
+                                        <div
+                                            className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center shrink-0">
+                                            <AlertTriangle className="w-5 h-5 text-destructive"/>
                                         </div>
-                                    );
-                                })}
+                                        <div className="space-y-1 max-w-sm">
+                                            <p className="text-sm font-medium text-destructive">Failed to load
+                                                sessions</p>
+                                            <p className="text-xs text-muted-foreground">
+                                                We couldn't retrieve your active devices. The server might be down or
+                                                unreachable.
+                                            </p>
+                                        </div>
+                                    </div>
+                                }
+                                {/*{isLoadingSessions ? (*/}
+                                {/*    <div className="p-8 text-center text-sm text-muted-foreground">*/}
+                                {/*        Loading sessions...*/}
+                                {/*    </div>*/}
+                                {/*) : sessions?.length === 0 ? (*/}
+                                {/*    <div className="p-8 text-center text-sm text-muted-foreground">*/}
+                                {/*        No active sessions found.*/}
+                                {/*    </div>*/}
+                                {/*) : (*/}
+                                {/*    sessions.map((session) => {*/}
+                                {/*        const {name: deviceName, icon: DeviceIcon} = parseUA(session.userAgent);*/}
+                                {/*        const isCurrent = session.id === currentSessionId;*/}
+
+                                {/*        return (*/}
+                                {/*            <div key={session.id}*/}
+                                {/*                 className="flex items-center justify-between p-4 border-b border-border last:border-0 hover:bg-muted/30 transition-colors">*/}
+                                {/*                <div className="flex items-center gap-4">*/}
+                                {/*                    <div*/}
+                                {/*                        className="w-10 h-10 rounded bg-secondary flex items-center justify-center shrink-0">*/}
+                                {/*                        <DeviceIcon className="w-5 h-5 text-muted-foreground"/>*/}
+                                {/*                    </div>*/}
+                                {/*                    <div className="space-y-1">*/}
+                                {/*                        <div className="text-sm font-medium flex items-center gap-2">*/}
+                                {/*                            {deviceName}*/}
+                                {/*                            {isCurrent && (*/}
+                                {/*                                <span*/}
+                                {/*                                    className="text-[10px] uppercase tracking-wider bg-primary/20 text-primary px-2 py-0.5 rounded font-mono">*/}
+                                {/*                                    Current*/}
+                                {/*                                </span>*/}
+                                {/*                            )}*/}
+                                {/*                        </div>*/}
+                                {/*                        <div*/}
+                                {/*                            className="text-xs text-muted-foreground flex items-center gap-2">*/}
+                                {/*                            <span>{session.ipAddress || "Unknown IP"}</span>*/}
+                                {/*                            <span>•</span>*/}
+                                {/*                            <span>Signed in {new Date(session.createdAt).toLocaleDateString()}</span>*/}
+                                {/*                        </div>*/}
+                                {/*                    </div>*/}
+                                {/*                </div>*/}
+                                {/*                {!isCurrent && (*/}
+                                {/*                    <button*/}
+                                {/*                        onClick={() => handleRevokeSession(session.token)}*/}
+                                {/*                        className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded transition-colors cursor-pointer"*/}
+                                {/*                        title="Revoke session"*/}
+                                {/*                    >*/}
+                                {/*                        <X className="w-4 h-4"/>*/}
+                                {/*                    </button>*/}
+                                {/*                )}*/}
+                                {/*            </div>*/}
+                                {/*        );*/}
+                                {/*    })*/}
+                                {/*)}*/}
+
+
+                                {isLoadingSessions ? (
+                                    <div className="p-8 text-center text-sm text-muted-foreground">
+                                        Loading sessions...
+                                    </div>
+                                ) : !sessions || sessions.length === 0 ? (
+                                    <div className="p-8 text-center text-sm text-muted-foreground">
+                                        No active sessions found.
+                                    </div>
+                                ) : (
+                                    sessions.map((session) => {
+                                        const {name: deviceName, icon: DeviceIcon} = parseUA(session.userAgent);
+                                        const isCurrent = session.id === currentSessionId;
+
+                                        return (
+                                            <div key={session.id}
+                                                 className="flex items-center justify-between p-4 border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                                                <div className="flex items-center gap-4">
+                                                    <div
+                                                        className="w-10 h-10 rounded bg-secondary flex items-center justify-center shrink-0">
+                                                        <DeviceIcon className="w-5 h-5 text-muted-foreground"/>
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <div className="text-sm font-medium flex items-center gap-2">
+                                                            {deviceName}
+                                                            {isCurrent && (
+                                                                <span
+                                                                    className="text-[10px] uppercase tracking-wider bg-primary/20 text-primary px-2 py-0.5 rounded font-mono">
+                                    Current
+                                </span>
+                                                            )}
+                                                        </div>
+                                                        <div
+                                                            className="text-xs text-muted-foreground flex items-center gap-2">
+                                                            <span>{session.ipAddress || "Unknown IP"}</span>
+                                                            <span>•</span>
+                                                            <span>Signed in {new Date(session.createdAt).toLocaleDateString()}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {!isCurrent && (
+                                                    <button
+                                                        onClick={() => handleRevokeSession(session.token)}
+                                                        className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded transition-colors cursor-pointer"
+                                                        title="Revoke session"
+                                                    >
+                                                        <X className="w-4 h-4"/>
+                                                    </button>
+                                                )}
+                                            </div>
+                                        );
+                                    })
+                                )}
                             </div>
                         </div>
 
