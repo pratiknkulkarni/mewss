@@ -1,7 +1,13 @@
 import {apiClient} from "@/lib/api-client.ts";
 
+export interface OpmlImportResponse {
+    imported: number;
+    skipped: number;
+    errors: string[];
+}
+
 export const opmlApi = {
-    import: (file: File): Promise<void> => {
+    import: (file: File): Promise<OpmlImportResponse> => {
         const formData = new FormData()
         formData.append('file', file)
 

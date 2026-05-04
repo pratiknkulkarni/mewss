@@ -40,7 +40,7 @@ export function AccountTab() {
     const [toast, setToast] = useState(null);
     const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
-    const showToast = (message, type = "default") => {
+    const showToast = (message: unknown, type = "default") => {
         setToast({message, type});
         setTimeout(() => setToast(null), 3000);
     };

@@ -1,9 +1,56 @@
-import {useState} from "react";
-import {FileUp, FileDown, Database} from "lucide-react";
+import {useRef, useState} from "react";
+import {FileUp, FileDown, Database, Check, X} from "lucide-react";
 import {TabShell} from "./TabShell";
+import {useImportOpml} from "@/features/data/hooks/useImportOPML.ts";
+import {useExportOpml} from "@/features/data/hooks/useExportOPML.ts";
+import {toast} from "sonner";
 
 export function DataStorageTab() {
     const [retentionPeriod, setRetentionPeriod] = useState("90");
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+    const importOpml = useImportOpml();
+    const exportOpml = useExportOpml();
+
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) {
+                toast.error("File is too large. Limit is 5MB.");
+                return;
+            }
+            setSelectedFile(file);
+        }
+        e.target.value = "";
+    };
+
+    const confirmImport = () => {
+        if (!selectedFile) return;
+
+        const loadingToast = toast.loading("Uploading and parsing OPML...");
+
+        importOpml.mutate(selectedFile, {
+            onSuccess: (data) => {
+                const hasErrors = data.errors.length > 0;
+
+                toast.success("OPML Import Processed", {
+                    id: loadingToast,
+                    description: `${data.imported} imported, ${data.skipped} skipped (duplicates)${hasErrors ? `, ${data.errors.length} failed` : ''}.`,
+                    duration: hasErrors ? 6000 : 4000,
+                });
+                setSelectedFile(null);
+            },
+            onError: (error) => {
+                const message = error instanceof Error ? error.message : "The server rejected the file.";
+
+                toast.error(`Import failed`, {
+                    id: loadingToast,
+                    description: message || "The server rejected the file."
+                });
+            }
+        });
+    };
 
     const retentionOptions = [
         {value: "30", label: "30 days"},
@@ -32,16 +79,54 @@ export function DataStorageTab() {
                             </p>
                         </div>
 
-                        <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                        <div className="flex flex-col sm:flex-row gap-3 pt-2 items-start">
+                            <input
+                                type="file"
+                                accept=".opml,text/xml,application/xml"
+                                className="hidden"
+                                ref={fileInputRef}
+                                onChange={handleFileSelect}
+                            />
+
+                            {!selectedFile ? (
+                                <button
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="cursor-pointer flex items-center justify-center gap-2 text-sm px-4 py-2 rounded border border-border text-primary hover:border-primary hover:bg-primary/10 transition-colors w-full sm:w-auto">
+                                    <FileUp className="w-4 h-4"/>
+                                    Select OPML File
+                                </button>
+                            ) : (
+                                <div
+                                    className="flex items-center gap-2 border border-border rounded p-1 w-full sm:w-auto bg-muted/30">
+                                    <span className="text-sm text-foreground px-3 truncate max-w-[200px]"
+                                          title={selectedFile.name}>
+                                        {selectedFile.name}
+                                    </span>
+                                    <button
+                                        onClick={confirmImport}
+                                        disabled={importOpml.isPending}
+                                        className="cursor-pointer flex items-center justify-center p-1.5 rounded bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50 transition-opacity"
+                                        title="Confirm Import"
+                                    >
+                                        <Check className="w-4 h-4"/>
+                                    </button>
+                                    <button
+                                        onClick={() => setSelectedFile(null)}
+                                        disabled={importOpml.isPending}
+                                        className="cursor-pointer flex items-center justify-center p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive disabled:opacity-50 transition-colors"
+                                        title="Cancel"
+                                    >
+                                        <X className="w-4 h-4"/>
+                                    </button>
+                                </div>
+                            )}
+
                             <button
-                                className="cursor-pointer flex items-center justify-center gap-2 text-sm px-4 py-2 rounded border border-border text-primary hover:border-primary hover:bg-primary/10 transition-colors w-full sm:w-auto">
-                                <FileUp className="w-4 h-4"/>
-                                Import OPML
-                            </button>
-                            <button
-                                className="cursor-pointer flex items-center justify-center gap-2 text-sm px-4 py-2 rounded border border-border text-primary hover:border-primary hover:bg-primary/10 transition-colors w-full sm:w-auto">
+                                onClick={() => exportOpml.mutate()}
+                                disabled={exportOpml.isPending || !!selectedFile}
+                                className="cursor-pointer flex items-center justify-center gap-2 text-sm px-4 py-2 rounded border border-border text-primary hover:border-primary hover:bg-primary/10 transition-colors w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed">
                                 <FileDown className="w-4 h-4"/>
-                                Export OPML
+                                {exportOpml.isPending ? "Exporting..." : "Export OPML"}
                             </button>
                         </div>
                     </div>
