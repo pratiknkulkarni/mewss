@@ -1,4 +1,4 @@
-import { ApiError } from "./api-error.ts";
+import {ApiError} from "./api-error.ts";
 
 /**
  * Base URL for API requests.
@@ -40,13 +40,16 @@ async function request<T>(
     const search = params ? buildSearch(params) : "";
     const url = `${BASE_URL}${path}${search}`;
 
+    const headers = new Headers(options.headers);
+
+    if (!headers.has("Content-Type") && !(options.body instanceof FormData)) {
+        headers.set("Content-Type", "application/json");
+    }
+
     const response = await fetch(url, {
         ...options,
         credentials: "include", // better auth cookie
-        headers: {
-            "Content-Type": "application/json",
-            ...options.headers,
-        },
+        headers,
     });
 
     if (response.status === 204) {
@@ -80,7 +83,7 @@ export const apiClient = {
      * @returns A promise that resolves to the response data.
      */
     get<T>(path: string, params?: Record<string, unknown>): Promise<T> {
-        return request<T>(path, { method: "GET" }, params);
+        return request<T>(path, {method: "GET"}, params);
     },
 
     /**
@@ -94,7 +97,9 @@ export const apiClient = {
     post<T>(path: string, body?: unknown): Promise<T> {
         return request<T>(path, {
             method: "POST",
-            body: body !== undefined ? JSON.stringify(body) : undefined,
+            body: body instanceof FormData
+                ? body
+                : (body !== undefined ? JSON.stringify(body) : undefined),
         });
     },
 
@@ -109,7 +114,9 @@ export const apiClient = {
     patch<T>(path: string, body?: unknown): Promise<T> {
         return request<T>(path, {
             method: "PATCH",
-            body: body !== undefined ? JSON.stringify(body) : undefined,
+            body: body instanceof FormData
+                ? body
+                : (body !== undefined ? JSON.stringify(body) : undefined),
         });
     },
 
@@ -121,7 +128,7 @@ export const apiClient = {
      * @returns A promise that resolves when the deletion is complete.
      */
     delete<T = void>(path: string): Promise<T> {
-        return request<T>(path, { method: "DELETE" });
+        return request<T>(path, {method: "DELETE"});
     },
 }
 
