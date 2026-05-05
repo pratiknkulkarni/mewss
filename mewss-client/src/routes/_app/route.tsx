@@ -1,6 +1,5 @@
 import {createFileRoute, Outlet, redirect} from '@tanstack/react-router'
 import {authClient} from "@/features/auth/api/auth-client.ts";
-// import { queryClient } from '@/lib/query-client';
 import {authKeys} from '@/lib/query-keys';
 import {ConfirmDialogProvider} from "@/components/ui/confirm-dialog-context.tsx";
 
@@ -14,7 +13,8 @@ export const Route = createFileRoute('/_app')({
                 if (error) throw new Error(error.message || 'Failed to fetch session');
                 return data;
             },
-            staleTime: 1000 * 60 * 15,
+            // this stale time => even if I revoke any device(s), it'll take at least 2 mins to reflect
+            staleTime: 1000 * 60 * 2,
         })
 
         if (!session?.user) {
