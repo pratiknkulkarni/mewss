@@ -1,10 +1,11 @@
-import {useEffect, useState} from "react";
+import {useState} from "react";
 import {AlertTriangle, Key, MonitorSmartphone, Trash2, X, Check, Smartphone, Laptop} from "lucide-react";
 import {TabShell} from "@/components/settings/TabShell.tsx";
 import {authClient} from "@/features/auth/api/auth-client.ts";
 import {useListSessions} from "@/features/auth/hooks/useListSessions.ts";
 import {useRevokeSession} from "@/features/auth/hooks/useRevokeSession.ts";
 import {useRevokeOtherSessions} from "@/features/auth/hooks/useRevokeOtherSessions.ts";
+import {useUpdatePassword} from "@/features/auth/hooks/useUpdatePassword.ts";
 
 const parseUA = (ua: string | null | undefined) => {
     if (!ua) return {name: "Unknown Device", icon: MonitorSmartphone};
@@ -25,15 +26,10 @@ export function AccountTab() {
     const [deleteConfirmText, setDeleteConfirmText] = useState("");
     const {data: sessions = [], error: listSessionsError, isLoading: isLoadingSessions} = useListSessions();
 
-    useEffect(() => {
-        console.log("sessions -> ")
-        console.log(sessions)
-    }, [sessions]);
-
-
     const {data: activeSessionData} = authClient.useSession();
     const {mutate: revokeSession} = useRevokeSession();
     const {mutate: revokeOtherSessions} = useRevokeOtherSessions();
+    const {mutate: updatePassword, isPending: isUpdatingPassword} = useUpdatePassword();
 
     const currentSessionId = activeSessionData?.session?.id;
 
@@ -42,7 +38,7 @@ export function AccountTab() {
         setTimeout(() => setToast(null), 3000);
     };
 
-    const handlePasswordSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
+    const handlePasswordSubmit = (e: React.FormEvent<HTMLFormElement>) => { // FIXED TYPE HERE
         e.preventDefault();
         if (passwords.new !== passwords.confirm) {
             return showToast("New passwords do not match.", "destructive");
@@ -50,9 +46,25 @@ export function AccountTab() {
         if (passwords.new.length < 8) {
             return showToast("Password is too weak.", "destructive");
         }
-        showToast("Password updated successfully.", "success");
-        setIsResettingPassword(false);
-        setPasswords({old: "", new: "", confirm: ""});
+
+        updatePassword(
+            {
+                currentPassword: passwords.old,
+                newPassword: passwords.new,
+                revokeOtherSessions: false,
+            },
+            {
+                onSuccess: () => {
+                    showToast("Password updated successfully.", "success");
+                    setIsResettingPassword(false);
+                    setPasswords({old: "", new: "", confirm: ""});
+                },
+                onError: (error) => {
+                    const message = error instanceof Error ? error.message : "Failed to update password.";
+                    showToast(message || "Failed to update password.", "destructive");
+                }
+            }
+        );
     };
 
     const handleLogoutDevices = async () => {
@@ -164,6 +176,7 @@ export function AccountTab() {
                                     <div className="pt-2 flex justify-end gap-2">
                                         <button
                                             type="button"
+                                            disabled={isUpdatingPassword}
                                             onClick={() => setIsResettingPassword(false)}
                                             className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                                         >
@@ -171,6 +184,7 @@ export function AccountTab() {
                                         </button>
                                         <button
                                             type="submit"
+                                            disabled={isUpdatingPassword}
                                             className="px-4 py-2 text-sm rounded bg-primary text-primary-foreground hover:opacity-90 transition-opacity cursor-pointer"
                                         >
                                             Save Password
