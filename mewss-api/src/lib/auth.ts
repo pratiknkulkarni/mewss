@@ -1,5 +1,5 @@
-import { betterAuth } from "better-auth";
-import { Pool } from "pg";
+import {betterAuth} from "better-auth";
+import {Pool} from "pg";
 
 export const auth = betterAuth({
     database: new Pool({
@@ -8,10 +8,10 @@ export const auth = betterAuth({
     trustedOrigins: [
         ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
     ],
-    emailAndPassword: { enabled: true },
+    emailAndPassword: {enabled: true},
     session: {
         expiresIn: 7 * 24 * 60 * 60,
-        cookieCache: { enabled: true, maxAge: 5 * 60 },
+        cookieCache: {enabled: true, maxAge: 5 * 60},
         fields: {
             userId: "user_id",
             expiresAt: "expires_at",
@@ -26,7 +26,10 @@ export const auth = betterAuth({
             emailVerified: "email_verified",
             createdAt: "created_at",
             updatedAt: "updated_at",
-        }
+        },
+        deleteUser: {
+            enabled: true,
+        },
     },
     account: {
         fields: {
@@ -49,11 +52,6 @@ export const auth = betterAuth({
             updatedAt: "updated_at",
         }
     },
-    // rateLimit: {
-    //     enabled: true,
-    //     window: 60,
-    //     max: 10,
-    // }
 })
 
 export type Auth = typeof auth

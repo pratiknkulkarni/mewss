@@ -1,4 +1,4 @@
-import {useState} from "react";
+import {type SyntheticEvent, useState} from "react";
 import {AlertTriangle, Key, MonitorSmartphone, Trash2, X, Check, Smartphone, Laptop} from "lucide-react";
 import {TabShell} from "@/components/settings/TabShell.tsx";
 import {authClient} from "@/features/auth/api/auth-client.ts";
@@ -6,6 +6,8 @@ import {useListSessions} from "@/features/auth/hooks/useListSessions.ts";
 import {useRevokeSession} from "@/features/auth/hooks/useRevokeSession.ts";
 import {useRevokeOtherSessions} from "@/features/auth/hooks/useRevokeOtherSessions.ts";
 import {useUpdatePassword} from "@/features/auth/hooks/useUpdatePassword.ts";
+import {useDeleteAccount} from "@/features/auth/hooks/useDeleteAccount.ts";
+import {useNavigate} from "@tanstack/react-router";
 
 const parseUA = (ua: string | null | undefined) => {
     if (!ua) return {name: "Unknown Device", icon: MonitorSmartphone};
@@ -25,11 +27,31 @@ export function AccountTab() {
     const [toast, setToast] = useState<{ message: string, type: string } | null>(null);
     const [deleteConfirmText, setDeleteConfirmText] = useState("");
     const {data: sessions = [], error: listSessionsError, isLoading: isLoadingSessions} = useListSessions();
+    const navigate = useNavigate();
 
     const {data: activeSessionData} = authClient.useSession();
     const {mutate: revokeSession} = useRevokeSession();
     const {mutate: revokeOtherSessions} = useRevokeOtherSessions();
     const {mutate: updatePassword, isPending: isUpdatingPassword} = useUpdatePassword();
+    const {mutate: deleteAccount, isPending: isDeletingAccount} = useDeleteAccount();
+
+    const handleDeleteAccount = (e: SyntheticEvent<HTMLFormElement>) => {
+        e.preventDefault();
+
+        deleteAccount(undefined, {
+            onSuccess: () => {
+                showToast("Account deleted. You are being redirected.", "success");
+                setIsDeleting(false);
+                navigate({
+                    to: '/login',
+                })
+            },
+            onError: (error) => {
+                const message = error instanceof Error ? error.message : "Failed to delete account.";
+                showToast(message, "destructive");
+            }
+        });
+    };
 
     const currentSessionId = activeSessionData?.session?.id;
 
@@ -38,7 +60,7 @@ export function AccountTab() {
         setTimeout(() => setToast(null), 3000);
     };
 
-    const handlePasswordSubmit = (e: React.FormEvent<HTMLFormElement>) => { // FIXED TYPE HERE
+    const handlePasswordSubmit = (e: SyntheticEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (passwords.new !== passwords.confirm) {
             return showToast("New passwords do not match.", "destructive");
@@ -79,12 +101,6 @@ export function AccountTab() {
             onSuccess: () => showToast("Session revoked.", "default"),
             onError: (error) => showToast(error?.message, "destructive"),
         });
-    };
-
-    const handleDeleteAccount = (e: React.SubmitEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        showToast("Account deleted. You are being redirected.", "destructive");
-        setIsDeleting(false);
     };
 
     return (
@@ -305,7 +321,7 @@ export function AccountTab() {
                                 {!isDeleting ? (
                                     <button
                                         onClick={() => setIsDeleting(true)}
-                                        className="text-sm px-4 py-2 rounded bg-destructive/10 border border-destructive/20 text-destructive hover:bg-destructive hover:text-white transition-colors w-full sm:w-auto shrink-0 whitespace-nowrap"
+                                        className="cursor-pointer text-sm px-4 py-2 rounded bg-destructive/10 border border-destructive/20 text-destructive hover:bg-destructive hover:text-white transition-colors w-full sm:w-auto shrink-0 whitespace-nowrap"
                                     >
                                         Delete Account
                                     </button>
@@ -321,7 +337,8 @@ export function AccountTab() {
                                             placeholder="DELETE"
                                             value={deleteConfirmText}
                                             onChange={(e) => setDeleteConfirmText(e.target.value)}
-                                            className="w-full sm:w-32 bg-background border border-destructive/50 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-destructive"
+                                            disabled={isDeletingAccount}
+                                            className="w-full sm:w-32 bg-background border border-destructive/50 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-destructive disabled:opacity-50"
                                         />
                                         <div className="flex gap-2">
                                             <button
@@ -330,16 +347,17 @@ export function AccountTab() {
                                                     setIsDeleting(false);
                                                     setDeleteConfirmText("");
                                                 }}
-                                                className="px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                                                disabled={isDeletingAccount}
+                                                className="px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50"
                                             >
                                                 Cancel
                                             </button>
                                             <button
                                                 type="submit"
-                                                disabled={deleteConfirmText !== "DELETE"}
+                                                disabled={deleteConfirmText !== "DELETE" || isDeletingAccount}
                                                 className="cursor-pointer px-3 py-1.5 text-xs rounded bg-destructive text-destructive-foreground hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
                                             >
-                                                Confirm
+                                                {isDeletingAccount ? "Deleting..." : "Confirm"}
                                             </button>
                                         </div>
                                     </form>
