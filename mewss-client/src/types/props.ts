@@ -1,4 +1,4 @@
-import type { Article, Feed, Pagination } from "./api.ts";
+import type {Article, Feed, Pagination} from "./api.ts";
 
 export interface PaginationControlsProps {
     handlePageChange: (newPage: number) => void,
@@ -88,4 +88,9 @@ export interface FeedItemProps {
 
 export interface FeedModalHeaderProps {
     isEditMode?: boolean
+}
+
+export interface ShortcutRowProps {
+    keys: string[];
+    description: string;
 }

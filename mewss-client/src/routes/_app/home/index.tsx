@@ -16,6 +16,7 @@ import {useQueryClient} from '@tanstack/react-query';
 import {articleKeys, feedKeys} from '@/lib/query-keys';
 import {useKeyboardShortcuts} from "@/hooks/use-keyboard-shortcuts.ts";
 import {useMarkArticleUnread} from "@/features/articles/hooks/useMarkArticleUnread.ts";
+import {KeyboardHelpOverlay} from "@/components/settings/KeyboardHelpOverlay";
 
 export const Route = createFileRoute('/_app/home/')({
     validateSearch: (search: Record<string, unknown>) => {
@@ -53,6 +54,8 @@ function HomeComponent() {
     const realFeedId = isStarredInbox ? undefined : feedId
 
     const [isWatchingRefresh, setIsWatchingRefresh] = useState(false);
+
+    const [isHelpOpen, setIsHelpOpen] = useState(false);
 
     const watchingFeedIdsRef = useRef<Set<string>>(new Set())
     const watchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -285,14 +288,17 @@ function HomeComponent() {
         "Shift+R": () => {
             handleRefresh();
         },
-        // settings modal
         "Shift+?": () => {
-            navigate({
-                to: '/settings',
-                replace: true,
-                resetScroll: true
-            });
+            setIsHelpOpen(prev => !prev)
         },
+        // settings modal
+        // "Shift+?": () => {
+        //     navigate({
+        //         to: '/settings',
+        //         replace: true,
+        //         resetScroll: true
+        //     });
+        // },
     });
 
 
@@ -344,6 +350,12 @@ function HomeComponent() {
                     />
                 </div>
             </div>
+
+            <KeyboardHelpOverlay
+                isOpen={isHelpOpen}
+                onClose={() => setIsHelpOpen(false)}
+            />
+
         </SidebarProvider>
     )
 }
