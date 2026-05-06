@@ -17,6 +17,7 @@ import {articleKeys, feedKeys} from '@/lib/query-keys';
 import {useKeyboardShortcuts} from "@/hooks/use-keyboard-shortcuts.ts";
 import {useMarkArticleUnread} from "@/features/articles/hooks/useMarkArticleUnread.ts";
 import {KeyboardHelpOverlay} from "@/components/settings/KeyboardHelpOverlay";
+import {FeedModal} from "@/components/feed/feed-modal.tsx";
 
 export const Route = createFileRoute('/_app/home/')({
     validateSearch: (search: Record<string, unknown>) => {
@@ -56,6 +57,7 @@ function HomeComponent() {
     const [isWatchingRefresh, setIsWatchingRefresh] = useState(false);
 
     const [isHelpOpen, setIsHelpOpen] = useState(false);
+    const [isAddFeedOpen, setIsAddFeedOpen] = useState(false);
 
     const watchingFeedIdsRef = useRef<Set<string>>(new Set())
     const watchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -291,6 +293,7 @@ function HomeComponent() {
         "Shift+?": () => {
             setIsHelpOpen(prev => !prev)
         },
+        "i": () => setIsAddFeedOpen(true),
         // settings modal
         // "Shift+?": () => {
         //     navigate({
@@ -318,6 +321,7 @@ function HomeComponent() {
                             onFeedSelect={handleFeedSelect}
                             unreadCount={data?.pagination?.total}
                             onFeedCreated={handleFeedCreated}
+                            onAddFeedClick={() => setIsAddFeedOpen(true)}
                 />
                 <ArticleListPanel
                     articles={articles}
@@ -355,6 +359,9 @@ function HomeComponent() {
                 isOpen={isHelpOpen}
                 onClose={() => setIsHelpOpen(false)}
             />
+
+            <FeedModal isOpen={isAddFeedOpen} onClose={() => setIsAddFeedOpen(false)}
+                       onFeedCreated={handleFeedCreated}/>
 
         </SidebarProvider>
     )

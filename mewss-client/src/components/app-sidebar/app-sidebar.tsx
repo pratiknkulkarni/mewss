@@ -6,7 +6,7 @@ import {SidebarFeedList} from './sidebar-feed-list.tsx';
 import {SidebarUser} from './sidebar-user.tsx';
 import {useNavigate, useSearch} from "@tanstack/react-router";
 
-export function AppSidebar({selectedFeedId, onFeedSelect, onFeedCreated}: AppSidebarProps) {
+export function AppSidebar({selectedFeedId, onFeedSelect, onFeedCreated, onAddFeedClick}: AppSidebarProps) {
     const navigate = useNavigate();
     const search = useSearch({strict: false});
 
@@ -28,12 +28,16 @@ export function AppSidebar({selectedFeedId, onFeedSelect, onFeedCreated}: AppSid
         }
     }
 
+    const handleAddFeedClick = onAddFeedClick ?? (() => {
+    })
+
+
     return (
         <div className={"flex"}>
             <Sidebar className="border-r border-sidebar-border bg-sidebar flex flex-col h-full">
                 <SidebarHeader/>
                 <SidebarMenu selectedFeedId={resolvedFeedId} onFeedSelect={handleFeedSelect}
-                             onFeedCreated={handleFeedCreated}/>
+                             onFeedCreated={handleFeedCreated} onAddFeedClick={handleAddFeedClick}/>
                 <SidebarFeedList selectedFeedId={resolvedFeedId} onFeedSelect={handleFeedSelect}/>
                 <SidebarUser/>
             </Sidebar>

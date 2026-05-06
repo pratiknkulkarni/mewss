@@ -200,12 +200,16 @@ Content-Type: text/xml
 
 <?xml version="1.0" encoding="UTF-8"?>
 <opml version="2.0">
-  <head><title>my feeds</title></head>
-  <body>
-    <outline type="rss" text="Hacker News" title="Hacker News" xmlUrl="https://news.ycombinator.com/rss"/>
-    <outline type="rss" text="The Verge" title="The Verge" xmlUrl="https://www.theverge.com/rss/index.xml"/>
-  </body>
+    <head>
+        <title>mewss subscriptions</title>
+        <dateCreated>Mon, 04 May 2026 04:56:43 GMT</dateCreated>
+    </head>
+    <body>
+        <outline type="rss" text="/r/Technology" title="/r/Technology" xmlUrl="https://reddit.com/r/technology/.rss"
+                 description="Subreddit dedicated to the news and discussions about the creation and use of technology and its surrounding issues."/>
+    </body>
 </opml>
+
 --boundary--
 
 

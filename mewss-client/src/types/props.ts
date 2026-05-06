@@ -47,6 +47,7 @@ export interface AppSidebarProps {
     onFeedSelect?: (feedId: string | null) => void
     unreadCount?: number
     onFeedCreated?: (feedId: string) => void;
+    onAddFeedClick?: () => void;
 }
 
 export interface FeedModalProps {
