@@ -50,7 +50,6 @@ function HomeComponent() {
     const navigate = Route.useNavigate()
     const queryClient = useQueryClient()
 
-
     const isStarredInbox = feedId === '__starred__'
     const realFeedId = isStarredInbox ? undefined : feedId
 
@@ -58,6 +57,8 @@ function HomeComponent() {
 
     const [isHelpOpen, setIsHelpOpen] = useState(false);
     const [isAddFeedOpen, setIsAddFeedOpen] = useState(false);
+    const [activePane, setActivePane] = useState<"sidebar" | "articles">("articles");
+
 
     const watchingFeedIdsRef = useRef<Set<string>>(new Set())
     const watchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -255,17 +256,34 @@ function HomeComponent() {
     }
 
     useKeyboardShortcuts({
+        // move "left" => move to the sidebar or feed list
+        // TODO: I will have to move back to articles if I press "S" (to switch to starred articles)
+        "h": () => setActivePane("sidebar"),
+
+        // move "right" => move to the articles
+        "l": () => setActivePane("articles"),
+
         // move one article "down"
         "j": () => {
-            if (!articles?.length) return;
-            const next = Math.min((selectedIndex === -1 ? 0 : selectedIndex + 1), articles.length - 1);
-            handleArticleNavigate(articles[next]); // <- do not read, only navigate
+            if (activePane === "sidebar") {
+                console.log("inside the sidebar...")
+            } else {
+                if (!articles?.length) return;
+                const next = Math.min((selectedIndex === -1 ? 0 : selectedIndex + 1), articles.length - 1);
+                handleArticleNavigate(articles[next]); // <- do not read, only navigate
+            }
         },
+
         // move one article "up"
         "k": () => {
-            if (!articles?.length || selectedIndex <= 0) return;
-            handleArticleNavigate(articles[selectedIndex - 1]); // ← do not read, only navigate
+            if (activePane === "sidebar") {
+                console.log("inside the sidebar...")
+            } else {
+                if (!articles?.length || selectedIndex <= 0) return;
+                handleArticleNavigate(articles[selectedIndex - 1]); // ← do not read, only navigate
+            }
         },
+
         // this DOES NOT happen by default anymore, I need to press m for marking as read/unread. Toggle.
         "m": () => {
             if (!selectedArticle) {
@@ -281,27 +299,39 @@ function HomeComponent() {
             markArticleReadMutate(selectedArticle.id);
             return;
         },
+
         // "star" article
         "s": () => {
             if (!selectedArticle) return;
             starMutate({articleId: selectedArticle.id, currentlyStarred: selectedArticle.isStarred});
         },
+
         // refresh article
         "Shift+R": () => {
             handleRefresh();
         },
+
         "Shift+?": () => {
             setIsHelpOpen(prev => !prev)
         },
+
         "i": () => setIsAddFeedOpen(true),
-        // settings modal
-        // "Shift+?": () => {
-        //     navigate({
-        //         to: '/settings',
-        //         replace: true,
-        //         resetScroll: true
-        //     });
-        // },
+        "g g": () => {
+            if (activePane === "sidebar") {
+                console.log("inside the sidebar...")
+            } else {
+                if (!articles?.length) return;
+                handleArticleNavigate(articles[0]);
+            }
+        },
+        "Shift+g": () => {
+            if (activePane === "sidebar") {
+                console.log("inside the sidebar...")
+            } else {
+                if (!articles?.length) return;
+                handleArticleNavigate(articles[articles.length - 1]);
+            }
+        },
     });
 
 
