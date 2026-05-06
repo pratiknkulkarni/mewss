@@ -1,10 +1,10 @@
 import {useEffect, useRef} from "react";
 // this one works in dev
-import {tinykeys} from "tinykeys";
+// import {tinykeys} from "tinykeys";
 
 // this is required because of an issue in the library - ref -> https://github.com/jamiebuilds/tinykeys/issues/191#issuecomment-2796301360
 // this one works in build smh :(
-// import {tinykeys} from "../../node_modules/tinykeys/dist/tinykeys.js";
+import {tinykeys} from "../../node_modules/tinykeys/dist/tinykeys.js";
 
 type ShortcutMap = Record<string, (event: KeyboardEvent) => void>;
 
