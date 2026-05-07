@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import {useFeeds} from "@/features/feeds/hooks/useFeeds"
 import {MoreHorizontal, Trash2, PencilIcon, RefreshCw, CheckCheckIcon} from "lucide-react"
-import {useState} from "react"
+import {useEffect, useRef, useState} from "react"
 import type {FeedItemProps, SidebarFeedListProps} from "@/types/props"
 import {useRefreshFeed} from "@/features/feeds/hooks/useRefreshFeed"
 import {useMarkAllRead} from "@/features/feeds/hooks/useMarkAllRead"
@@ -28,7 +28,17 @@ import type {Feed} from "@/types/api.ts";
 import {FeedModal} from "@/components/feed/feed-modal.tsx";
 import {safeHostname} from "@/lib/utils.ts";
 
-function FeedItem({id, url, title, status, isActive, onSelect, onEdit, unreadCount}: FeedItemProps) {
+function FeedItem({
+                      id,
+                      url,
+                      title,
+                      status,
+                      isActive,
+                      onSelect,
+                      onEdit,
+                      unreadCount,
+                      isKeyboardSelected
+                  }: FeedItemProps) {
     const [hovered, setHovered] = useState(false)
     const [menuOpen, setMenuOpen] = useState(false)
 
@@ -88,7 +98,7 @@ function FeedItem({id, url, title, status, isActive, onSelect, onEdit, unreadCou
                     hover:bg-accent/30 hover:text-foreground
                     ${isActive
                     ? "bg-accent/60 text-foreground font-medium"
-                    : "text-muted-foreground hover:bg-accent/30 hover:text-foreground"
+                    : isKeyboardSelected ? "bg-primary/10 text-foreground ring-1 ring-inset ring-primary/40" : "text-muted-foreground hover:bg-accent/30 hover:text-foreground"
                 }
                 `}
             >
@@ -181,9 +191,25 @@ function FeedItem({id, url, title, status, isActive, onSelect, onEdit, unreadCou
     )
 }
 
-export function SidebarFeedList({selectedFeedId, onFeedSelect}: SidebarFeedListProps) {
+export function SidebarFeedList({
+                                    selectedFeedId,
+                                    onFeedSelect,
+                                    keyboardSelectedIndex = -1,
+                                    isKeyboardFocused = false
+                                }: SidebarFeedListProps) {
     const {data: feeds, isLoading} = useFeeds()
     const [editingFeed, setEditingFeed] = useState<Feed | null>(null);
+
+    const itemRefs = useRef<(HTMLDivElement | null)[]>([])
+
+    useEffect(() => {
+        if (keyboardSelectedIndex >= 0 && itemRefs.current[keyboardSelectedIndex]) {
+            itemRefs.current[keyboardSelectedIndex]?.scrollIntoView({
+                block: "nearest",
+                behavior: "smooth",
+            })
+        }
+    }, [keyboardSelectedIndex])
 
     return (
         <SidebarContent className="flex flex-col flex-1 min-h-0 overflow-hidden px-0">
@@ -194,7 +220,9 @@ export function SidebarFeedList({selectedFeedId, onFeedSelect}: SidebarFeedListP
                     text-[10px] uppercase tracking-[0.2em] font-semibold
                     text-muted-foreground/60
                 ">
-                    Feeds
+                    Feeds {isKeyboardFocused ? (
+                    <span className="ml-1.5 text-primary/70">·</span>
+                ) : null}
                 </SidebarGroupLabel>
 
                 <SidebarGroupContent className="flex flex-col flex-1 min-h-0">
@@ -215,18 +243,23 @@ export function SidebarFeedList({selectedFeedId, onFeedSelect}: SidebarFeedListP
                                 </p>
                             )}
 
-                            {feeds?.map((feed) => (
-                                <FeedItem
-                                    key={feed.id}
-                                    id={feed.id}
-                                    url={feed.url}
-                                    title={feed.title}
-                                    status={feed?.status}
-                                    isActive={selectedFeedId === feed.id}
-                                    onSelect={() => onFeedSelect(feed.id)}
-                                    onEdit={() => setEditingFeed(feed)}
-                                    unreadCount={feed.unreadCount}
-                                />
+                            {feeds?.map((feed, index) => (
+                                <div key={feed.id} ref={(el) => {
+                                    itemRefs.current[index] = el
+                                }}>
+                                    <FeedItem
+                                        key={feed.id}
+                                        id={feed.id}
+                                        url={feed.url}
+                                        title={feed.title}
+                                        status={feed?.status}
+                                        isActive={selectedFeedId === feed.id}
+                                        onSelect={() => onFeedSelect(feed.id)}
+                                        onEdit={() => setEditingFeed(feed)}
+                                        unreadCount={feed.unreadCount}
+                                        isKeyboardSelected={index === keyboardSelectedIndex}
+                                    />
+                                </div>
                             ))}
 
                         </SidebarMenu>

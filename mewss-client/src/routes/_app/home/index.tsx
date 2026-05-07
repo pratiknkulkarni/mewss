@@ -57,8 +57,10 @@ function HomeComponent() {
 
     const [isHelpOpen, setIsHelpOpen] = useState(false);
     const [isAddFeedOpen, setIsAddFeedOpen] = useState(false);
-    const [activePane, setActivePane] = useState<"sidebar" | "articles">("articles");
 
+    // default should not show the "highlight" unless they starrt using keybindings
+    const [activePane, setActivePane] = useState<"sidebar" | "articles" | "default">("default");
+    const [sidebarSelectedIndex, setSidebarSelectedIndex] = useState<number>(-1)
 
     const watchingFeedIdsRef = useRef<Set<string>>(new Set())
     const watchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -266,7 +268,11 @@ function HomeComponent() {
         // move one article "down"
         "j": () => {
             if (activePane === "sidebar") {
-                console.log("inside the sidebar...")
+                const feedCount = feeds?.length ?? 0
+                if (feedCount === 0) return
+                setSidebarSelectedIndex(prev =>
+                    prev === -1 ? 0 : Math.min(prev + 1, feedCount - 1)
+                )
             } else {
                 if (!articles?.length) return;
                 const next = Math.min((selectedIndex === -1 ? 0 : selectedIndex + 1), articles.length - 1);
@@ -277,7 +283,7 @@ function HomeComponent() {
         // move one article "up"
         "k": () => {
             if (activePane === "sidebar") {
-                console.log("inside the sidebar...")
+                setSidebarSelectedIndex(prev => Math.max(prev - 1, 0))
             } else {
                 if (!articles?.length || selectedIndex <= 0) return;
                 handleArticleNavigate(articles[selectedIndex - 1]); // ← do not read, only navigate
@@ -287,15 +293,12 @@ function HomeComponent() {
         // this DOES NOT happen by default anymore, I need to press m for marking as read/unread. Toggle.
         "m": () => {
             if (!selectedArticle) {
-                console.log("nothing selected")
                 return;
             }
             if (selectedArticle?.isRead) {
-                // console.log(`marking ${selectedArticle.id} | ${selectedArticle?.title} as unread}`)
                 markArticleUnreadMutate(selectedArticle.id);
                 return;
             }
-            console.log(`marking ${selectedArticle.id} |  ${selectedArticle?.title} as read}`)
             markArticleReadMutate(selectedArticle.id);
             return;
         },
@@ -306,36 +309,95 @@ function HomeComponent() {
             starMutate({articleId: selectedArticle.id, currentlyStarred: selectedArticle.isStarred});
         },
 
+        // list all starred articles
+        "Shift+s": () => {
+            handleFeedSelect("__starred__")
+            setActivePane("articles")
+        },
+
         // refresh article
         "Shift+R": () => {
             handleRefresh();
         },
 
+        // toggle help
         "Shift+?": () => {
             setIsHelpOpen(prev => !prev)
         },
 
+        // insert a new feed
         "i": () => setIsAddFeedOpen(true),
+
+        // scroll to first item
         "g g": () => {
             if (activePane === "sidebar") {
-                console.log("inside the sidebar...")
+                if (feeds?.length) setSidebarSelectedIndex(0)
             } else {
                 if (!articles?.length) return;
                 handleArticleNavigate(articles[0]);
             }
         },
+
+        // scroll to last item
         "Shift+g": () => {
             if (activePane === "sidebar") {
-                console.log("inside the sidebar...")
+                const feedCount = feeds?.length ?? 0
+                if (feedCount > 0) setSidebarSelectedIndex(feedCount - 1)
             } else {
                 if (!articles?.length) return;
                 handleArticleNavigate(articles[articles.length - 1]);
             }
         },
+
+        // pagination next page
+        "]": () => {
+            if (data?.pagination) {
+                const totalPages = Math.ceil(data.pagination.total / limit)
+                if (page < totalPages) handlePageChange(page + 1)
+            }
+        },
+
+        // pagination previous page
+        "[": () => {
+            if (page > 1) handlePageChange(page - 1)
+        },
+
+        // open article in a new tab
+        "o": () => {
+            if (selectedArticle?.url) {
+                window.open(selectedArticle?.url, '_blank')
+            }
+        },
+
+        // open article in new tab AND mark article as read
+        "Shift+o": () => {
+            if (selectedArticle?.url) {
+                window.open(selectedArticle?.url, '_blank')
+                markArticleReadMutate(selectedArticle.id);
+            }
+        },
+
+        // open an article in a new tab / select a feed
+        "Enter": () => {
+            if (activePane === 'sidebar') {
+                if (sidebarSelectedIndex >= 0 && feeds?.[sidebarSelectedIndex]) {
+                    handleFeedSelect(feeds[sidebarSelectedIndex].id)
+                    setActivePane('articles')
+                }
+            } else {
+                if (selectedArticle?.url) window.open(selectedArticle.url, '_blank')
+            }
+        },
+
+        // list all articles, the default home page
+        "Shift+a": () => {
+            handleFeedSelect(null);
+            setActivePane("articles");
+            setSidebarSelectedIndex(-1);
+        },
     });
 
 
-    // I have yet to test this out
     if (error) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-card text-destructive text-sm">
@@ -352,6 +414,8 @@ function HomeComponent() {
                             unreadCount={data?.pagination?.total}
                             onFeedCreated={handleFeedCreated}
                             onAddFeedClick={() => setIsAddFeedOpen(true)}
+                            isKeyboardFocused={activePane === "sidebar"}
+                            keyboardSelectedIndex={sidebarSelectedIndex}
                 />
                 <ArticleListPanel
                     articles={articles}
@@ -360,7 +424,6 @@ function HomeComponent() {
                     selectedArticleId={articleId}
                     onArticleSelect={handleArticleSelect}
                     unreadOnly={tab === "unread"}
-                    // onUnreadToggle={handleUnreadToggle}
                     handlePageChange={handlePageChange}
                     currentPage={page}
                     currentLimit={limit}
@@ -375,6 +438,7 @@ function HomeComponent() {
                     onStar={handleStar}
                     isStarredInbox={isStarredInbox}
                     isWatchingRefresh={isWatchingRefresh}
+                    isKeyboardFocused={activePane === "articles"}
                 />
 
                 <div className={`flex-1 overflow-hidden ${articleId ? 'flex' : 'hidden md:flex'}`}>

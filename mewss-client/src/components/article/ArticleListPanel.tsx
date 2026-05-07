@@ -30,6 +30,7 @@ export default function ArticleListPanel({
                                              onStar,
                                              isStarredInbox,
                                              onMarkAllRead: markAllRead,
+                                             isKeyboardFocused = false,
                                          }: ArticleListPanelProps) {
     const showSkeletons = isLoading || (isWatchingRefresh && !articles?.length);
 
@@ -87,7 +88,11 @@ export default function ArticleListPanel({
 
     return (
         <div
-            className={`flex-none w-full md:w-95 bg-card border-r border-border flex flex-col h-full overflow-hidden ${className ?? ""}`}>
+            className={`relative flex-none w-full md:w-95 bg-card border-r border-border flex flex-col h-full overflow-hidden ${className ?? ""}`}>
+
+            {isKeyboardFocused && (
+                <div className="absolute top-0 inset-x-0 h-0.5 bg-primary z-20 rounded-t lg:block hidden"/>
+            )}
 
             <Tabs value={activeTab} onValueChange={onTabChange} className="flex flex-col flex-1 min-h-0">
                 <header

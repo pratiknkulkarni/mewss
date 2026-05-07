@@ -40,6 +40,7 @@ export type ArticleListPanelProps = React.HTMLAttributes<HTMLDivElement> & {
     onMarkAllRead: () => void;
     onStar: (articleId: string, currentlyStarred: boolean) => void;
     isStarredInbox: boolean;
+    isKeyboardFocused?: boolean
 }
 
 export interface AppSidebarProps {
@@ -48,6 +49,8 @@ export interface AppSidebarProps {
     unreadCount?: number
     onFeedCreated?: (feedId: string) => void;
     onAddFeedClick?: () => void;
+    isKeyboardFocused?: boolean
+    keyboardSelectedIndex?: number;
 }
 
 export interface FeedModalProps {
@@ -74,6 +77,8 @@ export interface FeedModalFormProps {
 export interface SidebarFeedListProps {
     selectedFeedId: string | null
     onFeedSelect: (feedId: string | null) => void
+    keyboardSelectedIndex?: number;
+    isKeyboardFocused?: boolean;
 }
 
 export interface FeedItemProps {
@@ -85,6 +90,7 @@ export interface FeedItemProps {
     onSelect: () => void
     onEdit: () => void
     unreadCount?: number
+    isKeyboardSelected?: boolean;
 }
 
 export interface FeedModalHeaderProps {

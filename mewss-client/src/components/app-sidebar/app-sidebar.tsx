@@ -6,7 +6,14 @@ import {SidebarFeedList} from './sidebar-feed-list.tsx';
 import {SidebarUser} from './sidebar-user.tsx';
 import {useNavigate, useSearch} from "@tanstack/react-router";
 
-export function AppSidebar({selectedFeedId, onFeedSelect, onFeedCreated, onAddFeedClick}: AppSidebarProps) {
+export function AppSidebar({
+                               selectedFeedId,
+                               onFeedSelect,
+                               onFeedCreated,
+                               onAddFeedClick,
+                               isKeyboardFocused,
+                               keyboardSelectedIndex = -1
+                           }: AppSidebarProps) {
     const navigate = useNavigate();
     const search = useSearch({strict: false});
 
@@ -33,12 +40,16 @@ export function AppSidebar({selectedFeedId, onFeedSelect, onFeedCreated, onAddFe
 
 
     return (
-        <div className={"flex"}>
+        <div className={"flex relative"}>
+            {isKeyboardFocused && (
+                <div className="absolute top-0 inset-x-0 h-0.5 bg-primary z-20 rounded-t"/>
+            )}
             <Sidebar className="border-r border-sidebar-border bg-sidebar flex flex-col h-full">
                 <SidebarHeader/>
                 <SidebarMenu selectedFeedId={resolvedFeedId} onFeedSelect={handleFeedSelect}
                              onFeedCreated={handleFeedCreated} onAddFeedClick={handleAddFeedClick}/>
-                <SidebarFeedList selectedFeedId={resolvedFeedId} onFeedSelect={handleFeedSelect}/>
+                <SidebarFeedList selectedFeedId={resolvedFeedId} onFeedSelect={handleFeedSelect}
+                                 keyboardSelectedIndex={keyboardSelectedIndex} isKeyboardFocused={isKeyboardFocused}/>
                 <SidebarUser/>
             </Sidebar>
         </div>
