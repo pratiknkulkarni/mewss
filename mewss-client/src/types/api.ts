@@ -126,9 +126,9 @@ export interface FeedResponse {
 export interface CreateFeedInput {
     /** The valid URL of the RSS or Atom feed. */
     url: string;
-    /** 
-     * The interval string (e.g., "30m", "1h") representing how often 
-     * the system should fetch new articles. 
+    /**
+     * The interval string (e.g., "30m", "1h") representing how often
+     * the system should fetch new articles.
      */
     refreshInterval: number;
 }
@@ -138,4 +138,17 @@ export interface UpdateFeedInput {
     refreshInterval?: number
     /** Toggle the feed between active and paused states. */
     status?: 'active' | 'paused'
+}
+
+
+export interface Settings {
+    userId: string;
+    theme: "dark" | "light" | "system";
+    itemsPerPage: 10 | 25 | 50 | 100;
+    /** null means never expire. 720 = 30 days, 1440 = 60 days, 2160 = 90 days */
+    articleRetentionHours: 720 | 1440 | 2160 | null;
+}
+
+export interface SettingsResponse {
+    settings: Settings;
 }
