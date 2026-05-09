@@ -395,6 +395,13 @@ function HomeComponent() {
             setActivePane("articles");
             setSidebarSelectedIndex(-1);
         },
+
+        // mark all feeds as read / mark feed as read
+        "Shift+m": () => {
+            handleMarkAllRead();
+            setActivePane("articles");
+            setSidebarSelectedIndex(-1);
+        }
     });
 
 
