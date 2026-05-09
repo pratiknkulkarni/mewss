@@ -3,6 +3,7 @@ import {auth} from "./lib/auth.js";
 import feedRouter from "./routes/feed.js";
 import articleRouter from "./routes/article.js";
 import dataRouter from "./routes/data.js";
+import settingsRouter from "./routes/settings.js";
 import {createLogger} from "./lib/logger.js";
 import {AppError} from "./errors/errors.js";
 import {cors} from 'hono/cors';
@@ -48,4 +49,5 @@ app.on(["POST", "GET"], "/api/auth/*", (c) => {
 app.route("/api/feeds", feedRouter);
 app.route("/api", articleRouter);
 app.route("/api", dataRouter);
+app.route("/api/settings", settingsRouter);
 // app.route("/api/health", healthRouter);
