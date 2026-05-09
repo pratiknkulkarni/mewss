@@ -1,3 +1,4 @@
+CREATE TABLE settings
 (
     user_id                 text PRIMARY KEY,
 

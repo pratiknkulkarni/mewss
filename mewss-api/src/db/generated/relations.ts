@@ -1,29 +1,30 @@
 import { relations } from "drizzle-orm/relations";
-import { user, session, account, feed, article, userArticleStates } from "./schema.js";
+import { user, session, account, feed, article, settings, userArticleStates } from "./schema";
 
-export const sessionRelations = relations(session, ({ one }) => ({
+export const sessionRelations = relations(session, ({one}) => ({
 	user: one(user, {
 		fields: [session.userId],
 		references: [user.id]
 	}),
 }));
 
-export const userRelations = relations(user, ({ many }) => ({
+export const userRelations = relations(user, ({many}) => ({
 	sessions: many(session),
 	accounts: many(account),
 	articles: many(article),
 	feeds: many(feed),
+	settings: many(settings),
 	userArticleStates: many(userArticleStates),
 }));
 
-export const accountRelations = relations(account, ({ one }) => ({
+export const accountRelations = relations(account, ({one}) => ({
 	user: one(user, {
 		fields: [account.userId],
 		references: [user.id]
 	}),
 }));
 
-export const articleRelations = relations(article, ({ one, many }) => ({
+export const articleRelations = relations(article, ({one, many}) => ({
 	feed: one(feed, {
 		fields: [article.feedId],
 		references: [feed.id]
@@ -35,7 +36,7 @@ export const articleRelations = relations(article, ({ one, many }) => ({
 	userArticleStates: many(userArticleStates),
 }));
 
-export const feedRelations = relations(feed, ({ one, many }) => ({
+export const feedRelations = relations(feed, ({one, many}) => ({
 	articles: many(article),
 	user: one(user, {
 		fields: [feed.userId],
@@ -43,7 +44,14 @@ export const feedRelations = relations(feed, ({ one, many }) => ({
 	}),
 }));
 
-export const userArticleStatesRelations = relations(userArticleStates, ({ one }) => ({
+export const settingsRelations = relations(settings, ({one}) => ({
+	user: one(user, {
+		fields: [settings.userId],
+		references: [user.id]
+	}),
+}));
+
+export const userArticleStatesRelations = relations(userArticleStates, ({one}) => ({
 	user: one(user, {
 		fields: [userArticleStates.userId],
 		references: [user.id]
