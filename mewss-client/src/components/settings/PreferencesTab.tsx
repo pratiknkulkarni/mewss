@@ -22,11 +22,12 @@ const ITEMS_PER_PAGE_OPTIONS: { value: ItemsPerPage; label: string }[] = [
     {value: 100, label: "100"},
 ];
 
-const RETENTION_OPTIONS: { value: RetentionHours; label: string }[] = [
-    {value: 720, label: "30 days"},
-    {value: 1440, label: "60 days"},
-    {value: 2160, label: "90 days"},
-    {value: null, label: "Never"},
+
+const RETENTION_OPTIONS: { value: RetentionHours; label: string, default: boolean }[] = [
+    {value: 720, label: "30 days", default: false},
+    {value: 1440, label: "60 days", default: false},
+    {value: 2160, label: "90 days", default: true},
+    {value: null, label: "Never", default: false},
 ];
 
 function SettingRow({label, description, children}: {
@@ -83,7 +84,7 @@ export function PreferencesTab() {
 
     function save<K extends keyof Settings>(key: K, value: Settings[K]) {
         mutate(
-            {[key]: value} as any,
+            {[key]: value} as Pick<Settings, K>,
             {
                 onSuccess: () => toast.success("Preference saved"),
                 onError: () => toast.error("Failed to save preference"),
@@ -139,21 +140,54 @@ export function PreferencesTab() {
                     </div>
                 </section>
 
-                <section className="space-y-1">
-                    <h2 className="text-xs font-mono font-medium tracking-[0.2em] text-muted-foreground uppercase mb-4">
-                        Data
+                <section className="space-y-4">
+                    <h2 className="text-xs font-mono font-medium tracking-[0.2em] text-primary uppercase">
+                        Retention
                     </h2>
-                    <div className="bg-card border border-border rounded-lg px-4 divide-y divide-border">
-                        <SettingRow
-                            label="Article retention"
-                            description="How long to keep read articles. Starred articles are never deleted."
-                        >
-                            <SelectInput
-                                value={settings.articleRetentionHours}
-                                options={RETENTION_OPTIONS}
-                                onChange={(v) => save("articleRetentionHours", v)}
-                            />
-                        </SettingRow>
+
+                    <div className="bg-card border border-border rounded-lg p-4 sm:p-6 space-y-6">
+                        <div className="space-y-1">
+                            <h3 className="text-sm font-medium text-foreground">Retention Policy</h3>
+                            <p className="text-sm text-muted-foreground">
+                                Manage how long unread articles are kept before being automatically cleared to save
+                                space.
+                            </p>
+                        </div>
+
+                        <div className="space-y-4 pt-2">
+                            <div className="text-sm font-medium text-foreground">Auto-delete unread articles after:
+                            </div>
+                            <div className="space-y-3">
+                                {RETENTION_OPTIONS.map((option) => (
+                                    <button
+                                        key={option.value}
+                                        type="button"
+                                        onClick={() => save("articleRetentionHours", option.value)}
+                                        className="flex items-center gap-3 w-full text-left group"
+                                    >
+                                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-colors
+                    ${settings.articleRetentionHours === option.value
+                                            ? 'border-primary'
+                                            : 'border-muted-foreground group-hover:border-foreground'}`}
+                                        >
+                                            {settings.articleRetentionHours === option.value && (
+                                                <div className="w-2 h-2 rounded-full bg-primary"/>
+                                            )}
+                                        </div>
+
+                                        <div className="text-sm text-foreground flex items-center gap-2">
+                                            {option.label}
+                                            {option.default && (
+                                                <span
+                                                    className="text-[10px] uppercase tracking-wider text-muted-foreground font-mono">
+                        (Default)
+                      </span>
+                                            )}
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
                     </div>
                 </section>
 

@@ -6,7 +6,6 @@ import {useExportOpml} from "@/features/data/hooks/useExportOPML.ts";
 import {toast} from "sonner";
 
 export function DataStorageTab() {
-    const [retentionPeriod, setRetentionPeriod] = useState("90");
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
@@ -51,13 +50,6 @@ export function DataStorageTab() {
             }
         });
     };
-
-    const retentionOptions = [
-        {value: "30", label: "30 days"},
-        {value: "60", label: "60 days"},
-        {value: "90", label: "90 days", isDefault: true},
-        {value: "never", label: "Never"},
-    ];
 
     return (
         <TabShell
@@ -170,40 +162,6 @@ export function DataStorageTab() {
                             </p>
                         </div>
 
-                        <div className="space-y-4 pt-2">
-                            <div className="text-sm font-medium text-foreground">Auto-delete unread articles after:
-                            </div>
-                            <div className="space-y-3">
-                                {retentionOptions.map((option) => (
-                                    <button
-                                        key={option.value}
-                                        type="button"
-                                        onClick={() => setRetentionPeriod(option.value)}
-                                        className="flex items-center gap-3 w-full text-left group"
-                                    >
-                                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-colors
-                    ${retentionPeriod === option.value
-                                            ? 'border-primary'
-                                            : 'border-muted-foreground group-hover:border-foreground'}`}
-                                        >
-                                            {retentionPeriod === option.value && (
-                                                <div className="w-2 h-2 rounded-full bg-primary"/>
-                                            )}
-                                        </div>
-
-                                        <div className="text-sm text-foreground flex items-center gap-2">
-                                            {option.label}
-                                            {option.isDefault && (
-                                                <span
-                                                    className="text-[10px] uppercase tracking-wider text-muted-foreground font-mono">
-                        (Default)
-                      </span>
-                                            )}
-                                        </div>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
                     </div>
                 </section>
             </div>
