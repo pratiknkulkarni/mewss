@@ -5,12 +5,12 @@ import {useTheme} from "next-themes"
 import {cn} from "@/lib/utils"
 import {useEffect, useState} from "react"
 
-export function ModeToggle({defaultTheme}: { defaultTheme: "light" | "dark" | "system" }) {
+// DEPRECATED - not using anymore
+export function ModeToggle() {
     const {theme, setTheme} = useTheme()
     const [mounted, setMounted] = useState(false)
 
     useEffect(() => {
-        setTheme(defaultTheme);
         setMounted(true)
     }, []);
 

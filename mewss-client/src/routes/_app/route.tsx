@@ -2,7 +2,22 @@ import {createFileRoute, Outlet, redirect} from '@tanstack/react-router'
 import {authClient} from "@/features/auth/api/auth-client.ts";
 import {authKeys} from '@/lib/query-keys';
 import {ConfirmDialogProvider} from "@/components/ui/confirm-dialog-context.tsx";
-import {SettingsProvider} from "@/contexts/SettingsContext.tsx";
+import {SettingsProvider, useSettingsContext} from "@/contexts/SettingsContext.tsx";
+import {useEffect} from "react";
+import {useTheme} from "next-themes";
+
+function ThemeSync() {
+    const {settings, isLoading} = useSettingsContext();
+    const {setTheme} = useTheme();
+
+    useEffect(() => {
+        if (!isLoading) {
+            setTheme(settings.theme);
+        }
+    }, [settings.theme, isLoading]);
+
+    return null;
+}
 
 export const Route = createFileRoute('/_app')({
     component: RouteComponent,
@@ -34,6 +49,7 @@ export const Route = createFileRoute('/_app')({
 function RouteComponent() {
     return (<div>
         <SettingsProvider>
+            <ThemeSync/>
             <ConfirmDialogProvider>
                 <Outlet/>
             </ConfirmDialogProvider>
