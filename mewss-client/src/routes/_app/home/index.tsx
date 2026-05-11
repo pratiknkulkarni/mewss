@@ -18,6 +18,7 @@ import {useKeyboardShortcuts} from "@/hooks/use-keyboard-shortcuts.ts";
 import {useMarkArticleUnread} from "@/features/articles/hooks/useMarkArticleUnread.ts";
 import {KeyboardHelpOverlay} from "@/components/settings/KeyboardHelpOverlay";
 import {FeedModal} from "@/components/feed/feed-modal.tsx";
+import {useSettingsContext} from "@/contexts/SettingsContext.tsx";
 
 export const Route = createFileRoute('/_app/home/')({
     validateSearch: (search: Record<string, unknown>) => {
@@ -27,7 +28,7 @@ export const Route = createFileRoute('/_app/home/')({
             feedId: search.feedId as string | undefined,
             tab: search.tab as 'unread' | 'all' | undefined,
             page: search.page ? Number(search.page) : undefined,
-            limit: search.limit ? Number(search.limit) : undefined,
+            // limit: search.limit ? Number(search.limit) : undefined,
         }
     },
     component: HomeComponent,
@@ -45,7 +46,8 @@ const WATCH_TIMEOUT_MS = 120_000 // and finally stop after 2 mins
 
 function HomeComponent() {
     //TODO: I am hardcoding the limit to 20 for now. I MAY add it later on, but this works fine for now.
-    const {articleId, feedId, tab = "unread", page = 1, limit = 20} = Route.useSearch();
+    const {articleId, feedId, tab = "unread", page = 1} = Route.useSearch();
+    const {settings} = useSettingsContext();
 
     const navigate = Route.useNavigate()
     const queryClient = useQueryClient()
@@ -98,7 +100,7 @@ function HomeComponent() {
 
     const {data, isLoading, error} = useArticles({
         page,
-        limit,
+        limit: settings?.itemsPerPage,
         unread: isStarredInbox ? undefined : tab === "unread",
         feedId: realFeedId,
         starred: isStarredInbox ? true : undefined,
@@ -259,7 +261,6 @@ function HomeComponent() {
 
     useKeyboardShortcuts({
         // move "left" => move to the sidebar or feed list
-        // TODO: I will have to move back to articles if I press "S" (to switch to starred articles)
         "h": () => setActivePane("sidebar"),
 
         // move "right" => move to the articles
@@ -352,7 +353,7 @@ function HomeComponent() {
         // pagination next page
         "]": () => {
             if (data?.pagination) {
-                const totalPages = Math.ceil(data.pagination.total / limit)
+                const totalPages = Math.ceil(data.pagination.total / settings?.itemsPerPage)
                 if (page < totalPages) handlePageChange(page + 1)
             }
         },
@@ -395,6 +396,13 @@ function HomeComponent() {
             setActivePane("articles");
             setSidebarSelectedIndex(-1);
         },
+
+        // mark all feeds as read / mark feed as read
+        "Shift+m": () => {
+            handleMarkAllRead();
+            setActivePane("articles");
+            setSidebarSelectedIndex(-1);
+        }
     });
 
 
@@ -426,7 +434,7 @@ function HomeComponent() {
                     unreadOnly={tab === "unread"}
                     handlePageChange={handlePageChange}
                     currentPage={page}
-                    currentLimit={limit}
+                    currentLimit={settings?.itemsPerPage}
                     pagination={data?.pagination}
                     className={`w-full md:w-80 lg:w-96 ${articleId ? 'hidden md:flex' : 'flex'} flex-col`}
                     activeTab={tab}

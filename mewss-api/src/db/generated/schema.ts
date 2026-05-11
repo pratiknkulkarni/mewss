@@ -1,4 +1,4 @@
-import { pgTable, unique, text, boolean, timestamp, foreignKey, uuid, varchar, uniqueIndex, index, bigint, integer, primaryKey } from "drizzle-orm/pg-core"
+import { pgTable, unique, text, boolean, timestamp, foreignKey, uuid, varchar, uniqueIndex, index, bigint, integer, check, primaryKey } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 
@@ -123,6 +123,22 @@ export const schemaMigrations = pgTable("schema_migrations", {
 	version: bigint({ mode: "number" }).primaryKey().notNull(),
 	dirty: boolean().notNull(),
 });
+
+export const settings = pgTable("settings", {
+	userId: text("user_id").primaryKey().notNull(),
+	theme: varchar({ length: 10 }).default('system').notNull(),
+	itemsPerPage: integer("items_per_page").default(25).notNull(),
+	articleRetentionHours: integer("article_retention_hours"),
+}, (table) => [
+	foreignKey({
+			columns: [table.userId],
+			foreignColumns: [user.id],
+			name: "settings_user_id_fkey"
+		}).onDelete("cascade"),
+	check("settings_theme_check", sql`(theme)::text = ANY ((ARRAY['dark'::character varying, 'light'::character varying, 'system'::character varying])::text[])`),
+	check("settings_items_per_page_check", sql`items_per_page = ANY (ARRAY[10, 25, 50, 100])`),
+	check("settings_article_retention_hours_check", sql`article_retention_hours = ANY (ARRAY[720, 1440, 2160])`),
+]);
 
 export const userArticleStates = pgTable("user_article_states", {
 	userId: text("user_id").notNull(),

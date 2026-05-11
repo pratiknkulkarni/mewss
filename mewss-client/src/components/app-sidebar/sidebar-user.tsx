@@ -1,8 +1,8 @@
-import { authClient } from "@/features/auth/api/auth-client";
-import { NavUser } from "../ui/nav-user";
+import {authClient} from "@/features/auth/api/auth-client";
+import {NavUser} from "@/components/ui/nav-user.tsx";
 
 export function SidebarUser() {
-    const { data } = authClient.useSession();
+    const {data} = authClient.useSession();
 
     const user: {
         name: string
@@ -14,7 +14,7 @@ export function SidebarUser() {
 
     return (
         <div className="flex-none relative z-10 bg-card">
-            <NavUser user={user} />
+            <NavUser user={user}/>
         </div>
     )
 }

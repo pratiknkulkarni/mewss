@@ -145,7 +145,7 @@ export default function ArticleListPanel({
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                    {feedId ? 'Mark this feed as read' : 'Mark ALL feeds as read'}
+                                    {feedId ? 'Mark this feed as read' : "Mark ALL feeds as read (Shift+M)"}
                                 </TooltipContent>
                             </Tooltip>)}
                         </div>

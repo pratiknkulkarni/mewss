@@ -1,15 +1,17 @@
 import {useState} from "react";
 import {cn} from "@/lib/utils";
-import {User, Database, Keyboard} from "lucide-react";
+import {User, Database, Keyboard, Settings} from "lucide-react";
 import {AccountTab} from "@/components/settings/AccountTab.tsx";
 import {DataStorageTab} from "@/components/settings/DataStorageTab.tsx";
 import {KeyboardShortcutsTab} from "@/components/settings/KeyboardShortcutsTab.tsx";
 import {AppSidebar} from "@/components/app-sidebar/app-sidebar.tsx";
 import {SidebarTrigger} from "@/components/ui/sidebar.tsx";
+import {PreferencesTab} from "@/components/settings/PreferencesTab.tsx";
 
 const TABS = [
     {id: "account", label: "Account", icon: User},
     {id: "data", label: "Data & Storage", icon: Database},
+    {id: "preferences", label: "Preferences", icon: Settings},
     {id: "shortcuts", label: "Keyboard Shortcuts", icon: Keyboard},
 ] as const;
 
@@ -20,7 +22,7 @@ export default function SettingsPage() {
 
     return (
         <div className="flex h-screen w-full overflow-hidden bg-card text-foreground font-sans">
-            <AppSidebar />
+            <AppSidebar/>
             <div className="min-h-screen w-full flex flex-col md:flex-row bg-background text-foreground">
 
                 <div>
@@ -76,6 +78,7 @@ export default function SettingsPage() {
                     <div className="max-w-4xl mx-auto px-6 py-8 md:px-12 md:py-16">
                         {activeTab === "account" && <AccountTab/>}
                         {activeTab === "data" && <DataStorageTab/>}
+                        {activeTab === "preferences" && <PreferencesTab/>}
                         {activeTab === "shortcuts" && <KeyboardShortcutsTab/>}
                     </div>
                 </main>

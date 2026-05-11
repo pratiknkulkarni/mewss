@@ -50,6 +50,7 @@ func main() {
 
 	pool := worker.NewPool(cfg.WorkerCount, feedService, jobsChan)
 	scheduler := worker.NewScheduler(repo, jobsChan, cfg.PollInterval, cfg.StaleLockCutoff, cfg.WorkerCount)
+	retentionCleaner := worker.NewRetentionCleaner(repo)
 
 	apiServer := api.NewServer(cfg.APIPort, netFetcher, db)
 
@@ -57,6 +58,7 @@ func main() {
 	setupSignalHandler(cancel)
 
 	go scheduler.Start(ctx)
+	go retentionCleaner.Start(ctx)
 
 	pool.Start(ctx)
 

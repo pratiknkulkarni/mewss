@@ -23,3 +23,8 @@ export const feedKeys = {
     lists: () => [...feedKeys.all, 'list'] as const,
     list: (status?: string) => [...feedKeys.lists(), {status}] as const,
 };
+
+export const settingsKeys = {
+    all: ["settings"] as const,
+    detail: () => [...settingsKeys.all, "detail"] as const,
+};

@@ -3,7 +3,7 @@
 import {
     ChevronsUpDown,
     LogOut,
-    Settings, SunMoon
+    Settings
 } from "lucide-react"
 import {
     Avatar,
@@ -26,11 +26,10 @@ import {
 } from "@/components/ui/sidebar"
 import {useLogout} from "@/features/auth/hooks/useLogout"
 import generateAvatarIcon from "@/lib/generate-avatar-icon.ts";
-import {ModeToggle} from "@/components/theme-toggle.tsx";
 import {useNavigate} from "@tanstack/react-router"
 
 export function NavUser({
-                            user,
+                            user
                         }: {
     user: {
         name: string
@@ -97,14 +96,6 @@ export function NavUser({
                                     Settings
                                 </DropdownMenuItem>
                             </DropdownMenuGroup>
-
-                            <DropdownMenuSeparator/>
-
-                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}
-                                              className="cursor-pointer">
-                                <SunMoon/>
-                                <ModeToggle/>
-                            </DropdownMenuItem>
 
                             <DropdownMenuSeparator/>
 
