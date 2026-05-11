@@ -12,10 +12,8 @@ func TestDomainLimiter_Concurrency(t *testing.T) {
 	var wg sync.WaitGroup
 
 	// 50 concurrent workers hitting ONE domain
-	for i := 0; i < 50; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range 50 {
+		wg.Go(func() {
 			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 			defer cancel()
 
@@ -23,13 +21,11 @@ func TestDomainLimiter_Concurrency(t *testing.T) {
 			if err != nil {
 				t.Errorf("limiter wait failed: %v", err)
 			}
-		}()
+		})
 	}
 
-	for i := 0; i < 50; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range 50 {
+		wg.Go(func() {
 			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 			defer cancel()
 
@@ -37,7 +33,7 @@ func TestDomainLimiter_Concurrency(t *testing.T) {
 			if err != nil {
 				t.Errorf("limiter wait failed: %v", err)
 			}
-		}()
+		})
 	}
 
 	wg.Wait()

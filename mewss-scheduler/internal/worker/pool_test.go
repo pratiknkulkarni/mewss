@@ -75,8 +75,7 @@ func waitFor(t *testing.T, label string, condition func() bool) {
 func TestPool_HappyPath(t *testing.T) {
 	proc := &mockProcessor{}
 	jobs := make(chan model.Job, 1)
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	pool := newTestPool(1, proc, jobs)
 	pool.Start(ctx)
@@ -99,8 +98,7 @@ func TestPool_HappyPath(t *testing.T) {
 func TestPool_RateLimiterImmediateError_ReleasesLock(t *testing.T) {
 	proc := &mockProcessor{}
 	jobs := make(chan model.Job, 1)
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	pool := newTestPool(1, proc, jobs)
 	// burst=0: rate.Wait(n=1) returns an error immediately because n > burst.
@@ -129,8 +127,7 @@ func TestPool_RateLimiterImmediateError_ReleasesLock(t *testing.T) {
 func TestPool_RateLimiterTimeout_ReleasesLock(t *testing.T) {
 	proc := &mockProcessor{}
 	jobs := make(chan model.Job, 2)
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	pool := newTestPool(1, proc, jobs)
 	// burst=1, rate=0: first Wait succeeds (burst token), second blocks forever.
@@ -153,8 +150,7 @@ func TestPool_RateLimiterTimeout_ReleasesLock(t *testing.T) {
 func TestPool_ChannelClosed_ExitsCleanly(t *testing.T) {
 	proc := &mockProcessor{}
 	jobs := make(chan model.Job)
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	pool := newTestPool(3, proc, jobs)
 	pool.Start(ctx)
@@ -208,13 +204,12 @@ func TestPool_MultipleWorkers_AllJobsProcessed(t *testing.T) {
 
 	proc := &mockProcessor{}
 	jobs := make(chan model.Job, numJobs)
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	pool := newTestPool(numWorkers, proc, jobs)
 	pool.Start(ctx)
 
-	for i := 0; i < numJobs; i++ {
+	for i := range numJobs {
 		jobs <- model.Job{Feed: model.Feed{
 			ID:  fmt.Sprintf("feed-%d", i),
 			URL: fmt.Sprintf("https://host%d.example.com/rss", i), // unique domain per job — no rate limiting

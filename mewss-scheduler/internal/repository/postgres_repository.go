@@ -189,7 +189,7 @@ func (r *PostgresFeedRepository) SaveArticles(ctx context.Context, articles []mo
 
 	columnsPerArticle := 10
 	valueStrings := make([]string, 0, len(articles))
-	valueArgs := make([]interface{}, 0, len(articles)*columnsPerArticle)
+	valueArgs := make([]any, 0, len(articles)*columnsPerArticle)
 
 	paramIndex := 1
 	for _, a := range articles {
@@ -238,9 +238,6 @@ func (r *PostgresFeedRepository) DeleteExpiredArticles(ctx context.Context) (int
 	if err != nil {
 		return 0, fmt.Errorf("DeleteExpiredArticles: %w", err)
 	}
-
-	fmt.Println("deleted articles")
-	fmt.Println(result.RowsAffected())
 
 	return result.RowsAffected()
 }
