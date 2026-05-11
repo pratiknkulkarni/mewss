@@ -30,12 +30,13 @@ import {ModeToggle} from "@/components/theme-toggle.tsx";
 import {useNavigate} from "@tanstack/react-router"
 
 export function NavUser({
-                            user,
+                            user, defaultTheme
                         }: {
     user: {
         name: string
         email: string
-    }
+    },
+    defaultTheme: "light" | "dark" | "system"
 }) {
     const {isMobile} = useSidebar();
     const {mutate: logout, isPending} = useLogout();
@@ -103,7 +104,7 @@ export function NavUser({
                             <DropdownMenuItem onSelect={(e) => e.preventDefault()}
                                               className="cursor-pointer">
                                 <SunMoon/>
-                                <ModeToggle/>
+                                <ModeToggle defaultTheme={defaultTheme}/>
                             </DropdownMenuItem>
 
                             <DropdownMenuSeparator/>

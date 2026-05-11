@@ -217,3 +217,30 @@ func (r *PostgresFeedRepository) SaveArticles(ctx context.Context, articles []mo
 
 	return nil
 }
+
+func (r *PostgresFeedRepository) DeleteExpiredArticles(ctx context.Context) (int64, error) {
+	query := `
+		WITH articles_to_delete AS (
+			SELECT a.id
+			FROM article a
+			JOIN settings s ON s.user_id = a.user_id
+			LEFT JOIN user_article_states uas ON uas.article_id = a.id
+			WHERE s.article_retention_hours IS NOT NULL
+			  AND a.created_at < NOW() - (s.article_retention_hours || ' hours')::interval
+			  AND COALESCE(uas.is_starred, false) = false
+		)
+		DELETE FROM article
+		USING articles_to_delete
+		WHERE article.id = articles_to_delete.id
+	`
+
+	result, err := r.db.ExecContext(ctx, query)
+	if err != nil {
+		return 0, fmt.Errorf("DeleteExpiredArticles: %w", err)
+	}
+
+	fmt.Println("deleted articles")
+	fmt.Println(result.RowsAffected())
+
+	return result.RowsAffected()
+}
