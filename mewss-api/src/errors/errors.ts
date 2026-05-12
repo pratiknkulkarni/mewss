@@ -47,3 +47,9 @@ export class ValidationError extends AppError {
         super(400, "VALIDATION_ERROR", message);
     }
 }
+
+export class RequestTimeoutError extends AppError {
+  constructor(message = "Request timed out") {
+    super(504, "REQUEST_TIMEOUT", message);
+  }
+}
