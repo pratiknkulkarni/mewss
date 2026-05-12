@@ -1,17 +1,15 @@
-import {betterAuth} from "better-auth";
-import {Pool} from "pg";
+import { betterAuth } from "better-auth";
+import { pool } from "../db/db.js"
 
 export const auth = betterAuth({
-    database: new Pool({
-        connectionString: process.env.DATABASE_URL!,
-    }),
+    database: pool,
     trustedOrigins: [
         ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
     ],
-    emailAndPassword: {enabled: true},
+    emailAndPassword: { enabled: true },
     session: {
         expiresIn: 7 * 24 * 60 * 60,
-        cookieCache: {enabled: true, maxAge: 5 * 60},
+        cookieCache: { enabled: true, maxAge: 5 * 60 },
         fields: {
             userId: "user_id",
             expiresAt: "expires_at",
