@@ -181,38 +181,49 @@ func (r *PostgresFeedRepository) CleanStaleLocks(ctx context.Context, cutoff tim
 	return result.RowsAffected()
 }
 
+const saveArticlesBatchSize = 500
+
 // SaveArticles takes a slice of articles and executes a single bulk INSERT query.
 func (r *PostgresFeedRepository) SaveArticles(ctx context.Context, articles []model.Article) error {
 	if len(articles) == 0 {
 		return nil
 	}
 
-	columnsPerArticle := 10
-	valueStrings := make([]string, 0, len(articles))
-	valueArgs := make([]any, 0, len(articles)*columnsPerArticle)
+	const columnsPerArticle = 10
 
-	paramIndex := 1
-	for _, a := range articles {
-		chunk := fmt.Sprintf("($%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d)",
-			paramIndex, paramIndex+1, paramIndex+2, paramIndex+3, paramIndex+4,
-			paramIndex+5, paramIndex+6, paramIndex+7, paramIndex+8, paramIndex+9)
-		valueStrings = append(valueStrings, chunk)
+	for i := 0; i < len(articles); i += saveArticlesBatchSize {
+		end := i + saveArticlesBatchSize
+		if end > len(articles) {
+			end = len(articles)
+		}
+		batch := articles[i:end]
 
-		valueArgs = append(valueArgs,
-			a.FeedID, a.UserID, a.GUID, a.Title, a.URL, a.Content,
-			a.Author, a.PublishedAt, a.Summary, a.IdentityHash)
-		paramIndex += columnsPerArticle
-	}
+		valueStrings := make([]string, 0, len(batch))
+		valueArgs := make([]interface{}, 0, len(batch)*columnsPerArticle)
 
-	query := fmt.Sprintf(`
-		INSERT INTO article (feed_id, user_id, guid, title, url, content, author, published_at, summary, identity_hash)
-		VALUES %s
-		ON CONFLICT (identity_hash) DO NOTHING
-	`, strings.Join(valueStrings, ","))
+		paramIndex := 1
+		for _, a := range batch {
+			valueStrings = append(valueStrings, fmt.Sprintf(
+				"($%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d)",
+				paramIndex, paramIndex+1, paramIndex+2, paramIndex+3, paramIndex+4,
+				paramIndex+5, paramIndex+6, paramIndex+7, paramIndex+8, paramIndex+9,
+			))
+			valueArgs = append(valueArgs,
+				a.FeedID, a.UserID, a.GUID, a.Title, a.URL, a.Content,
+				a.Author, a.PublishedAt, a.Summary, a.IdentityHash,
+			)
+			paramIndex += columnsPerArticle
+		}
 
-	_, err := r.db.ExecContext(ctx, query, valueArgs...)
-	if err != nil {
-		return fmt.Errorf("bulk insert failed: %w", err)
+		query := fmt.Sprintf(`
+			INSERT INTO article (feed_id, user_id, guid, title, url, content, author, published_at, summary, identity_hash)
+			VALUES %s
+			ON CONFLICT (identity_hash) DO NOTHING
+		`, strings.Join(valueStrings, ","))
+
+		if _, err := r.db.ExecContext(ctx, query, valueArgs...); err != nil {
+			return fmt.Errorf("bulk insert batch %d-%d failed: %w", i, end, err)
+		}
 	}
 
 	return nil
