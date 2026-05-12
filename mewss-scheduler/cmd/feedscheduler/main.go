@@ -53,7 +53,7 @@ func main() {
 	retentionCleaner := worker.NewRetentionCleaner(repo)
 
 	validationFetcher := fetcher.NewGoFeedFetcher(15*time.Second, "RSS-Scheduler/1.0", 3)
-	apiServer := api.NewServer(cfg.APIPort, validationFetcher, db)
+	apiServer := api.NewServer(cfg.APIPort, validationFetcher, db, cfg.InternalApiSecret)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	setupSignalHandler(cancel)

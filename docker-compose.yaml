@@ -37,6 +37,7 @@ services:
       DB_MAX_OPEN_CONNS: "25"
       DB_MAX_IDLE_CONNS: "25"
       DB_CONN_MAX_LIFETIME: "5m"
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET}
     restart: unless-stopped
     networks:
       - backend
@@ -57,6 +58,7 @@ services:
       BETTER_AUTH_URL: ${BETTER_AUTH_URL}
       FRONTEND_URL: ${FRONTEND_URL}
       SCHEDULER_URL: "http://mewss-scheduler:8081"
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET}
     expose:
       - "3000"
     restart: unless-stopped

@@ -19,6 +19,7 @@ type Config struct {
 	WorkerCount       int           `mapstructure:"WORKER_COUNT"`
 	PollInterval      time.Duration `mapstructure:"POLL_INTERVAL"`
 	StaleLockCutoff   time.Duration `mapstructure:"STALE_LOCK_CUTOFF"`
+	InternalApiSecret string        `mapstructure:"INTERNAL_API_SECRET"`
 }
 
 // LoadConfig reads configuration purely from environment variables.
@@ -35,6 +36,7 @@ func LoadConfig() (*Config, error) {
 	v.SetDefault("WORKER_COUNT", 5)
 	v.SetDefault("POLL_INTERVAL", "10s")
 	v.SetDefault("STALE_LOCK_CUTOFF", "15m")
+	v.SetDefault("INTERNAL_API_SECRET", "")
 
 	v.AutomaticEnv()
 
@@ -49,6 +51,7 @@ func LoadConfig() (*Config, error) {
 		WorkerCount:       v.GetInt("WORKER_COUNT"),
 		PollInterval:      v.GetDuration("POLL_INTERVAL"),
 		StaleLockCutoff:   v.GetDuration("STALE_LOCK_CUTOFF"),
+		InternalApiSecret: v.GetString("INTERNAL_API_SECRET"),
 	}
 
 	if cfg.DatabaseURL == "" {
