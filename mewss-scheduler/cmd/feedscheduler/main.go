@@ -42,7 +42,7 @@ func main() {
 	}
 
 	repo := repository.NewPostgresFeedRepository(db)
-	netFetcher := fetcher.NewGoFeedFetcher(15*time.Second, "RSS-Scheduler/1.0")
+	netFetcher := fetcher.NewGoFeedFetcher(15*time.Second, "RSS-Scheduler/1.0", 10)
 	feedService := service.NewFeedService(repo, netFetcher)
 
 	//workerCount := 10
@@ -52,7 +52,8 @@ func main() {
 	scheduler := worker.NewScheduler(repo, jobsChan, cfg.PollInterval, cfg.StaleLockCutoff, cfg.WorkerCount)
 	retentionCleaner := worker.NewRetentionCleaner(repo)
 
-	apiServer := api.NewServer(cfg.APIPort, netFetcher, db)
+	validationFetcher := fetcher.NewGoFeedFetcher(15*time.Second, "RSS-Scheduler/1.0", 3)
+	apiServer := api.NewServer(cfg.APIPort, validationFetcher, db)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	setupSignalHandler(cancel)

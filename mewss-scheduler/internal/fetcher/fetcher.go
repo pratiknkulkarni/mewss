@@ -30,12 +30,12 @@ type GoFeedFetcher struct {
 	parser    *gofeed.Parser
 }
 
-func NewGoFeedFetcher(timeout time.Duration, userAgent string) *GoFeedFetcher {
+func NewGoFeedFetcher(timeout time.Duration, userAgent string, maxConnsPerHost int) *GoFeedFetcher {
 	return &GoFeedFetcher{
 		client: &http.Client{
 			Timeout: timeout,
 			Transport: &http.Transport{
-				Proxy: http.ProxyFromEnvironment,
+				// Proxy: http.ProxyFromEnvironment,
 				DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
 					host, port, err := net.SplitHostPort(addr)
 					if err != nil {
@@ -63,6 +63,7 @@ func NewGoFeedFetcher(timeout time.Duration, userAgent string) *GoFeedFetcher {
 				},
 				ForceAttemptHTTP2:     true,
 				MaxIdleConns:          100,
+				MaxConnsPerHost:       maxConnsPerHost,
 				IdleConnTimeout:       90 * time.Second,
 				TLSHandshakeTimeout:   10 * time.Second,
 				ExpectContinueTimeout: 1 * time.Second,
