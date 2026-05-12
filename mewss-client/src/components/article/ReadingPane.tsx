@@ -1,8 +1,18 @@
-import { ArrowLeft, ExternalLink } from "lucide-react"
-import { ScrollArea } from "@/components/ui/scroll-area.tsx";
-import type { ReadingPaneProps } from "@/types/props.ts";
-import { EmptyReadingPane } from "./EmptyReadingPane.tsx";
+import {ArrowLeft, ExternalLink} from "lucide-react"
+import {ScrollArea} from "@/components/ui/scroll-area.tsx";
+import type {ReadingPaneProps} from "@/types/props.ts";
+import {EmptyReadingPane} from "./EmptyReadingPane.tsx";
 import DOMPurify from 'dompurify';
+
+function safeSrc(url: string | null): string | null {
+    if (!url) return null;
+    try {
+        const u = new URL(url);
+        return (u.protocol === 'https:' || u.protocol === 'http:') ? url : null;
+    } catch {
+        return null;
+    }
+}
 
 function formatReadableDate(dateStr: string | null): string {
     if (!dateStr) return ""
@@ -20,9 +30,9 @@ function formatReadableDate(dateStr: string | null): string {
     }
 }
 
-export function ReadingPane({ article, onBack }: ReadingPaneProps) {
+export function ReadingPane({article, onBack}: ReadingPaneProps) {
     if (!article) {
-        return <EmptyReadingPane />
+        return <EmptyReadingPane/>
     }
 
     const publishedAt = formatReadableDate(article.publishedAt)
@@ -35,7 +45,7 @@ export function ReadingPane({ article, onBack }: ReadingPaneProps) {
                     onClick={onBack}
                     className="inline-flex h-9 items-center justify-center gap-2 rounded-md pr-4 text-sm font-medium text-muted-foreground hover:text-foreground"
                 >
-                    <ArrowLeft className="size-4" />
+                    <ArrowLeft className="size-4"/>
                     Back
                 </button>
             </div>
@@ -44,13 +54,13 @@ export function ReadingPane({ article, onBack }: ReadingPaneProps) {
                 <article className="max-w-2xl mx-auto px-4 md:px-8 py-6 md:py-10">
                     <header className="mb-8 space-y-3">
                         <a
-                            href={article.url}
+                            href={safeSrc(article.url) ?? "#"}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-primary/70 hover:text-primary transition-colors"
                         >
-                            {new URL(article.url).hostname.replace(/^www\./, "")}
-                            <ExternalLink className="size-3" />
+                            {safeSrc(article.url)}
+                            <ExternalLink className="size-3"/>
                         </a>
                         <h1 className="text-2xl font-semibold leading-snug text-foreground">
                             {article.title}
@@ -70,18 +80,18 @@ export function ReadingPane({ article, onBack }: ReadingPaneProps) {
                     {body ? (
                         <div
                             className="prose prose-sm dark:prose-invert max-w-none text-foreground/90 leading-relaxed"
-                            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(body) }}
+                            dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(body)}}
                         />
                     ) : (
                         <div className="py-12 text-center text-sm text-muted-foreground">
                             <p>No content available for this article.</p>
                             <a
-                                href={article.url}
+                                href={safeSrc(article.url) ?? "#"}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="mt-2 inline-flex items-center gap-1 text-primary hover:underline"
                             >
-                                Read on original site <ExternalLink className="size-3" />
+                                Read on original site <ExternalLink className="size-3"/>
                             </a>
                         </div>
                     )}

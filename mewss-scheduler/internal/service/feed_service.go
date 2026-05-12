@@ -10,6 +10,7 @@ import (
 	"log/slog"
 	"math"
 	"math/rand"
+	"net/url"
 	"time"
 
 	"github.com/mmcdole/gofeed"
@@ -127,6 +128,14 @@ func (s *FeedService) ProcessFeed(ctx context.Context, feed model.Feed) {
 	}
 }
 
+func sanitizeURL(raw string) string {
+	u, err := url.Parse(raw)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") {
+		return ""
+	}
+	return u.String()
+}
+
 // mapToArticle converts a gofeed.Item into the domain model
 // Returns by value intentionally — caller appends directly into a pre-allocated slice
 func (s *FeedService) mapToArticle(feed model.Feed, item *gofeed.Item) model.Article {
@@ -154,7 +163,7 @@ func (s *FeedService) mapToArticle(feed model.Feed, item *gofeed.Item) model.Art
 		GUID:         guid,
 		Title:        item.Title,
 		Content:      item.Content,
-		URL:          item.Link,
+		URL:          sanitizeURL(item.Link),
 		Author:       author,
 		PublishedAt:  item.PublishedParsed,
 		Summary:      summary,
