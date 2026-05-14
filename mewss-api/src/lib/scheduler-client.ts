@@ -16,7 +16,10 @@ export async function validateFeedUrl(url: string): Promise<ValidateFeedResult> 
     try {
         response = await fetch(`${SCHEDULER_URL}/v1/feeds/validate`, {
             method: "POST",
-            headers: {"Content-Type": "application/json"},
+            headers: {
+                "Content-Type": "application/json",
+                "X-Internal-Secret": process.env.SCHEDULER_INTERNAL_SECRET!
+            },
             body: JSON.stringify({url}),
             signal: AbortSignal.timeout(10_000),
         });
