@@ -18,7 +18,7 @@ export async function validateFeedUrl(url: string): Promise<ValidateFeedResult> 
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "X-Internal-Secret": process.env.SCHEDULER_INTERNAL_SECRET!
+                "X-Internal-Secret": process.env.INTERNAL_API_SECRET!
             },
             body: JSON.stringify({url}),
             signal: AbortSignal.timeout(10_000),
