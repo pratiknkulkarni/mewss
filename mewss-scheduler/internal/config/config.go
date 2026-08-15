@@ -23,7 +23,7 @@ type Config struct {
 }
 
 // LoadConfig reads configuration purely from environment variables.
-// DATABASE_URL is the only required value — startup fails fast if absent.
+// DATABASE_URL and INTERNAL_API_SECRET are required — startup fails fast if absent.
 func LoadConfig() (*Config, error) {
 	v := viper.New()
 
@@ -56,6 +56,13 @@ func LoadConfig() (*Config, error) {
 
 	if cfg.DatabaseURL == "" {
 		return nil, errors.New("DATABASE_URL environment variable is required but not set")
+	}
+
+	// An empty secret would make requireInternalSecret authorize every caller:
+	// ConstantTimeCompare returns 1 when both sides are empty, so a missing
+	// header would match a missing secret. Refuse to start instead.
+	if cfg.InternalApiSecret == "" {
+		return nil, errors.New("INTERNAL_API_SECRET environment variable is required but not set")
 	}
 
 	return cfg, nil

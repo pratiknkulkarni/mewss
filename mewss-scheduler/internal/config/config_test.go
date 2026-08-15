@@ -10,6 +10,7 @@ import (
 // with a clear message when DATABASE_URL is not set.
 func TestLoadConfig_MissingDatabaseURL(t *testing.T) {
 	t.Setenv("DATABASE_URL", "")
+	t.Setenv("INTERNAL_API_SECRET", "test-secret")
 
 	_, err := LoadConfig()
 	if err == nil {
@@ -21,10 +22,29 @@ func TestLoadConfig_MissingDatabaseURL(t *testing.T) {
 	}
 }
 
+// TestLoadConfig_MissingInternalApiSecret verifies that startup fails when
+// INTERNAL_API_SECRET is absent. An empty secret would otherwise make the
+// scheduler's requireInternalSecret middleware accept unauthenticated callers,
+// because ConstantTimeCompare reports a match between two empty values.
+func TestLoadConfig_MissingInternalApiSecret(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://test:test@localhost:5432/testdb")
+	t.Setenv("INTERNAL_API_SECRET", "")
+
+	_, err := LoadConfig()
+	if err == nil {
+		t.Fatal("expected an error when INTERNAL_API_SECRET is missing, got nil")
+	}
+
+	if !strings.Contains(err.Error(), "INTERNAL_API_SECRET") {
+		t.Errorf("unexpected error message: %q", err.Error())
+	}
+}
+
 // TestLoadConfig_ReadsFromEnv verifies that all fields are populated
 // correctly from environment variables.
 func TestLoadConfig_ReadsFromEnv(t *testing.T) {
 	t.Setenv("DATABASE_URL", "postgres://test:test@localhost:5432/testdb")
+	t.Setenv("INTERNAL_API_SECRET", "test-secret")
 	t.Setenv("WORKER_COUNT", "99")
 	t.Setenv("APP_ENV", "testing")
 	t.Setenv("LOG_LEVEL", "debug")
@@ -53,9 +73,10 @@ func TestLoadConfig_ReadsFromEnv(t *testing.T) {
 }
 
 // TestLoadConfig_Defaults verifies that sensible defaults are applied for
-// every optional field when only the required DATABASE_URL is set.
+// every optional field when only the required values are set.
 func TestLoadConfig_Defaults(t *testing.T) {
 	t.Setenv("DATABASE_URL", "postgres://test:test@localhost:5432/testdb")
+	t.Setenv("INTERNAL_API_SECRET", "test-secret")
 
 	cfg, err := LoadConfig()
 	if err != nil {
