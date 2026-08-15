@@ -1,7 +1,13 @@
 # mewss-scheduler/Dockerfile
 
 # ── Stage 1: Build ────────────────────────────────────────────────────────────
-FROM golang:1.26.2-alpine AS builder
+# Build on the builder's native platform and cross-compile, rather than
+# emulating the target platform through QEMU.
+FROM --platform=$BUILDPLATFORM golang:1.26.2-alpine AS builder
+
+# Provided by BuildKit; must be redeclared in-stage to be usable in RUN.
+ARG TARGETOS
+ARG TARGETARCH
 
 WORKDIR /app
 
