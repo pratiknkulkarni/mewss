@@ -1,16 +1,17 @@
 # Gitea Actions CI. Deliberately `.gitea/workflows/`, matching pratik/saveit and
 # pratik/lightcurve.
 #
-# The only registered runner is a Raspberry Pi 4 (label `pi-arm64`). Unlike
-# saveit and lightcurve, which publish arm64-only, this builds a multi-arch
-# manifest: mewss gets run from x86_64 workstations on the LAN as well as from
-# the homelab, and an arm64-only `latest` fails on those with a bare "no
-# matching manifest" at pull time.
+# The only registered runner is a Raspberry Pi 4 (label `pi-arm64`), and the
+# homelab this deploys to is also arm64, so the published images are arm64-only
+# — same as saveit and lightcurve.
 #
-# The amd64 half is emulated through QEMU on the Pi and is the slow part of the
-# run — the registry buildcache below is what keeps that tolerable after the
-# first build. To trade the x86 machines away for a faster run, set `platforms`
-# to linux/arm64 (either via workflow_dispatch or by changing the default).
+# This was briefly multi-arch. Emulating the amd64 half through QEMU on the Pi
+# cost ~27min for the API image alone and the jobs run one at a time on the
+# single runner, which is not worth paying on every push for machines that
+# rarely pull. Anything not arm64 builds from source instead; see the README.
+#
+# To publish another architecture anyway, set `platforms` via workflow_dispatch
+# (e.g. linux/amd64,linux/arm64) — it will be slow for the reason above.
 
 name: Build and publish images
 
@@ -29,7 +30,7 @@ on:
       platforms:
         description: "Target platforms (e.g. linux/arm64 or linux/amd64,linux/arm64)"
         required: false
-        default: "linux/amd64,linux/arm64"
+        default: "linux/arm64"
 
 concurrency:
   group: build-${{ github.ref }}
@@ -83,9 +84,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Registers the binfmt handlers the emulated amd64 half of the build needs.
-      - uses: docker/setup-qemu-action@v3
-
       - uses: docker/setup-buildx-action@v3
 
       # secrets.GITEA_TOKEN does NOT work here: Gitea 1.27's package registry
@@ -114,7 +112,7 @@ jobs:
       - name: Build and push ${{ matrix.name }}
         run: |
           docker buildx build \
-            --platform "${{ inputs.platforms || 'linux/amd64,linux/arm64' }}" \
+            --platform "${{ inputs.platforms || 'linux/arm64' }}" \
             ${{ steps.meta.outputs.tags }} \
             --build-arg VITE_API_BASE_URL= \
             --cache-from type=registry,ref=${{ steps.meta.outputs.image }}:buildcache \

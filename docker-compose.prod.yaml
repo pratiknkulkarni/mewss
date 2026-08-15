@@ -1,10 +1,16 @@
 # Runs mewss from images published to the Gitea container registry.
 #
-# On any machine on the same network as Gitea:
-#
 #   docker login gitea.15092021.xyz
 #   cp env.prod.example .env      # then edit MEWSS_PUBLIC_URL and the secrets
 #   docker compose -f docker-compose.prod.yaml pull
+#   docker compose -f docker-compose.prod.yaml up -d
+#
+# The published images are arm64-only. Every service also carries a `build:`
+# stanza, so on any other architecture the same file works with one verb
+# changed — `build` instead of `pull`, which produces the images locally for
+# the host's own architecture:
+#
+#   docker compose -f docker-compose.prod.yaml build
 #   docker compose -f docker-compose.prod.yaml up -d
 #
 # Only the client is published to the host. Everything else talks over the
@@ -38,6 +44,9 @@ services:
   # to come up before the API touches any table.
   mewss-scheduler:
     image: ${MEWSS_REGISTRY:-gitea.15092021.xyz}/${MEWSS_NAMESPACE:-pratik}/mewss-scheduler:${MEWSS_TAG:-latest}
+    build:
+      context: ./mewss-scheduler
+      dockerfile: Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
@@ -59,6 +68,9 @@ services:
 
   mewss-api:
     image: ${MEWSS_REGISTRY:-gitea.15092021.xyz}/${MEWSS_NAMESPACE:-pratik}/mewss-api:${MEWSS_TAG:-latest}
+    build:
+      context: ./mewss-api
+      dockerfile: Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
@@ -91,6 +103,13 @@ services:
 
   mewss-client:
     image: ${MEWSS_REGISTRY:-gitea.15092021.xyz}/${MEWSS_NAMESPACE:-pratik}/mewss-client:${MEWSS_TAG:-latest}
+    build:
+      context: ./mewss-client
+      dockerfile: Dockerfile
+      args:
+        # Empty means "call the API on the same origin the page was served
+        # from", which is what the nginx proxy in this image expects.
+        VITE_API_BASE_URL: ""
     depends_on:
       mewss-api:
         condition: service_healthy
