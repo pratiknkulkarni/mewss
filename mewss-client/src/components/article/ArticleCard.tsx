@@ -3,6 +3,16 @@ import {formatDistanceToNowStrict, differenceInDays, format} from 'date-fns';
 import {safeHostname} from "@/lib/utils.ts";
 import {Star} from "lucide-react";
 import {useEffect, useRef} from "react";
+import DOMPurify from "dompurify";
+
+// Feed summaries are HTML more often than not — Hacker News ends every item with
+// an anchor to the comments page. React escapes a string, so rendering the raw
+// summary in the card puts literal <a href="..."> in the list. Stripping every
+// tag leaves the text, entities already decoded, which is all the preview wants.
+// The reading pane keeps the markup, it just sanitises it before use.
+function summaryText(summary: string): string {
+    return DOMPurify.sanitize(summary, {ALLOWED_TAGS: [], ALLOWED_ATTR: []}).trim();
+}
 
 function relativeTime(dateStr: string | null): string {
     if (!dateStr) return "";
@@ -84,7 +94,7 @@ export default function ArticleCard({article, isActive, onClick, onStar}: Articl
                     </h3>
                     {isActive && article.summary && (
                         <p className="text-[12px] text-muted-foreground line-clamp-2 leading-relaxed animate-in fade-in slide-in-from-top-1 duration-300">
-                            {article.summary}
+                            {summaryText(article.summary)}
                         </p>
                     )}
                 </div>
