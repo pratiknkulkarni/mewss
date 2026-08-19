@@ -18,9 +18,10 @@ Start with the configuration either way:
 cp env.prod.example .env
 ```
 
-Then edit `.env`. Three values matter:
+Then edit `.env`. Four values have to be filled in, and compose refuses to start if any of them is empty:
 
 - `MEWSS_PUBLIC_URL` — the URL you actually type into the browser. Use the host's LAN IP rather than `localhost` if you want to reach it from other machines, and keep the port in sync with `MEWSS_PORT`. Session cookies and Better Auth's trusted-origin check are both derived from this, so a mismatch shows up as login failing without an obvious error.
+- `POSTGRES_PASSWORD` — `openssl rand -hex 24`.
 - `BETTER_AUTH_SECRET` and `INTERNAL_API_SECRET` — generate each with `openssl rand -hex 32`.
 
 ### arm64 (Raspberry Pi)
