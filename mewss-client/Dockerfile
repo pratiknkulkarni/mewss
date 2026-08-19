@@ -54,16 +54,17 @@ server {
 
     # if I ever move the API to another website
     # I may need to remove 'connect-src' since it only allows 'fetch' calls to same origin
-    add_header Content-Security-Policy "
-      default-src 'self';
-      script-src 'self';
-      style-src 'self' 'unsafe-inline';
-      img-src 'self' data: https:;
-      connect-src 'self';
-      font-src 'self';
-      object-src 'none';
-      frame-ancestors 'none';
-    " always;
+    # Has to stay on one line. Nginx copies the value through verbatim, so a
+    # multi-line string puts bare LF bytes inside the header value, which is not
+    # a legal HTTP field. Busybox wget rejects the whole response with
+    # "bad header line", which is enough to fail the HEALTHCHECK below forever.
+    #
+    # Directive by directive: only same-origin by default; no inline scripts;
+    # inline styles allowed because the bundler injects them; images may also
+    # come from data: URIs and any https host, since article thumbnails are
+    # remote; fetch/XHR restricted to this origin, which is why the client and
+    # the API share one; no plugins; and not embeddable in a frame anywhere.
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self'; font-src 'self'; object-src 'none'; frame-ancestors 'none'" always;
 
     # I am not too sure I should be including this here consider I am usually behind Caddy https
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
