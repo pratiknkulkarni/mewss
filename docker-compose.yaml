@@ -81,6 +81,10 @@ services:
     depends_on:
       mewss-api:
         condition: service_healthy
+    ports:
+      # The only published port in the stack. Without it `make up` brings
+      # everything online healthy and completely unreachable.
+      - "${MEWSS_PORT:-8080}:80"
     restart: unless-stopped
     networks:
       - frontend
