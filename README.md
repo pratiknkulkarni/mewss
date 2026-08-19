@@ -58,11 +58,11 @@ Add feeds from the sidebar. The refresh interval is per feed, and the scheduler 
   <img src="media/add-feed.png" alt="The add-feed dialog" width="100%">
 </p>
 
-If a feed's password or database volume ever gets out of sync — say you change `POSTGRES_PASSWORD` on a stack that already has a volume — the scheduler is the service that tells you. It exits and restarts on a failed connection, while the API keeps reporting healthy, so `docker compose ps` is worth a look before assuming an empty article list means empty feeds.
+If a feed's password or database volume ever gets out of sync; say you change `POSTGRES_PASSWORD` on a stack that already has a volume, the scheduler is the service that tells you. It exits and restarts on a failed connection, while the API keeps reporting healthy, so `docker compose ps` is worth a look before assuming an empty article list means empty feeds.
 
 
 ---
 
 Developed on a self-hosted [Gitea](https://gitea.15092021.xyz/pratik/mewsss) that runs in
-my homelab; the copy on GitHub is a read-only mirror of it, pushed on every commit.
+my homelab; the copy on [GitHub](https://github.com/pratiknkulkarni/mewss) is a read-only mirror of it, pushed on every commit.
 Issues and pull requests are welcome on the GitHub side and I will port them across.
