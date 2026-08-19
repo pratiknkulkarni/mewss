@@ -86,3 +86,5 @@ ignore_this_file.http
 
 bundle-stats.html
 .tanstack/
+# tsc output next to the .ts config sources
+mewss-api/*.config.js

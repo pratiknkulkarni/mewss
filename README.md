@@ -1,8 +1,12 @@
 # mewsss
 
-A self-hosted RSS reader. Three services and a Postgres database behind one Caddy container: a Go daemon that fetches feeds on a schedule, a TypeScript API that serves them, and a React client. One `docker compose up` brings the whole thing online.
+A self-hosted RSS reader. Three services and a Postgres database: a Go daemon that fetches feeds on a schedule, a TypeScript API that serves them, and a React client whose nginx also proxies `/api`, so the whole app is same-origin on one published port. One `docker compose up` brings it online.
 
 I have been running it on my homelab since February 2026 against about 30 feeds and roughly 11,000 stored articles.
+
+<p align="center">
+  <img src="media/reading.png" alt="Reading an article, with the feed list and the article list beside it" width="100%">
+</p>
 
 ## Installation
 
@@ -48,3 +52,17 @@ The app is served on `MEWSS_PORT` (default `8080`). Only the client is published
 
 The scheduler owns the database schema and runs migrations on startup, so it needs to come up before the API — the compose file already encodes that ordering.
 
+Add feeds from the sidebar. The refresh interval is per feed, and the scheduler will not go below five minutes on any of them:
+
+<p align="center">
+  <img src="media/add-feed.png" alt="The add-feed dialog" width="100%">
+</p>
+
+If a feed's password or database volume ever gets out of sync — say you change `POSTGRES_PASSWORD` on a stack that already has a volume — the scheduler is the service that tells you. It exits and restarts on a failed connection, while the API keeps reporting healthy, so `docker compose ps` is worth a look before assuming an empty article list means empty feeds.
+
+
+---
+
+Developed on a self-hosted [Gitea](https://gitea.15092021.xyz/pratik/mewsss) that runs in
+my homelab; the copy on GitHub is a read-only mirror of it, pushed on every commit.
+Issues and pull requests are welcome on the GitHub side and I will port them across.
